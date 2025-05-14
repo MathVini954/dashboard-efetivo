@@ -221,12 +221,14 @@ def carregar_dados_efetivo():
         if col in df.columns:
             df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
 
-    df['Tipo'] = df.get('DIRETO / INDIRETO', 'INDEFINIDO').astype(str).str.upper().str.strip()
+    if 'DIRETO / INDIRETO' in df.columns:
+        df['Tipo'] = df['DIRETO / INDIRETO'].astype(str).str.upper().str.strip()
+    else:
+        df['Tipo'] = 'INDEFINIDO'
+
     df['Total Extra'] = df['Hora Extra 70% - Sabado'] + df['Hora Extra 70% - Semana']
     return df
 
-# --- Inserir logo no canto esquerdo da sidebar ---
-st.sidebar.image("logotipo.png", use_container_width=True)
 
 # --- Tabs do app ---
 aba = st.tabs(["📈 Produtividade", "📊 Efetivo"])

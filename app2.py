@@ -98,101 +98,60 @@ with aba[0]:
     st.plotly_chart(fig_barra)
 
 
- # ========== EFETIVO ==========
+# ========== EFETIVO ==========
 with aba[1]:
-    # Este é o código de análise de "Efetivo"
-    st.title("📊 Análise de Efetivo - Abril 2025")
+    st.title("📊 Dashboard de Efetivo")
 
     # Carregar os dados de efetivo
-   uploaded_file = st.file_uploader("efetivo_abril", type="xlsx")
-if uploaded_file is not None:
-    df = pd.read_excel(uploaded_file, engine="openpyxl")
-    df.columns = df.columns.str.strip()
-    # Restante do seu código
+    df_efetivo = carregar_dados_efetivo()
 
+    # Filtros
+    tipo_obra_efetivo_opcoes = ["Todos"] + df_efetivo['Obra'].unique().tolist()
+    tipo_obra_efetivo = st.sidebar.selectbox('Tipo de Obra', tipo_obra_efetivo_opcoes)
 
-    # FILTROS
-    st.sidebar.header("🔍 Filtros")
-    lista_obras = sorted(df['Obra'].astype(str).unique())
-    obras_selecionadas = st.sidebar.multiselect("Obras:", lista_obras, default=lista_obras)
+    tipo_efetivo_opcoes = ['Todos', 'DIRETO', 'INDIRETO', 'TERCEIRO']
+    tipo_efetivo = st.sidebar.selectbox('Tipo de Efetivo', tipo_efetivo_opcoes)
 
-    tipo_selecionado = st.sidebar.radio("Tipo:", ['Todos', 'DIRETO', 'INDIRETO', 'TERCEIRO'], horizontal=True)
-    tipo_analise = st.sidebar.radio("Tipo de Análise da Tabela:", ['Produção', 'Hora Extra Semana', 'Hora Extra Sábado'])
-    qtd_linhas = st.sidebar.radio("Qtd. de Funcionários na Tabela:", ['5', '10', '20', 'Todos'], horizontal=True)
+    # Filtro de mês (considerando que já existe a coluna 'DATA_FORMATADA')
+    datas_opcoes_efetivo = ["Todos"] + df_efetivo['DATA_FORMATADA'].unique().tolist()
+    datas_sel_efetivo = st.sidebar.multiselect("Mês/Ano", datas_opcoes_efetivo, default=datas_opcoes_efetivo)
 
-    # Aplicar filtros gerais
-    df_filtrado = df[df['Obra'].isin(obras_selecionadas)]
-    if tipo_selecionado != 'Todos':
-        df_filtrado = df_filtrado[df_filtrado['Tipo'] == tipo_selecionado]
+    # Aplicando os filtros
+    df_efetivo_filtrado = df_efetivo.copy()
+    if tipo_obra_efetivo != "Todos":
+        df_efetivo_filtrado = df_efetivo_filtrado[df_efetivo_filtrado['Obra'] == tipo_obra_efetivo]
+    if tipo_efetivo != "Todos":
+        df_efetivo_filtrado = df_efetivo_filtrado[df_efetivo_filtrado['Tipo'] == tipo_efetivo]
+    if datas_sel_efetivo and "Todos" not in datas_sel_efetivo:
+        df_efetivo_filtrado = df_efetivo_filtrado[df_efetivo_filtrado['DATA_FORMATADA'].isin(datas_sel_efetivo)]
 
-    # --- KPIs ---
-    col1, col2, col3, col4 = st.columns(4)
-    col1.metric("👷 Direto", len(df_filtrado[df_filtrado['Tipo'] == 'DIRETO']))
-    col2.metric("👷‍♂️ Indireto", len(df_filtrado[df_filtrado['Tipo'] == 'INDIRETO']))
-    col3.metric("🏗️ Terceiro", len(df_filtrado[df_filtrado['Tipo'] == 'TERCEIRO']))
-    col4.metric("👥 Total", len(df_filtrado))
+    # Tabela com os dados filtrados
+    st.markdown("### 📋 Efetivo - Dados Filtrados")
+    st.dataframe(df_efetivo_filtrado)
 
-    st.divider()
+    # --- Gráfico de Pizza para Tipo de Efetivo ---
+    tipo_efetivo_count = df_efetivo_filtrado['Tipo'].value_counts().reset_index()
+    tipo_efetivo_count.columns = ['Tipo', 'Contagem']
+    fig_pizza_efetivo = px.pie(tipo_efetivo_count, names='Tipo', values='Contagem',
+                               title="Distribuição por Tipo de Efetivo",
+                               color_discrete_sequence=px.colors.sequential.Plasma)
+    st.plotly_chart(fig_pizza_efetivo, use_container_width=True)
 
-    # --- GRÁFICO PIZZA + TABELA ---
-    col_g1, col_g2 = st.columns([1, 2])
+    # --- Gráfico de Barras para Efetivo por Função ---
+    funcao_efetivo_count = df_efetivo_filtrado['Função'].value_counts().reset_index()
+    funcao_efetivo_count.columns = ['Função', 'Contagem']
+    fig_barra_efetivo = px.bar(funcao_efetivo_count, x='Função', y='Contagem', title="Efetivo por Função",
+                               color='Contagem', color_continuous_scale='Blues')
+    fig_barra_efetivo.update_layout(xaxis_tickangle=-45)
+    st.plotly_chart(fig_barra_efetivo, use_container_width=True)
 
-    with col_g1:
-        df_pizza = df[df['Obra'].isin(obras_selecionadas)]
-        pizza = df_pizza['Tipo'].value_counts().reset_index()
-        pizza.columns = ['Tipo', 'count']
-        fig_pizza = px.pie(pizza, names='Tipo', values='count', title='Distribuição por Tipo de Efetivo',
-                           color_discrete_sequence=px.colors.sequential.Plasma)
-        st.plotly_chart(fig_pizza, use_container_width=True)
-
-    with col_g2:
-        coluna_valor = {
-            'Produção': 'PRODUÇÃO',
-            'Hora Extra Semana': 'Hora Extra 70% - Semana',
-            'Hora Extra Sábado': 'Hora Extra 70% - Sabado'
-        }[tipo_analise]
-
-        # Adicionar a coluna REFLEXO S PRODUÇÃO apenas quando Produção for selecionada
-        if tipo_analise == 'Produção' and 'REFLEXO S PRODUÇÃO' in df.columns:
-            df_filtrado['DSR'] = df_filtrado['REFLEXO S PRODUÇÃO']
-            ranking = df_filtrado[['Funcionário', 'Função', 'Obra', 'Tipo', 'PRODUÇÃO', 'DSR']].sort_values(by='PRODUÇÃO', ascending=False)
-        else:
-            ranking = df_filtrado[['Funcionário', 'Função', 'Obra', 'Tipo', coluna_valor]].sort_values(by=coluna_valor, ascending=False)
-
-        valor_total = df_filtrado[coluna_valor].sum()
-        st.markdown(f"### 📋 Top Funcionários por **{tipo_analise}**")
-        st.markdown(f"**Total em {tipo_analise}:** R$ {valor_total:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
-
-        if qtd_linhas != 'Todos':
-            ranking = ranking.head(int(qtd_linhas))
-
-        # Formatar como R$
-        ranking[coluna_valor] = ranking[coluna_valor].apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
-        if 'DSR' in ranking.columns:
-            ranking['DSR'] = ranking['DSR'].apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
-
-        st.dataframe(ranking, use_container_width=True)
-
-    # --- GRÁFICO DE BARRAS (embaixo) ---
-    st.divider()
-    col_bar = st.container()
-    with col_bar:
-        graf_funcao = df_filtrado['Função'].value_counts().reset_index()
-        graf_funcao.columns = ['Função', 'Qtd']
-        fig_bar = px.bar(graf_funcao, x='Função', y='Qtd', title='Efetivo por Função', text='Qtd',
-                         color='Qtd', color_continuous_scale='Blues')
-        fig_bar.update_layout(xaxis_tickangle=-45)
-        st.plotly_chart(fig_bar, use_container_width=True)
-
-    # --- GRÁFICO DE DISPERSÃO ---
-    st.divider()
-    st.markdown("### 🔍 Correlação: Produção vs. Hora Extra Total")
-    fig_disp = px.scatter(df_filtrado,
-                          x="Total Extra",
-                          y="PRODUÇÃO",
-                          color="Tipo",
-                          hover_data=["Funcionário", "Função", "Obra"],
-                          trendline="ols",
-                          labels={"Total Extra": "Hora Extra Total", "PRODUÇÃO": "Produção"},
-                          title="Dispersão: Hora Extra Total vs Produção")
-    st.plotly_chart(fig_disp, use_container_width=True)
+    # --- Gráfico de Dispersão para Produção vs Hora Extra Total ---
+    fig_disp_efetivo = px.scatter(df_efetivo_filtrado,
+                                  x="Total Extra",
+                                  y="PRODUÇÃO",
+                                  color="Tipo",
+                                  hover_data=["Funcionário", "Função", "Obra"],
+                                  trendline="ols",
+                                  labels={"Total Extra": "Hora Extra Total", "PRODUÇÃO": "Produção"},
+                                  title="Dispersão: Hora Extra Total vs Produção")
+    st.plotly_chart(fig_disp_efetivo, use_container_width=True)

@@ -85,7 +85,8 @@ df = carregar_dados("efetivo_abril.xlsx")
 # FILTROS
 st.sidebar.header("🔍 Filtros")
 lista_obras = sorted(df['Obra'].astype(str).unique())
-obras_selecionadas = st.sidebar.multiselect("Obras:", lista_obras, default=lista_obras)
+obra_selecionada = st.sidebar.radio("Obra:", lista_obras, horizontal=False)
+
 
 tipo_selecionado = st.sidebar.radio("Tipo:", ['Todos', 'DIRETO', 'INDIRETO', 'TERCEIRO'], horizontal=True)
 tipo_analise = st.sidebar.radio("Tipo de Análise da Tabela:", ['Produção', 'Hora Extra Semana', 'Hora Extra Sábado'])
@@ -93,6 +94,7 @@ qtd_linhas = st.sidebar.radio("Qtd. de Funcionários na Tabela:", ['5', '10', '2
 
 # Aplicar filtros gerais
 df_filtrado = df[df['Obra'].isin(obras_selecionadas)]
+
 if tipo_selecionado != 'Todos':
     df_filtrado = df_filtrado[df_filtrado['Tipo'] == tipo_selecionado]
 

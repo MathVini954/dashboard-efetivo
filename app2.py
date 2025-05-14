@@ -104,7 +104,7 @@ with aba[1]:
 import pandas as pd
 import plotly.express as px
 
-# --- Configuração da página ---
+# --- Configuração da página --- (Primeira linha após as importações)
 st.set_page_config(page_title="Dashboard de Efetivo", layout="wide")
 
 # --- Estilos CSS com tema e sidebar flutuante ---
@@ -231,6 +231,7 @@ with col_g2:
 
     # Formatar como R$
     ranking[coluna_valor] = ranking[coluna_valor].apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+
     if 'DSR' in ranking.columns:
         ranking['DSR'] = ranking['DSR'].apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
 

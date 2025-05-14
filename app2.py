@@ -100,8 +100,11 @@ with aba[0]:
 # ========== EFETIVO ==========
 # ========== EFETIVO ==========
 with aba[1]:
-   def pagina_efetivo(df):
-    # --- Configuração da página ---
+   import streamlit as st
+import pandas as pd
+import plotly.express as px
+
+# --- Configuração da página ---
 st.set_page_config(page_title="Dashboard de Efetivo", layout="wide")
 
 # --- Estilos CSS com tema e sidebar flutuante ---

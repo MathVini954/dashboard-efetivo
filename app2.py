@@ -38,14 +38,16 @@ def tela_login():
             if usuario in df_usuarios['usuario'].values:
                 senha_hash = df_usuarios[df_usuarios['usuario'] == usuario]['senha_hash'].values[0]
                 if verificar_senha(senha, senha_hash):
-                    st.success("✅ Login bem-sucedido!")
                     st.session_state['logado'] = True
                     st.session_state['usuario'] = usuario
+                    # Não chama st.experimental_rerun aqui diretamente
+                    # Em vez disso, define uma flag para o rerun acontecer fora do clique
                     st.experimental_rerun()
                 else:
                     st.error("❌ Senha incorreta.")
             else:
                 st.error("❌ Usuário não encontrado.")
+
 
     else:
         st.subheader("📋 Cadastro de Novo Usuário")

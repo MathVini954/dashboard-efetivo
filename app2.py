@@ -6,24 +6,25 @@ import plotly.express as px
 @st.cache_data
 def carregar_dados(arquivo):
     df = pd.read_excel(arquivo, engine="openpyxl", header=None)  # Sem cabeçalho
-    df.columns = ['NOME', 'SENHA']  # Renomeia as colunas para 'NOME' e 'SENHA'
-    df = df.fillna(0)
     return df
 
 # --- Login ---
 def login_usuario():
     st.sidebar.header("🔑 Login")
-    usuarios_df = carregar_dados("usuarios.xlsx")  # Carrega o arquivo sem cabeçalho
     
-    # Exibir as colunas para depuração (apenas para verificar se as colunas estão corretas)
-    st.write(usuarios_df.columns)  # Isso irá mostrar as colunas no app para depuração
+    # Carregar o arquivo com usuários e senhas
+    usuarios_df = carregar_dados("usuarios.xlsx")  # Carrega o arquivo sem cabeçalho
 
+    # Exibir a logo no canto superior
+    st.image("logotipo.png", width=200)  # Ajuste o caminho da imagem conforme necessário
+    
+    # Obtém o nome de usuário e senha das células A1 e B1
     usuario = st.sidebar.text_input("Nome de Usuário")
     senha = st.sidebar.text_input("Senha", type="password")
 
     if st.sidebar.button("Login"):
         # Verificar se o nome de usuário e senha são válidos
-        if usuario in usuarios_df['NOME'].values and senha == usuarios_df.loc[usuarios_df['NOME'] == usuario, 'SENHA'].values[0]:
+        if usuario == usuarios_df.iloc[0, 0] and senha == str(usuarios_df.iloc[0, 1]):
             st.session_state.logged_in = True
             st.session_state.usuario = usuario
             st.sidebar.success(f"Bem-vindo, {usuario}!")

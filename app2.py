@@ -1,21 +1,9 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-from PIL import Image
 
 # --- Configuração da página ---
 st.set_page_config(page_title="Dashboard de Efetivo", layout="wide")
-
-# --- Logo no canto superior direito ---
-col_logo_title, col_logo_img = st.columns([10, 1])
-with col_logo_title:
-    st.title("📊 Análise de Efetivo - Abril 2025")
-with col_logo_img:
-    try:
-        logo = Image.open("logo.png")
-        st.image(logo, width=100)
-    except:
-        st.warning("⚠️ Erro ao carregar a logo")
 
 # --- Estilos CSS com tema e sidebar flutuante ---
 modo_escuro = st.sidebar.toggle("🌙 Modo Escuro", value=False)
@@ -79,21 +67,27 @@ def carregar_dados(arquivo):
     df['Total Extra'] = df['Hora Extra 70% - Sabado'] + df['Hora Extra 70% - Semana']
     return df
 
+st.title("📊 Análise de Efetivo - Abril 2025")
+
 # Carregar o arquivo Excel diretamente
 df = carregar_dados("efetivo_abril.xlsx")
 
-# FILTROS
+# --- Filtros ---
 st.sidebar.header("🔍 Filtros")
 lista_obras = sorted(df['Obra'].astype(str).unique())
-obra_selecionada = st.sidebar.radio("Obra:", lista_obras, horizontal=False)
+lista_obras.insert(0, 'Todos')  # Adiciona a opção "Todos" no início
+obra_selecionada = st.sidebar.radio("Obra:", lista_obras, horizontal=True)
 
-
+# Outros filtros
 tipo_selecionado = st.sidebar.radio("Tipo:", ['Todos', 'DIRETO', 'INDIRETO', 'TERCEIRO'], horizontal=True)
 tipo_analise = st.sidebar.radio("Tipo de Análise da Tabela:", ['Produção', 'Hora Extra Semana', 'Hora Extra Sábado'])
 qtd_linhas = st.sidebar.radio("Qtd. de Funcionários na Tabela:", ['5', '10', '20', 'Todos'], horizontal=True)
 
 # Aplicar filtros gerais
-df_filtrado = df[df['Obra'].isin(obras_selecionadas)]
+if obra_selecionada == 'Todos':
+    df_filtrado = df  # Não filtra por obra se "Todos" for selecionado
+else:
+    df_filtrado = df[df['Obra'] == obra_selecionada]
 
 if tipo_selecionado != 'Todos':
     df_filtrado = df_filtrado[df_filtrado['Tipo'] == tipo_selecionado]
@@ -135,6 +129,7 @@ with col_g2:
     if qtd_linhas != 'Todos':
         ranking = ranking.head(int(qtd_linhas))
 
+    # Formatar como R$
     ranking[coluna_valor] = ranking[coluna_valor].apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
 
     st.dataframe(ranking, use_container_width=True)

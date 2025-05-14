@@ -151,19 +151,37 @@ with aba[1]:
 
     st.divider()
 
-    # --- GRÁFICO DE BARRAS (embaixo) ---
+# --- GRÁFICO DE COLUNAS: Funcionários por Obra ---
 st.divider()
-col_bar = st.container()
-with col_bar:
-    graf_funcao = df_filtrado['Função'].value_counts().reset_index()
-    graf_funcao.columns = ['Função', 'Qtd']
-    fig_bar = px.bar(graf_funcao, x='Função', y='Qtd', title='Efetivo por Função', text='Qtd',
-                     color='Qtd', color_continuous_scale='Blues')
-    fig_bar.update_layout(xaxis_tickangle=-45)
-    st.plotly_chart(fig_bar, use_container_width=True)
+st.markdown("### 📍 Quantidade de Funcionários por Obra")
+df_qtd_obra = df_filtrado['Obra'].value_counts().reset_index()
+df_qtd_obra.columns = ['Obra', 'Qtd']
+fig_col = px.bar(df_qtd_obra,
+                 x='Obra',
+                 y='Qtd',
+                 text='Qtd',
+                 color='Qtd',
+                 color_continuous_scale='viridis',
+                 title='Funcionários por Obra')
+fig_col.update_layout(height=400)
+st.plotly_chart(fig_col, use_container_width=True)
 
+# --- GRÁFICO DE BARRAS (Função) ---
+st.divider()
+st.markdown("### 👷 Efetivo por Função")
+graf_funcao = df_filtrado['Função'].value_counts().reset_index()
+graf_funcao.columns = ['Função', 'Qtd']
+fig_bar = px.bar(graf_funcao,
+                 x='Função',
+                 y='Qtd',
+                 title='Efetivo por Função',
+                 text='Qtd',
+                 color='Qtd',
+                 color_continuous_scale='Blues')
+fig_bar.update_layout(xaxis_tickangle=-45)
+st.plotly_chart(fig_bar, use_container_width=True)
 
- # --- GRÁFICO DE DISPERSÃO ---
+# --- GRÁFICO DE DISPERSÃO ---
 st.divider()
 st.markdown("### 🔍 Correlação: Produção vs. Hora Extra Total")
 fig_disp = px.scatter(df_filtrado,
@@ -175,3 +193,4 @@ fig_disp = px.scatter(df_filtrado,
                       labels={"Total Extra": "Hora Extra Total", "PRODUÇÃO": "Produção"},
                       title="Dispersão: Hora Extra Total vs Produção")
 st.plotly_chart(fig_disp, use_container_width=True)
+

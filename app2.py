@@ -5,6 +5,10 @@ import plotly.express as px
 # --- Configuração da página ---
 st.set_page_config(page_title="Dashboard de Efetivo e Produtividade", layout="wide")
 
+# --- Carregar a logo no canto superior direito ---
+logo = "caminho/para/sua/logo.png"  # Substitua pelo caminho real da sua logo
+st.markdown(f'<img src="{logo}" style="position: absolute; top: 10px; right: 10px; width: 150px;">', unsafe_allow_html=True)
+
 # --- Estilos CSS com tema e sidebar flutuante ---
 modo_escuro = st.sidebar.toggle("🌙 Modo Escuro", value=False)
 
@@ -48,8 +52,7 @@ body {{
 """
 st.markdown(css, unsafe_allow_html=True)
 
-# --- Funções para carregamento e processamento de dados ---
-
+# --- Função para carregar os dados ---
 @st.cache_data
 def carregar_dados(arquivo):
     df = pd.read_excel(arquivo, engine="openpyxl")
@@ -68,26 +71,17 @@ def carregar_dados(arquivo):
     df['Total Extra'] = df['Hora Extra 70% - Sabado'] + df['Hora Extra 70% - Semana']
     return df
 
-# --- Página inicial com seleção de serviço ---
+# --- Página inicial para selecionar o serviço ---
+pagina_selecionada = st.sidebar.radio("Escolha um serviço:", ["Efetivo", "Produtividade"])
 
-# Carregar logo e título da página inicial
-st.sidebar.image("logotipo.png", width=200)  # Ajuste o caminho da imagem conforme necessário
-
-# Menu de navegação
-st.title("📊 Dashboard de Efetivo e Produtividade")
-servico = st.sidebar.radio("Escolha o serviço que deseja analisar:", ["Efetivo", "Produtividade"])
-
-# --- Caso o usuário escolha "Efetivo" ---
-
-if servico == "Efetivo":
+# --- Carregar os dados para o Efetivo ---
+if pagina_selecionada == "Efetivo":
     st.title("📊 Análise de Efetivo - Abril 2025")
-
-    # Carregar o arquivo Excel diretamente
-    df = carregar_dados("efetivo_abril.xlsx")
+    df_efetivo = carregar_dados("efetivo_abril.xlsx")
 
     # FILTROS
     st.sidebar.header("🔍 Filtros")
-    lista_obras = sorted(df['Obra'].astype(str).unique())
+    lista_obras = sorted(df_efetivo['Obra'].astype(str).unique())
     obras_selecionadas = st.sidebar.multiselect("Obras:", lista_obras, default=lista_obras)
 
     tipo_selecionado = st.sidebar.radio("Tipo:", ['Todos', 'DIRETO', 'INDIRETO', 'TERCEIRO'], horizontal=True)
@@ -95,7 +89,7 @@ if servico == "Efetivo":
     qtd_linhas = st.sidebar.radio("Qtd. de Funcionários na Tabela:", ['5', '10', '20', 'Todos'], horizontal=True)
 
     # Aplicar filtros gerais
-    df_filtrado = df[df['Obra'].isin(obras_selecionadas)]
+    df_filtrado = df_efetivo[df_efetivo['Obra'].isin(obras_selecionadas)]
     if tipo_selecionado != 'Todos':
         df_filtrado = df_filtrado[df_filtrado['Tipo'] == tipo_selecionado]
 
@@ -112,7 +106,7 @@ if servico == "Efetivo":
     col_g1, col_g2 = st.columns([1, 2])
 
     with col_g1:
-        df_pizza = df[df['Obra'].isin(obras_selecionadas)]
+        df_pizza = df_efetivo[df_efetivo['Obra'].isin(obras_selecionadas)]
         pizza = df_pizza['Tipo'].value_counts().reset_index()
         pizza.columns = ['Tipo', 'count']
         fig_pizza = px.pie(pizza, names='Tipo', values='count', title='Distribuição por Tipo de Efetivo',
@@ -126,7 +120,8 @@ if servico == "Efetivo":
             'Hora Extra Sábado': 'Hora Extra 70% - Sabado'
         }[tipo_analise]
 
-        if tipo_analise == 'Produção' and 'REFLEXO S PRODUÇÃO' in df.columns:
+        # Adicionar a coluna REFLEXO S PRODUÇÃO apenas quando Produção for selecionada
+        if tipo_analise == 'Produção' and 'REFLEXO S PRODUÇÃO' in df_efetivo.columns:
             df_filtrado['DSR'] = df_filtrado['REFLEXO S PRODUÇÃO']
             ranking = df_filtrado[['Funcionário', 'Função', 'Obra', 'Tipo', 'PRODUÇÃO', 'DSR']].sort_values(by='PRODUÇÃO', ascending=False)
         else:
@@ -139,6 +134,7 @@ if servico == "Efetivo":
         if qtd_linhas != 'Todos':
             ranking = ranking.head(int(qtd_linhas))
 
+        # Formatar como R$
         ranking[coluna_valor] = ranking[coluna_valor].apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
         if 'DSR' in ranking.columns:
             ranking['DSR'] = ranking['DSR'].apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
@@ -169,9 +165,15 @@ if servico == "Efetivo":
                           title="Dispersão: Hora Extra Total vs Produção")
     st.plotly_chart(fig_disp, use_container_width=True)
 
-# --- Caso o usuário escolha "Produtividade" ---
-elif servico == "Produtividade":
-    # Carregar o código de produtividade aqui (conforme código anterior)
+# --- Carregar a página de Produtividade ---
+if pagina_selecionada == "Produtividade":
     st.title("📊 Dashboard de Produtividade")
-    # Adicione o código do dashboard de produtividade como foi antes
-    pass  # Substitua isso com o código do gráfico de produtividade
+
+    # Carregar o arquivo Excel de produtividade
+    df_produtividade = pd.read_excel("produtividade.xlsx", engine="openpyxl")
+
+    # Seu código para visualização de dados de produtividade vai aqui...
+    st.write("Aqui será exibido o dashboard de produtividade.")
+    # Exemplo de gráfico de barras para produtividade
+    fig_produtividade = px.bar(df_produtividade, x='Nome', y='Produtividade', title="Produtividade por Funcionário")
+    st.plotly_chart(fig_produtividade, use_container_width=True)

@@ -52,8 +52,7 @@ def carregar_dados(arquivo):
     df = pd.read_excel(arquivo, engine="openpyxl")
     df.columns = df.columns.str.strip()
     df = df.fillna(0)
-# Carregar o arquivo Excel diretamente
-df = carregar_dados("efetivo_abril.xlsx")
+
     for col in ['Hora Extra 70% - Sabado', 'Hora Extra 70% - Semana', 'PRODUÇÃO']:
         if col in df.columns:
             df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
@@ -66,7 +65,9 @@ df = carregar_dados("efetivo_abril.xlsx")
     df['Total Extra'] = df['Hora Extra 70% - Sabado'] + df['Hora Extra 70% - Semana']
     return df
 
-st.title("📊 Análise de Efetivo - Abril 2025")
+# Agora sim, fora da função
+df = carregar_dados("efetivo_abril.xlsx")
+
 
 
 

@@ -40,14 +40,11 @@ def tela_login():
                 if verificar_senha(senha, senha_hash):
                     st.session_state['logado'] = True
                     st.session_state['usuario'] = usuario
-                    # Não chama st.experimental_rerun aqui diretamente
-                    # Em vez disso, define uma flag para o rerun acontecer fora do clique
-                    st.experimental_rerun()
+                    # Não chamar st.experimental_rerun aqui para evitar erros
                 else:
                     st.error("❌ Senha incorreta.")
             else:
                 st.error("❌ Usuário não encontrado.")
-
 
     else:
         st.subheader("📋 Cadastro de Novo Usuário")
@@ -67,6 +64,10 @@ def tela_login():
                 else:
                     salvar_usuario(novo_usuario, hash_senha(nova_senha))
                     st.success("✅ Usuário cadastrado com sucesso! Faça login.")
+    
+    # Força o rerun se estiver logado (fora do clique do botão)
+    if st.session_state.get('logado', False):
+        st.experimental_rerun()
 
 # ---------- Dashboard de Efetivo ----------
 @st.cache_data
@@ -223,13 +224,14 @@ def main():
 
     if "logado" not in st.session_state:
         st.session_state['logado'] = False
+    if "usuario" not in st.session_state:
+        st.session_state['usuario'] = ""
 
     if not st.session_state['logado']:
         tela_login()
     else:
         st.sidebar.title(f"👋 Bem-vindo, {st.session_state['usuario']}")
-        
-        # Abas incluindo a nova aba "Análise Custo e Planejamento"
+
         aba1, aba2, aba3 = st.tabs(["📊 Efetivo", "📈 Produtividade", "🏗️ Análise Custo e Planejamento"])
 
         with aba1:
@@ -244,15 +246,4 @@ def main():
                 """
                 <div style="text-align: center; margin-top: 100px;">
                     <h2>ESTAMOS EM DESENVOLVIMENTO</h2>
-                    <div style="font-size: 100px;">🏗️</div>
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
-
-        if st.sidebar.button("Sair"):
-            st.session_state['logado'] = False
-            st.experimental_rerun()
-
-if __name__ == "__main__":
-    main()
+                    <div style

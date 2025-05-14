@@ -112,9 +112,7 @@ with aba[1]:
     tipo_efetivo_opcoes = ['Todos', 'DIRETO', 'INDIRETO', 'TERCEIRO']
     tipo_efetivo = st.sidebar.selectbox('Tipo de Efetivo', tipo_efetivo_opcoes)
 
-    # Filtro de mês (considerando que já existe a coluna 'DATA_FORMATADA')
-    datas_opcoes_efetivo = ["Todos"] + df_efetivo['DATA_FORMATADA'].unique().tolist()
-    datas_sel_efetivo = st.sidebar.multiselect("Mês/Ano", datas_opcoes_efetivo, default=datas_opcoes_efetivo)
+    
 
     # Aplicando os filtros
     df_efetivo_filtrado = df_efetivo.copy()
@@ -122,9 +120,7 @@ with aba[1]:
         df_efetivo_filtrado = df_efetivo_filtrado[df_efetivo_filtrado['Obra'] == tipo_obra_efetivo]
     if tipo_efetivo != "Todos":
         df_efetivo_filtrado = df_efetivo_filtrado[df_efetivo_filtrado['Tipo'] == tipo_efetivo]
-    if datas_sel_efetivo and "Todos" not in datas_sel_efetivo:
-        df_efetivo_filtrado = df_efetivo_filtrado[df_efetivo_filtrado['DATA_FORMATADA'].isin(datas_sel_efetivo)]
-
+   
     # Tabela com os dados filtrados
     st.markdown("### 📋 Efetivo - Dados Filtrados")
     st.dataframe(df_efetivo_filtrado)

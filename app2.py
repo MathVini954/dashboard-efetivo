@@ -60,72 +60,48 @@ def criar_grafico_barras(df):
     
     fig_barras = px.bar(df_produtividade_obra, x='TIPO_OBRA', y='PRODUTIVIDADE_PROF_DIAM2',
                         title="Produtividade Profissional Média por Tipo de Obra",
-                        labels={'TIPO_OBRA': 'Tipo de Obra', 'PRODUTIVIDADE_PROF_DIAM2': 'Produtividade Média'},
-                        color='TIPO_OBRA',
-                        template='plotly_dark')  # Estilo de fundo moderno
+                        template='plotly_dark')  # Estilo moderno
     
-    # Aumentando o tamanho do gráfico
     fig_barras.update_layout(width=900, height=500)
     
     return fig_barras
 
-# Função para criar gráfico de barras comparando Profissional e Ajudante
-def criar_grafico_profissional_ajudante(df):
-    df_prof_ajudante = df.groupby(['DATA_FORMATADA', 'TIPO_OBRA']).agg({
-        'PROFISSIONAL': 'sum',
-        'AJUDANTE': 'sum'
-    }).reset_index()
-
-    fig_prof_ajudante = px.bar(df_prof_ajudante, x='DATA_FORMATADA', y=['PROFISSIONAL', 'AJUDANTE'],
-                               title="Comparação de Profissionais e Ajudantes por Mês/Ano",
-                               labels={'value': 'Quantidade', 'DATA_FORMATADA': 'Mês/Ano'},
-                               barmode='group', template='plotly_dark')  # Gráfico de barras lado a lado
+# Função principal para exibir tudo
+def app():
+    st.set_page_config(page_title="Dashboard de Produtividade", layout="wide")
     
-    # Aumentando o tamanho do gráfico
-    fig_prof_ajudante.update_layout(width=900, height=500)
-    
-    return fig_prof_ajudante
+    # Exibir logo no canto superior direito
+    st.sidebar.image("logotipo.png", width=200)  # Ajuste o caminho da imagem conforme necessário
 
-# Função para exibir o dashboard
-def exibir_dashboard():
     # Carregar dados
-    produtividade_df = carregar_dados()
+    df = carregar_dados()
+    
+    # Filtros para seleção de tipo de obra, serviço e mês/ano
+    tipo_obra_opcoes = ["Todos"] + df['TIPO_OBRA'].unique().tolist()
+    tipo_obra = st.sidebar.selectbox('Selecione o Tipo de Obra', tipo_obra_opcoes)
+    
+    servicos_opcoes = df['SERVIÇO'].unique().tolist()
+    servico = st.sidebar.selectbox('Selecione o Serviço', servicos_opcoes)
+    
+    mes_ano_opcoes = ["Todos"] + df['DATA_FORMATADA'].unique().tolist()
+    mes_ano = st.sidebar.selectbox('Selecione o Mês/Ano', mes_ano_opcoes)
+    
+    # Filtrar os dados com base nos filtros aplicados
+    df_filtrado = filtrar_dados(df, tipo_obra, servico, mes_ano)
+    
+    # Criar gráficos
+    fig_produtividade = criar_grafico_produtividade(df_filtrado)
+    fig_barras = criar_grafico_barras(df_filtrado)
+    
+    # Exibir os gráficos
+    st.title("Dashboard de Produtividade")
+    
+    # Exibir gráfico de produtividade em linha
+    st.plotly_chart(fig_produtividade)
+    
+    # Exibir gráfico de barras de produtividade por tipo de obra
+    st.plotly_chart(fig_barras)
 
-    # Título do Dashboard
-    st.title("📊 Dashboard Central de Produtividade")
-
-    # Exibindo o logotipo no canto superior
-    st.image("logotipo.png", width=200)  # Ajuste o caminho da imagem conforme necessário
-
-    # Layout de filtros na esquerda
-    st.sidebar.header("Filtros de Seleção")
-
-    # Filtros de seleção
-    tipo_obra = st.sidebar.selectbox('Selecione o Tipo de Obra:', ['Todos'] + list(produtividade_df['TIPO_OBRA'].unique()))
-    servico = st.sidebar.selectbox('Selecione o Serviço:', [''] + list(produtividade_df['SERVIÇO'].unique()))  # Serviços
-    mes_ano = st.sidebar.selectbox('Selecione o Período (Mês/Ano):', ['Todos'] + sorted(produtividade_df['DATA_FORMATADA'].unique(), reverse=True))
-
-    # Filtrando os dados com base nas seleções
-    df_filtrado = filtrar_dados(produtividade_df, tipo_obra, servico, mes_ano)
-
-    # Verificando se há dados para o período e tipo de obra
-    if not df_filtrado.empty:
-        # Exibindo gráficos de produtividade
-        col1, col2 = st.columns(2)
-
-        with col1:
-            fig_linha = criar_grafico_produtividade(df_filtrado)
-            st.plotly_chart(fig_linha)
-
-        with col2:
-            fig_barras = criar_grafico_barras(df_filtrado)
-            st.plotly_chart(fig_barras)
-
-        # Gráfico de Profissional vs Ajudante
-        fig_prof_ajudante = criar_grafico_profissional_ajudante(df_filtrado)
-        st.plotly_chart(fig_prof_ajudante)
-    else:
-        st.warning("Não há dados disponíveis para o filtro selecionado.")
-
-# Chamando a função para exibir o dashboard
-exibir_dashboard()
+# Chamar a função principal
+if __name__ == "__main__":
+    app()

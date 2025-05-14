@@ -26,7 +26,8 @@ def filtrar_dados(df, tipo_obra, servico, mes_ano):
         df_filtrado = df_filtrado[df_filtrado['SERVIÇO'] == servico]
     
     # Filtrar pelo mês e ano selecionado
-    df_filtrado = df_filtrado[df_filtrado['DATA_FORMATADA'] == mes_ano]
+    if mes_ano != "Todos":
+        df_filtrado = df_filtrado[df_filtrado['DATA_FORMATADA'] == mes_ano]
     
     return df_filtrado
 
@@ -43,7 +44,20 @@ def criar_grafico_produtividade(df):
                   labels={'value': 'Produtividade', 'DATA_FORMATADA': 'Mês/Ano'},
                   title="Produtividade Profissional por M² (Real x Orçado)")
     
-    st.plotly_chart(fig)
+    return fig
+
+# Função para criar gráfico de barra de produtividade por tipo de obra
+def criar_grafico_barras(df):
+    df_produtividade_obra = df.groupby('TIPO_OBRA').agg({
+        'PRODUTIVIDADE_PROF_DIAM2': 'mean'
+    }).reset_index()
+    
+    fig_barras = px.bar(df_produtividade_obra, x='TIPO_OBRA', y='PRODUTIVIDADE_PROF_DIAM2',
+                        title="Produtividade Profissional Média por Tipo de Obra",
+                        labels={'TIPO_OBRA': 'Tipo de Obra', 'PRODUTIVIDADE_PROF_DIAM2': 'Produtividade Média'},
+                        color='TIPO_OBRA')
+    
+    return fig_barras
 
 # Função para exibir o dashboard
 def exibir_dashboard():
@@ -62,7 +76,7 @@ def exibir_dashboard():
     # Filtros de seleção
     tipo_obra = st.sidebar.selectbox('Selecione o Tipo de Obra:', ['Todos'] + list(produtividade_df['TIPO_OBRA'].unique()))
     servico = st.sidebar.selectbox('Selecione o Serviço:', [''] + list(produtividade_df['SERVIÇO'].unique()))  # Servicos
-    mes_ano = st.sidebar.selectbox('Selecione o Período (Mês/Ano):', sorted(produtividade_df['DATA_FORMATADA'].unique(), reverse=True))
+    mes_ano = st.sidebar.selectbox('Selecione o Período (Mês/Ano):', ['Todos'] + sorted(produtividade_df['DATA_FORMATADA'].unique(), reverse=True))
 
     # Filtrando os dados com base nas seleções
     df_filtrado = filtrar_dados(produtividade_df, tipo_obra, servico, mes_ano)
@@ -70,20 +84,17 @@ def exibir_dashboard():
     # Verificando se há dados para o período e tipo de obra
     if not df_filtrado.empty:
         # Exibindo gráficos de produtividade
-        criar_grafico_produtividade(df_filtrado)
+        col1, col2 = st.columns(2)
+
+        with col1:
+            fig_linha = criar_grafico_produtividade(df_filtrado)
+            st.plotly_chart(fig_linha)
+
+        with col2:
+            fig_barras = criar_grafico_barras(df_filtrado)
+            st.plotly_chart(fig_barras)
     else:
         st.warning("Não há dados disponíveis para o filtro selecionado.")
-
-    # Gráficos adicionais: Exemplo de gráfico de barras de produtividade por obra
-    df_produtividade_obra = df_filtrado.groupby('TIPO_OBRA').agg({
-        'PRODUTIVIDADE_PROF_DIAM2': 'mean'
-    }).reset_index()
-    
-    fig_barras = px.bar(df_produtividade_obra, x='TIPO_OBRA', y='PRODUTIVIDADE_PROF_DIAM2',
-                        title="Produtividade Profissional Média por Tipo de Obra",
-                        labels={'TIPO_OBRA': 'Tipo de Obra', 'PRODUTIVIDADE_PROF_DIAM2': 'Produtividade Média'},
-                        color='TIPO_OBRA')
-    st.plotly_chart(fig_barras)
 
     # Gráfico de pizza para distribuição de serviços
     if servico:

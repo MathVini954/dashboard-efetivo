@@ -1,9 +1,21 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+from PIL import Image
 
 # --- Configuração da página ---
 st.set_page_config(page_title="Dashboard de Efetivo", layout="wide")
+
+# --- Logo no canto superior direito ---
+col_logo_title, col_logo_img = st.columns([10, 1])
+with col_logo_title:
+    st.title("📊 Análise de Efetivo - Abril 2025")
+with col_logo_img:
+    try:
+        logo = Image.open("logo.png")
+        st.image(logo, width=100)
+    except:
+        st.warning("⚠️ Erro ao carregar a logo")
 
 # --- Estilos CSS com tema e sidebar flutuante ---
 modo_escuro = st.sidebar.toggle("🌙 Modo Escuro", value=False)
@@ -67,8 +79,6 @@ def carregar_dados(arquivo):
     df['Total Extra'] = df['Hora Extra 70% - Sabado'] + df['Hora Extra 70% - Semana']
     return df
 
-st.title("📊 Análise de Efetivo - Abril 2025")
-
 # Carregar o arquivo Excel diretamente
 df = carregar_dados("efetivo_abril.xlsx")
 
@@ -123,7 +133,6 @@ with col_g2:
     if qtd_linhas != 'Todos':
         ranking = ranking.head(int(qtd_linhas))
 
-    # Formatar como R$
     ranking[coluna_valor] = ranking[coluna_valor].apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
 
     st.dataframe(ranking, use_container_width=True)

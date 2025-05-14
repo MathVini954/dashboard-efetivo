@@ -40,7 +40,7 @@ def criar_grafico_produtividade(df):
     }).reset_index()
 
     # Gráfico de linha para Produtividade Prof. Dia/M² e Produtividade Orçada
-    fig = px.line(df_mensal, x='DATA_FORMATADA', y=['PRODUTIVIDADE_MENSAL', 'PRODUTIVIDADE_ORCADA'],
+    fig = px.line(df_mensal, x='DATA_FORMATADA', y=['PRODUTIVIDADE MENSAL', 'PRODUTIVIDADE ORCADA'],
                   labels={'value': 'Produtividade', 'DATA_FORMATADA': 'Mês/Ano'},
                   title="Produtividade Profissional por M² (Real x Orçado)",
                   line_shape='linear',  # Linha mais suave

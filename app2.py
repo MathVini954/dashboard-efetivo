@@ -7,8 +7,9 @@ st.set_page_config(page_title="Dashboard de Efetivo", layout="wide")
 
 # --- Cores fixas (modo escuro sempre ativado) ---
 cor_fundo = "#0e1117"
-cor_texto = "#ffffff"
+cor_texto = "#0e1117"
 cor_sidebar = "#161b22"
+cor_texto_sidebar = "#ffffff"
 
 # --- Estilo CSS fixo com logo e texto branco ---
 css = f"""
@@ -29,6 +30,7 @@ h1, h2, h3, h4, h5, h6, p, span, div, label {{
     width: 300px;
     height: 100%;
     background-color: {cor_sidebar};
+    color: {cor_texto_sidebar}:
     transition: left 0.3s ease;
     z-index: 100;
 }}

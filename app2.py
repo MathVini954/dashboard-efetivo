@@ -22,6 +22,16 @@ body {{
 [data-testid="stSidebar"] {{
     background-color: {cor_sidebar};
 }}
+.header {{
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+}}
+.stImage {{
+    position: absolute;
+    top: 20px;
+    left: 20px;
+}}
 </style>
 """
 st.markdown(css, unsafe_allow_html=True)
@@ -48,6 +58,9 @@ def carregar_dados_efetivo():
     df['Total Extra'] = df['Hora Extra 70% - Sabado'] + df['Hora Extra 70% - Semana']
     return df
 
+# --- Exibir logotipo no canto esquerdo ---
+st.image("logotipo.png", width=150)
+
 # --- Tabs do app ---
 aba = st.tabs(["📈 Produtividade", "📊 Efetivo"])
 
@@ -55,16 +68,15 @@ aba = st.tabs(["📈 Produtividade", "📊 Efetivo"])
 with aba[0]:
     st.title("📈 Dashboard de Produtividade")
 
-    df_prod = carregar_dados_produtividade()
-
+    # Exibir filtros apenas se a aba "Produtividade" estiver selecionada
     tipo_obra_opcoes = ["Todos"] + df_prod['TIPO_OBRA'].unique().tolist()
-    tipo_obra = st.sidebar.selectbox('Tipo de Obra', tipo_obra_opcoes)
+    tipo_obra = st.selectbox('Tipo de Obra', tipo_obra_opcoes)
 
     servicos_opcoes = df_prod['SERVIÇO'].unique().tolist()
-    servico = st.sidebar.selectbox('Serviço', servicos_opcoes)
+    servico = st.selectbox('Serviço', servicos_opcoes)
 
     datas_opcoes = ["Todos"] + df_prod['DATA_FORMATADA'].unique().tolist()
-    datas_sel = st.sidebar.multiselect("Mês/Ano", datas_opcoes, default=datas_opcoes)
+    datas_sel = st.multiselect("Mês/Ano", datas_opcoes, default=datas_opcoes)
 
     # Filtro
     df_f = df_prod.copy()
@@ -97,22 +109,19 @@ with aba[0]:
     fig_barra.update_layout(width=900, height=500)
     st.plotly_chart(fig_barra)
 
-
 # ========== EFETIVO ==========
 with aba[1]:
     st.title("📊 Dashboard de Efetivo")
 
-    # Carregar os dados de efetivo
-    df_efetivo = carregar_dados_efetivo()
-
-    # Filtros
+    # Exibir filtros apenas se a aba "Efetivo" estiver selecionada
     tipo_obra_efetivo_opcoes = ["Todos"] + df_efetivo['Obra'].unique().tolist()
-    tipo_obra_efetivo = st.sidebar.selectbox('Tipo de Obra', tipo_obra_efetivo_opcoes)
+    tipo_obra_efetivo = st.selectbox('Tipo de Obra', tipo_obra_efetivo_opcoes)
 
     tipo_efetivo_opcoes = ['Todos', 'DIRETO', 'INDIRETO', 'TERCEIRO']
-    tipo_efetivo = st.sidebar.selectbox('Tipo de Efetivo', tipo_efetivo_opcoes)
+    tipo_efetivo = st.selectbox('Tipo de Efetivo', tipo_efetivo_opcoes)
 
-    
+    # Carregar os dados de efetivo
+    df_efetivo = carregar_dados_efetivo()
 
     # Aplicando os filtros
     df_efetivo_filtrado = df_efetivo.copy()

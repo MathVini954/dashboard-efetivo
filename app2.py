@@ -213,35 +213,37 @@ def dashboard_produtividade():
 def main():
     st.set_page_config(page_title="Dashboards de Obra", layout="wide")
 
-    # Topo: logo + texto lado a lado
+    # Colunas para logo + texto
     col1, col2 = st.columns([1, 4])
-    wcol1, col2 = st.columns([1, 4])
 
-with col1:
-    st.markdown("""
-    <style>
-    .logo-container {
-        display: flex;
-        align-items: center;
-        height: 100%;
-    }
-    .logo-container img {
-        max-height: 120px;
-        width: auto;
-        margin-right: 20px;
-    }
-    </style>
-    <div class="logo-container">
-        <img src="logotipo.png" alt="Logo">
-    </div>
-    """, unsafe_allow_html=True)
+    with col1:
+        st.markdown("""
+        <style>
+        .logo-container {
+            display: flex;
+            align-items: center;
+            height: 100%;
+        }
+        .logo-container img {
+            max-height: 120px;
+            width: auto;
+            margin-right: 20px;
+        }
+        </style>
+        <div class="logo-container">
+            <img src="logotipo.png" alt="Logo">
+        </div>
+        """, unsafe_allow_html=True)
 
-with col2:
-    st.markdown("""
-    <div style="display: flex; align-items: center; height: 120px;">
-        <h1 style="margin: 0;">SISTEMA DE CUSTO E PLANEJAMENTO</h1>
-    </div>
-    """, unsafe_allow_html=True)
+    with col2:
+        st.markdown("""
+        <div style="display: flex; align-items: center; height: 120px;">
+            <h1 style="margin: 0;">SISTEMA DE CUSTO E PLANEJAMENTO</h1>
+        </div>
+        """, unsafe_allow_html=True)
+
+    # resto do seu código...
+
 
     if "logado" not in st.session_state:
         st.session_state['logado'] = False

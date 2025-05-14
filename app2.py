@@ -5,13 +5,12 @@ import plotly.express as px
 # --- Configuração da página ---
 st.set_page_config(page_title="Dashboard de Efetivo", layout="wide")
 
-# --- Estilos CSS com tema e sidebar flutuante ---
-modo_escuro = st.sidebar.toggle("🌙 Modo Escuro", value=False)
+# --- Cores fixas (modo escuro sempre ativado) ---
+cor_fundo = "#0e1117"
+cor_texto = "#ffffff"
+cor_sidebar = "#161b22"
 
-cor_fundo = "#0e1117" if modo_escuro else "#ffffff"
-cor_texto = "#ffffff" if modo_escuro else "#000000"
-cor_sidebar = "#161b22" if modo_escuro else "#f0f2f6"
-
+# --- Estilo CSS fixo com logo ---
 css = f"""
 <style>
 body {{
@@ -44,7 +43,22 @@ body {{
     background: transparent;
     z-index: 101;
 }}
+
+#logo-container {{
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    z-index: 999;
+}}
+
+#logo-container img {{
+    width: 150px;
+}}
 </style>
+
+<div id="logo-container">
+    <img src="logotipo.png">
+</div>
 """
 st.markdown(css, unsafe_allow_html=True)
 
@@ -113,7 +127,6 @@ with col_g2:
         'Hora Extra Sábado': 'Hora Extra 70% - Sabado'
     }[tipo_analise]
 
-    # Adicionar a coluna REFLEXO S PRODUÇÃO apenas quando Produção for selecionada
     if tipo_analise == 'Produção' and 'REFLEXO S PRODUÇÃO' in df.columns:
         df_filtrado['DSR'] = df_filtrado['REFLEXO S PRODUÇÃO']
         ranking = df_filtrado[['Funcionário', 'Função', 'Obra', 'Tipo', 'PRODUÇÃO', 'DSR']].sort_values(by='PRODUÇÃO', ascending=False)
@@ -127,7 +140,6 @@ with col_g2:
     if qtd_linhas != 'Todos':
         ranking = ranking.head(int(qtd_linhas))
 
-    # Formatar como R$
     ranking[coluna_valor] = ranking[coluna_valor].apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
     if 'DSR' in ranking.columns:
         ranking['DSR'] = ranking['DSR'].apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))

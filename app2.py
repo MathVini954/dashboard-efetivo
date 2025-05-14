@@ -52,20 +52,6 @@ def criar_grafico_produtividade(df):
     
     return fig
 
-# Função para criar gráfico de barras de produtividade por tipo de obra
-def criar_grafico_barras(df):
-    df_produtividade_obra = df.groupby('TIPO_OBRA').agg({
-        'PRODUTIVIDADE_PROF_DIAM2': 'mean'
-    }).reset_index()
-    
-    fig_barras = px.bar(df_produtividade_obra, x='TIPO_OBRA', y='PRODUTIVIDADE_PROF_DIAM2',
-                        title="Produtividade Profissional Média por Tipo de Obra",
-                        template='plotly_dark')  # Estilo moderno
-    
-    fig_barras.update_layout(width=900, height=500)
-    
-    return fig_barras
-
 # Função principal para exibir tudo
 def app():
     st.set_page_config(page_title="Dashboard de Produtividade", layout="wide")
@@ -89,18 +75,14 @@ def app():
     # Filtrar os dados com base nos filtros aplicados
     df_filtrado = filtrar_dados(df, tipo_obra, servico, datas_selecionadas)
     
-    # Criar gráficos
+    # Criar gráfico de produtividade
     fig_produtividade = criar_grafico_produtividade(df_filtrado)
-    fig_barras = criar_grafico_barras(df_filtrado)
     
     # Exibir os gráficos
     st.title("Dashboard de Produtividade")
     
     # Exibir gráfico de produtividade em linha
     st.plotly_chart(fig_produtividade)
-    
-    # Exibir gráfico de barras de produtividade por tipo de obra
-    st.plotly_chart(fig_barras)
 
 # Chamar a função principal
 if __name__ == "__main__":

@@ -105,8 +105,8 @@ st.divider()
 col_g1, col_g2 = st.columns([1, 2])
 
 with col_g1:
-    df_pizza = df[df['Obra'].isin(obras_selecionadas)]
-    pizza = df_pizza['Tipo'].value_counts().reset_index()
+    # Corrigido para utilizar df_filtrado diretamente
+    pizza = df_filtrado['Tipo'].value_counts().reset_index()
     pizza.columns = ['Tipo', 'count']
     fig_pizza = px.pie(pizza, names='Tipo', values='count', title='Distribuição por Tipo de Efetivo',
                        color_discrete_sequence=px.colors.sequential.Plasma)

@@ -5,14 +5,15 @@ import plotly.express as px
 # Função para carregar os dados de produtividade
 def carregar_dados():
     # Carregar dados de produtividade do Excel
+    # Assumindo que a planilha tenha as colunas: TIPO_OBRA, SERVIÇO, DATA, PRODUTIVIDADE_PROF_DIAM2, PRODUTIVIDADE_ORCADA_DIAM2
     produtividade_df = pd.read_excel("produtividade.xlsx")
-
+    
     # Garantir que a coluna de data esteja no formato datetime
     produtividade_df['DATA'] = pd.to_datetime(produtividade_df['DATA'])
     
     return produtividade_df
 
-# Função para filtrar os dados
+# Função para filtrar os dados com base nos filtros de tipo de obra, serviço e mês/ano
 def filtrar_dados(df, tipo_obra, servico, mes_ano):
     df_filtrado = df[df['TIPO_OBRA'] == tipo_obra]
     
@@ -24,7 +25,7 @@ def filtrar_dados(df, tipo_obra, servico, mes_ano):
     
     return df_filtrado
 
-# Função para criar gráfico de produtividade
+# Função para criar gráfico de produtividade (real vs orçado)
 def criar_grafico_produtividade(df):
     # Calcular a média de produtividade para o mês
     df_mensal = df.groupby(df['DATA'].dt.strftime('%Y-%m')).agg({

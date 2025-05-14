@@ -246,4 +246,15 @@ def main():
                 """
                 <div style="text-align: center; margin-top: 100px;">
                     <h2>ESTAMOS EM DESENVOLVIMENTO</h2>
-                    <div style
+                    <div style ="font-size: 50px; color: grey;">👷‍♂️🚧</div>
+</div>
+""", unsafe_allow_html=True
+)
+
+if name == "main":
+main()
+
+
+
+
+

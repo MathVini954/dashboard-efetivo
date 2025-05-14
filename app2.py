@@ -21,6 +21,13 @@ body {{
 }}
 [data-testid="stSidebar"] {{
     background-color: {cor_sidebar};
+    transition: width 0.3s ease-in-out;
+    width: 80px;
+    visibility: hidden;
+}}
+[data-testid="stSidebar"]:hover {{
+    width: 300px;
+    visibility: visible;
 }}
 </style>
 """
@@ -131,17 +138,22 @@ with aba[1]:
     if tipo_efetivo != "Todos":
         df_efetivo_filtrado = df_efetivo_filtrado[df_efetivo_filtrado['Tipo'] == tipo_efetivo]
    
-    # Tabela com os dados filtrados
-    st.markdown("### 📋 Efetivo - Dados Filtrados")
-    st.dataframe(df_efetivo_filtrado)
+    # Layout com colunas para colocar o gráfico de pizza e a tabela lado a lado
+    col1, col2 = st.columns(2)
 
-    # --- Gráfico de Pizza para Tipo de Efetivo ---
-    tipo_efetivo_count = df_efetivo_filtrado['Tipo'].value_counts().reset_index()
-    tipo_efetivo_count.columns = ['Tipo', 'Contagem']
-    fig_pizza_efetivo = px.pie(tipo_efetivo_count, names='Tipo', values='Contagem',
-                               title="Distribuição por Tipo de Efetivo",
-                               color_discrete_sequence=px.colors.sequential.Plasma)
-    st.plotly_chart(fig_pizza_efetivo, use_container_width=True)
+    with col1:
+        # --- Gráfico de Pizza para Tipo de Efetivo ---
+        tipo_efetivo_count = df_efetivo_filtrado['Tipo'].value_counts().reset_index()
+        tipo_efetivo_count.columns = ['Tipo', 'Contagem']
+        fig_pizza_efetivo = px.pie(tipo_efetivo_count, names='Tipo', values='Contagem',
+                                   title="Distribuição por Tipo de Efetivo",
+                                   color_discrete_sequence=px.colors.sequential.Plasma)
+        st.plotly_chart(fig_pizza_efetivo, use_container_width=True)
+
+    with col2:
+        # --- Tabela de Ranking de Efetivo ---
+        st.markdown("### 📊 Ranking de Efetivo")
+        st.dataframe(df_efetivo_filtrado[['Funcionário', 'Função', 'Tipo']].sort_values(by='Tipo'))
 
     # --- Gráfico de Barras para Efetivo por Função ---
     funcao_efetivo_count = df_efetivo_filtrado['Função'].value_counts().reset_index()
@@ -161,3 +173,4 @@ with aba[1]:
                                   labels={"Total Extra": "Hora Extra Total", "PRODUÇÃO": "Produção"},
                                   title="Dispersão: Hora Extra Total vs Produção")
     st.plotly_chart(fig_disp_efetivo, use_container_width=True)
+

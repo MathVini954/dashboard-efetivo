@@ -9,17 +9,20 @@ st.set_page_config(page_title="Dashboard de Efetivo", layout="wide")
 import streamlit as st
 from PIL import Image
 
-# --- Configuração da página ---
+# ✅ ISSO DEVE VIR ANTES DE QUALQUER COMANDO ST.*
 st.set_page_config(page_title="Dashboard de Efetivo", layout="wide")
 
-# --- Exibir logo no canto superior direito ---
-col_logo, col_title = st.columns([1, 9])
+# Logo no canto superior direito
+col_title, col_logo = st.columns([9, 1])
+with col_title:
+    st.title("📊 Análise de Efetivo - Abril 2025")
 with col_logo:
     try:
         logo = Image.open("logo.png")
-        st.image(logo, width=120)
+        st.image(logo, width=100)
     except:
-        st.warning("⚠️ Não foi possível carregar a logo. Verifique se o arquivo 'logo.png' está no diretório.")
+        st.warning("⚠️ Não foi possível carregar a logo.")
+
 
 with col_title:
     st.title("📊 Análise de Efetivo - Abril 2025")

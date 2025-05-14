@@ -22,16 +22,6 @@ body {{
 [data-testid="stSidebar"] {{
     background-color: {cor_sidebar};
 }}
-.header {{
-    display: flex;
-    justify-content: flex-start;
-    align-items: center;
-}}
-.stImage {{
-    position: absolute;
-    top: 20px;
-    left: 20px;
-}}
 </style>
 """
 st.markdown(css, unsafe_allow_html=True)
@@ -39,10 +29,16 @@ st.markdown(css, unsafe_allow_html=True)
 # --- Funções compartilhadas ---
 @st.cache_data
 def carregar_dados_produtividade():
-    df = pd.read_excel("produtividade.xlsx")
-    df['DATA'] = pd.to_datetime(df['DATA'], format='%d/%m/%Y')
-    df['DATA_FORMATADA'] = df['DATA'].dt.strftime('%b/%y')
-    return df
+    try:
+        df = pd.read_excel("produtividade.xlsx")
+        df['DATA'] = pd.to_datetime(df['DATA'], format='%d/%m/%Y')
+        df['DATA_FORMATADA'] = df['DATA'].dt.strftime('%b/%y')
+        # Verificar as colunas carregadas
+        print(df.columns)
+        return df
+    except Exception as e:
+        st.error(f"Erro ao carregar os dados de produtividade: {e}")
+        return pd.DataFrame()  # Retorna um dataframe vazio em caso de erro
 
 @st.cache_data
 def carregar_dados_efetivo():
@@ -58,8 +54,8 @@ def carregar_dados_efetivo():
     df['Total Extra'] = df['Hora Extra 70% - Sabado'] + df['Hora Extra 70% - Semana']
     return df
 
-# --- Exibir logotipo no canto esquerdo ---
-st.image("logotipo.png", width=150)
+# --- Inserir logo no canto esquerdo da sidebar ---
+st.sidebar.image("logotipo.png", use_column_width=True)
 
 # --- Tabs do app ---
 aba = st.tabs(["📈 Produtividade", "📊 Efetivo"])
@@ -68,60 +64,65 @@ aba = st.tabs(["📈 Produtividade", "📊 Efetivo"])
 with aba[0]:
     st.title("📈 Dashboard de Produtividade")
 
-    # Exibir filtros apenas se a aba "Produtividade" estiver selecionada
-    tipo_obra_opcoes = ["Todos"] + df_prod['TIPO_OBRA'].unique().tolist()
-    tipo_obra = st.selectbox('Tipo de Obra', tipo_obra_opcoes)
+    # Carregar os dados de produtividade
+    df_prod = carregar_dados_produtividade()
+    if df_prod.empty:
+        st.warning("Não foi possível carregar os dados de produtividade.")
+    else:
+        # Filtros para a aba de Produtividade
+        tipo_obra_opcoes = ["Todos"] + df_prod['TIPO_OBRA'].unique().tolist()
+        tipo_obra = st.sidebar.selectbox('Tipo de Obra', tipo_obra_opcoes)
 
-    servicos_opcoes = df_prod['SERVIÇO'].unique().tolist()
-    servico = st.selectbox('Serviço', servicos_opcoes)
+        servicos_opcoes = df_prod['SERVIÇO'].unique().tolist()
+        servico = st.sidebar.selectbox('Serviço', servicos_opcoes)
 
-    datas_opcoes = ["Todos"] + df_prod['DATA_FORMATADA'].unique().tolist()
-    datas_sel = st.multiselect("Mês/Ano", datas_opcoes, default=datas_opcoes)
+        datas_opcoes = ["Todos"] + df_prod['DATA_FORMATADA'].unique().tolist()
+        datas_sel = st.sidebar.multiselect("Mês/Ano", datas_opcoes, default=datas_opcoes)
 
-    # Filtro
-    df_f = df_prod.copy()
-    if tipo_obra != "Todos":
-        df_f = df_f[df_f['TIPO_OBRA'] == tipo_obra]
-    if servico:
-        df_f = df_f[df_f['SERVIÇO'] == servico]
-    if datas_sel and "Todos" not in datas_sel:
-        df_f = df_f[df_f['DATA_FORMATADA'].isin(datas_sel)]
+        # Filtro
+        df_f = df_prod.copy()
+        if tipo_obra != "Todos":
+            df_f = df_f[df_f['TIPO_OBRA'] == tipo_obra]
+        if servico:
+            df_f = df_f[df_f['SERVIÇO'] == servico]
+        if datas_sel and "Todos" not in datas_sel:
+            df_f = df_f[df_f['DATA_FORMATADA'].isin(datas_sel)]
 
-    # Gráficos
-    df_mensal = df_f.groupby('DATA_FORMATADA').agg({
-        'PRODUTIVIDADE_PROF_DIAM2': 'mean',
-        'PRODUTIVIDADE_ORCADA_DIAM2': 'mean'
-    }).reset_index()
+        # Gráficos
+        df_mensal = df_f.groupby('DATA_FORMATADA').agg({
+            'PRODUTIVIDADE_PROF_DIAM2': 'mean',
+            'PRODUTIVIDADE_ORCADA_DIAM2': 'mean'
+        }).reset_index()
 
-    fig_linha = px.line(df_mensal, x='DATA_FORMATADA',
-                        y=['PRODUTIVIDADE_PROF_DIAM2', 'PRODUTIVIDADE_ORCADA_DIAM2'],
-                        labels={'value': 'Produtividade', 'DATA_FORMATADA': 'Mês/Ano'},
-                        title="Produtividade Real x Orçada",
-                        markers=True,
-                        template='plotly_dark' if modo_escuro else 'plotly_white')
-    fig_linha.update_layout(width=900, height=500)
-    st.plotly_chart(fig_linha)
+        fig_linha = px.line(df_mensal, x='DATA_FORMATADA',
+                            y=['PRODUTIVIDADE_PROF_DIAM2', 'PRODUTIVIDADE_ORCADA_DIAM2'],
+                            labels={'value': 'Produtividade', 'DATA_FORMATADA': 'Mês/Ano'},
+                            title="Produtividade Real x Orçada",
+                            markers=True,
+                            template='plotly_dark' if modo_escuro else 'plotly_white')
+        fig_linha.update_layout(width=900, height=500)
+        st.plotly_chart(fig_linha)
 
-    df_tipo = df_f.groupby('TIPO_OBRA').agg({'PRODUTIVIDADE_PROF_DIAM2': 'mean'}).reset_index()
-    fig_barra = px.bar(df_tipo, x='TIPO_OBRA', y='PRODUTIVIDADE_PROF_DIAM2',
-                       title="Produtividade Média por Tipo de Obra",
-                       template='plotly_dark' if modo_escuro else 'plotly_white')
-    fig_barra.update_layout(width=900, height=500)
-    st.plotly_chart(fig_barra)
+        df_tipo = df_f.groupby('TIPO_OBRA').agg({'PRODUTIVIDADE_PROF_DIAM2': 'mean'}).reset_index()
+        fig_barra = px.bar(df_tipo, x='TIPO_OBRA', y='PRODUTIVIDADE_PROF_DIAM2',
+                           title="Produtividade Média por Tipo de Obra",
+                           template='plotly_dark' if modo_escuro else 'plotly_white')
+        fig_barra.update_layout(width=900, height=500)
+        st.plotly_chart(fig_barra)
 
 # ========== EFETIVO ==========
 with aba[1]:
     st.title("📊 Dashboard de Efetivo")
 
-    # Exibir filtros apenas se a aba "Efetivo" estiver selecionada
-    tipo_obra_efetivo_opcoes = ["Todos"] + df_efetivo['Obra'].unique().tolist()
-    tipo_obra_efetivo = st.selectbox('Tipo de Obra', tipo_obra_efetivo_opcoes)
-
-    tipo_efetivo_opcoes = ['Todos', 'DIRETO', 'INDIRETO', 'TERCEIRO']
-    tipo_efetivo = st.selectbox('Tipo de Efetivo', tipo_efetivo_opcoes)
-
     # Carregar os dados de efetivo
     df_efetivo = carregar_dados_efetivo()
+
+    # Filtros para a aba de Efetivo
+    tipo_obra_efetivo_opcoes = ["Todos"] + df_efetivo['Obra'].unique().tolist()
+    tipo_obra_efetivo = st.sidebar.selectbox('Tipo de Obra', tipo_obra_efetivo_opcoes)
+
+    tipo_efetivo_opcoes = ['Todos', 'DIRETO', 'INDIRETO', 'TERCEIRO']
+    tipo_efetivo = st.sidebar.selectbox('Tipo de Efetivo', tipo_efetivo_opcoes)
 
     # Aplicando os filtros
     df_efetivo_filtrado = df_efetivo.copy()

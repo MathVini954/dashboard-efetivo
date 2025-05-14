@@ -97,6 +97,7 @@ with aba[0]:
     st.plotly_chart(fig_barra)
 
 # ========== EFETIVO ==========
+# ========== EFETIVO ==========
 with aba[1]:
     st.title("📊 Dashboard de Efetivo - Abril 2025")
 
@@ -148,3 +149,25 @@ with aba[1]:
 
         st.dataframe(df_tabela, use_container_width=True)
 
+    st.divider()
+
+    # --- Gráfico de colunas: produção total por obra ---
+    df_total_obra = df_e.groupby('Obra').agg({'PRODUÇÃO': 'sum'}).reset_index()
+    fig_bar = px.bar(df_total_obra, x='Obra', y='PRODUÇÃO',
+                     title='Produção Total por Obra',
+                     text_auto=True,
+                     template='plotly_dark' if modo_escuro else 'plotly_white')
+    fig_bar.update_layout(height=450)
+    st.plotly_chart(fig_bar, use_container_width=True)
+
+    # --- Gráfico de dispersão: Hora Extra vs Produção ---
+    fig_disp = px.scatter(df_e,
+                          x='Total Extra',
+                          y='PRODUÇÃO',
+                          color='Obra',
+                          size='PRODUÇÃO',
+                          hover_data=['Funcionário', 'Função'],
+                          title='Correlação entre Hora Extra e Produção',
+                          template='plotly_dark' if modo_escuro else 'plotly_white')
+    fig_disp.update_layout(height=500)
+    st.plotly_chart(fig_disp, use_container_width=True)

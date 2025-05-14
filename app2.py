@@ -6,12 +6,24 @@ import plotly.express as px
 st.set_page_config(page_title="Dashboard de Efetivo", layout="wide")
 
 # --- Adicionar logo no canto superior direito ---
-logo_html = """
-<div style="position: absolute; top: 10px; right: 10px; z-index: 999;">
-    <img src="logo.png" width="120">
-</div>
-"""
-st.markdown(logo_html, unsafe_allow_html=True)
+import streamlit as st
+from PIL import Image
+
+# --- Configuração da página ---
+st.set_page_config(page_title="Dashboard de Efetivo", layout="wide")
+
+# --- Exibir logo no canto superior direito ---
+col_logo, col_title = st.columns([1, 9])
+with col_logo:
+    try:
+        logo = Image.open("logo.png")
+        st.image(logo, width=120)
+    except:
+        st.warning("⚠️ Não foi possível carregar a logo. Verifique se o arquivo 'logo.png' está no diretório.")
+
+with col_title:
+    st.title("📊 Análise de Efetivo - Abril 2025")
+
 
 # --- Estilos CSS com tema e sidebar flutuante ---
 modo_escuro = st.sidebar.toggle("🌙 Modo Escuro", value=False)

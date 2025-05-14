@@ -55,7 +55,7 @@ def carregar_dados_efetivo():
     return df
 
 # --- Inserir logo no canto esquerdo da sidebar ---
-st.sidebar.image("logotipo.png", use_column_width=True)
+st.sidebar.image("logotipo.png", use_container_width=True)
 
 # --- Tabs do app ---
 aba = st.tabs(["📈 Produtividade", "📊 Efetivo"])

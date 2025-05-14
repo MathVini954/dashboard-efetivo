@@ -10,12 +10,16 @@ cor_fundo = "#0e1117"
 cor_texto = "#ffffff"
 cor_sidebar = "#161b22"
 
-# --- Estilo CSS fixo com logo ---
+# --- Estilo CSS fixo com logo e texto branco ---
 css = f"""
 <style>
 body {{
     background-color: {cor_fundo};
     color: {cor_texto};
+}}
+
+h1, h2, h3, h4, h5, h6, p, span, div, label {{
+    color: {cor_texto} !important;
 }}
 
 [data-testid="stSidebar"] {{
@@ -42,6 +46,14 @@ body {{
     height: 100%;
     background: transparent;
     z-index: 101;
+}}
+
+thead tr th {{
+    color: {cor_texto} !important;
+}}
+
+tbody tr td {{
+    color: {cor_texto} !important;
 }}
 
 #logo-container {{

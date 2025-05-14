@@ -218,9 +218,9 @@ def main():
     # Topo: logo + texto lado a lado
     col1, col2 = st.columns([1, 4])
     with col1:
-        st.image('logotipo.png', width=300)
+        st.image('logotipo.png', width=100)
     with col2:
-        st.markdown("<h1 style='margin-top: 10px;'>SISTEMA DE CUSTO E PLANEJAMENTO</h1>", unsafe_allow_html=True)
+        st.markdown("<h1 style='margin-top: 30px;'>SISTEMA DE CUSTO E PLANEJAMENTO</h1>", unsafe_allow_html=True)
 
     if "logado" not in st.session_state:
         st.session_state['logado'] = False
@@ -246,15 +246,11 @@ def main():
                 """
                 <div style="text-align: center; margin-top: 100px;">
                     <h2>ESTAMOS EM DESENVOLVIMENTO</h2>
-                    <div style ="font-size: 50px; color: grey;">👷‍♂️🚧</div>
+                    <div style
+="font-size: 50px; color: grey;">👷‍♂️🚧</div>
 </div>
 """, unsafe_allow_html=True
 )
 
 if name == "main":
 main()
-
-
-
-
-

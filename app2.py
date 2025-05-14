@@ -2,81 +2,27 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 
-# --- Configuração da página ---
-st.set_page_config(page_title="Dashboard de Efetivo", layout="wide")
-
-# --- Estilos CSS com tema e sidebar flutuante ---
-modo_escuro = st.sidebar.toggle("🌙 Modo Escuro", value=False)
-
-cor_fundo = "#0e1117" if modo_escuro else "#ffffff"
-cor_texto = "#ffffff" if modo_escuro else "#000000"
-cor_sidebar = "#161b22" if modo_escuro else "#f0f2f6"
-
-css = f"""
-<style>
-body {{
-    background-color: {cor_fundo};
-    color: {cor_texto};
-}}
-
-[data-testid="stSidebar"] {{
-    position: fixed;
-    left: -300px;
-    top: 0;
-    width: 300px;
-    height: 100%;
-    background-color: {cor_sidebar};
-    transition: left 0.3s ease;
-    z-index: 100;
-}}
-
-[data-testid="stSidebar"]:hover {{
-    left: 0;
-}}
-
-[data-testid="stSidebar"]::before {{
-    content: '';
-    position: fixed;
-    left: 0;
-    top: 0;
-    width: 20px;
-    height: 100%;
-    background: transparent;
-    z-index: 101;
-}}
-</style>
-"""
-st.markdown(css, unsafe_allow_html=True)
-
 # --- Carregamento dos dados ---
 @st.cache_data
 def carregar_dados(arquivo):
-    df = pd.read_excel(arquivo, engine="openpyxl")
-    df.columns = df.columns.str.strip()
+    df = pd.read_excel(arquivo, engine="openpyxl", header=None)  # Sem cabeçalho
+    df.columns = ['NOME', 'SENHA']  # Renomeia as colunas para 'NOME' e 'SENHA'
     df = df.fillna(0)
-
-    for col in ['Hora Extra 70% - Sabado', 'Hora Extra 70% - Semana', 'PRODUÇÃO']:
-        if col in df.columns:
-            df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
-
-    if 'DIRETO / INDIRETO' in df.columns:
-        df['Tipo'] = df['DIRETO / INDIRETO'].astype(str).str.upper().str.strip()
-    else:
-        df['Tipo'] = 'INDEFINIDO'
-
-    df['Total Extra'] = df['Hora Extra 70% - Sabado'] + df['Hora Extra 70% - Semana']
     return df
 
 # --- Login ---
 def login_usuario():
     st.sidebar.header("🔑 Login")
-    usuarios_df = pd.read_excel("usuarios.xlsx", engine="openpyxl")
-    usuarios_df.columns = usuarios_df.columns.str.strip()
+    usuarios_df = carregar_dados("usuarios.xlsx")  # Carrega o arquivo sem cabeçalho
     
+    # Exibir as colunas para depuração (apenas para verificar se as colunas estão corretas)
+    st.write(usuarios_df.columns)  # Isso irá mostrar as colunas no app para depuração
+
     usuario = st.sidebar.text_input("Nome de Usuário")
     senha = st.sidebar.text_input("Senha", type="password")
 
     if st.sidebar.button("Login"):
+        # Verificar se o nome de usuário e senha são válidos
         if usuario in usuarios_df['NOME'].values and senha == usuarios_df.loc[usuarios_df['NOME'] == usuario, 'SENHA'].values[0]:
             st.session_state.logged_in = True
             st.session_state.usuario = usuario

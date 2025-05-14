@@ -99,98 +99,60 @@ with aba[0]:
 # ========== EFETIVO ==========
 # ========== EFETIVO ==========
 with aba[1]:
-    st.title("📊 Dashboard de Efetivo - Abril 2025")
+   def pagina_efetivo(df):
+    st.title("📊 Efetivo de Funcionários")
 
-    df_efetivo = carregar_dados_efetivo()
+    # --- FILTROS ---
+    st.sidebar.header("Filtros")
 
-    obras = sorted(df_efetivo['Obra'].astype(str).unique())
-    obras_sel = st.sidebar.multiselect("Obras:", obras, default=obras)
+    obras_disponiveis = df["Obra"].unique()
+    obra_selecionada = st.sidebar.selectbox("Selecione a Obra:", obras_disponiveis)
 
-    tipo = st.sidebar.radio("Tipo:", ['Todos', 'DIRETO', 'INDIRETO', 'TERCEIRO'], horizontal=True)
-    tipo_tabela = st.sidebar.radio("Análise:", ['Produção', 'Hora Extra Semana', 'Hora Extra Sábado'])
-    qtd = st.sidebar.radio("Qtd. na Tabela:", ['5', '10', '20', 'Todos'], horizontal=True)
+    df_filtrado = df[df["Obra"] == obra_selecionada]
 
-    df_e = df_efetivo[df_efetivo['Obra'].isin(obras_sel)]
-    if tipo != 'Todos':
-        df_e = df_e[df_e['Tipo'] == tipo]
+    # --- TABELA DE EFETIVO ---
+    st.markdown("### 👷‍♂️ Efetivo da Obra Selecionada")
+    st.dataframe(df_filtrado, use_container_width=True)
 
-    col1, col2, col3, col4 = st.columns(4)
-    col1.metric("👷 Direto", len(df_e[df_e['Tipo'] == 'DIRETO']))
-    col2.metric("👷‍♂️ Indireto", len(df_e[df_e['Tipo'] == 'INDIRETO']))
-    col3.metric("🏗️ Terceiro", len(df_e[df_e['Tipo'] == 'TERCEIRO']))
-    col4.metric("👥 Total", len(df_e))
-
+    # --- GRÁFICO DE COLUNAS: Funcionários por Obra ---
     st.divider()
+    st.markdown("### 📍 Quantidade de Funcionários por Obra")
+    df_qtd_obra = df['Obra'].value_counts().reset_index()
+    df_qtd_obra.columns = ['Obra', 'Qtd']
+    fig_col = px.bar(df_qtd_obra,
+                     x='Obra',
+                     y='Qtd',
+                     text='Qtd',
+                     color='Qtd',
+                     color_continuous_scale='viridis',
+                     title='Funcionários por Obra')
+    fig_col.update_layout(height=400)
+    st.plotly_chart(fig_col, use_container_width=True)
 
-    col_g1, col_g2 = st.columns([1, 2])
-
-    with col_g1:
-        pizza_df = df_e['Tipo'].value_counts().reset_index()
-        pizza_df.columns = ['Tipo', 'count']
-        fig_pie = px.pie(pizza_df, names='Tipo', values='count',
-                         title="Distribuição por Tipo",
-                         color_discrete_sequence=px.colors.sequential.Plasma)
-        st.plotly_chart(fig_pie, use_container_width=True)
-
-    with col_g2:
-        coluna = {
-            'Produção': 'PRODUÇÃO',
-            'Hora Extra Semana': 'Hora Extra 70% - Semana',
-            'Hora Extra Sábado': 'Hora Extra 70% - Sabado'
-        }[tipo_tabela]
-
-        df_tabela = df_e[['Funcionário', 'Função', 'Obra', 'Tipo', coluna]]
-        if tipo_tabela == 'Produção' and 'REFLEXO S PRODUÇÃO' in df_e.columns:
-            df_tabela['DSR'] = df_e['REFLEXO S PRODUÇÃO']
-
-        df_tabela = df_tabela.sort_values(by=coluna, ascending=False)
-        if qtd != 'Todos':
-            df_tabela = df_tabela.head(int(qtd))
-
-        st.dataframe(df_tabela, use_container_width=True)
-
+    # --- GRÁFICO DE BARRAS (Função) ---
     st.divider()
+    st.markdown("### 👷 Efetivo por Função")
+    graf_funcao = df_filtrado['Função'].value_counts().reset_index()
+    graf_funcao.columns = ['Função', 'Qtd']
+    fig_bar = px.bar(graf_funcao,
+                     x='Função',
+                     y='Qtd',
+                     title='Efetivo por Função',
+                     text='Qtd',
+                     color='Qtd',
+                     color_continuous_scale='Blues')
+    fig_bar.update_layout(xaxis_tickangle=-45)
+    st.plotly_chart(fig_bar, use_container_width=True)
 
-# --- GRÁFICO DE COLUNAS: Funcionários por Obra ---
-st.divider()
-st.markdown("### 📍 Quantidade de Funcionários por Obra")
-df_qtd_obra = df_filtrado['Obra'].value_counts().reset_index()
-df_qtd_obra.columns = ['Obra', 'Qtd']
-fig_col = px.bar(df_qtd_obra,
-                 x='Obra',
-                 y='Qtd',
-                 text='Qtd',
-                 color='Qtd',
-                 color_continuous_scale='viridis',
-                 title='Funcionários por Obra')
-fig_col.update_layout(height=400)
-st.plotly_chart(fig_col, use_container_width=True)
-
-# --- GRÁFICO DE BARRAS (Função) ---
-st.divider()
-st.markdown("### 👷 Efetivo por Função")
-graf_funcao = df_filtrado['Função'].value_counts().reset_index()
-graf_funcao.columns = ['Função', 'Qtd']
-fig_bar = px.bar(graf_funcao,
-                 x='Função',
-                 y='Qtd',
-                 title='Efetivo por Função',
-                 text='Qtd',
-                 color='Qtd',
-                 color_continuous_scale='Blues')
-fig_bar.update_layout(xaxis_tickangle=-45)
-st.plotly_chart(fig_bar, use_container_width=True)
-
-# --- GRÁFICO DE DISPERSÃO ---
-st.divider()
-st.markdown("### 🔍 Correlação: Produção vs. Hora Extra Total")
-fig_disp = px.scatter(df_filtrado,
-                      x="Total Extra",
-                      y="PRODUÇÃO",
-                      color="Tipo",
-                      hover_data=["Funcionário", "Função", "Obra"],
-                      trendline="ols",
-                      labels={"Total Extra": "Hora Extra Total", "PRODUÇÃO": "Produção"},
-                      title="Dispersão: Hora Extra Total vs Produção")
-st.plotly_chart(fig_disp, use_container_width=True)
-
+    # --- GRÁFICO DE DISPERSÃO ---
+    st.divider()
+    st.markdown("### 🔍 Correlação: Produção vs. Hora Extra Total")
+    fig_disp = px.scatter(df_filtrado,
+                          x="Total Extra",
+                          y="PRODUÇÃO",
+                          color="Tipo",
+                          hover_data=["Funcionário", "Função", "Obra"],
+                          trendline="ols",
+                          labels={"Total Extra": "Hora Extra Total", "PRODUÇÃO": "Produção"},
+                          title="Dispersão: Hora Extra Total vs Produção")
+    st.plotly_chart(fig_disp, use_container_width=True)

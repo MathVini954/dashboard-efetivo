@@ -213,35 +213,16 @@ def dashboard_produtividade():
 def main():
     st.set_page_config(page_title="Dashboards de Obra", layout="wide")
 
-    # Colunas para logo + texto
     col1, col2 = st.columns([1, 4])
 
     with col1:
-        st.markdown("""
-        <style>
-        .logo-container {
-            display: flex;
-            align-items: center;
-            height: 100%;
-        }
-        .logo-container img {
-            max-height: 120px;
-            width: auto;
-            margin-right: 20px;
-        }
-        </style>
-        <div class="logo-container">
-            <img src="logotipo.png" alt="Logo">
-        </div>
-        """, unsafe_allow_html=True)
+        st.image("logotipo.png", width=120)
 
     with col2:
-        st.markdown("""
-        <div style="display: flex; align-items: center; height: 120px;">
-            <h1 style="margin: 0;">SISTEMA DE CUSTO E PLANEJAMENTO</h1>
-        </div>
-        """, unsafe_allow_html=True)
-
+        st.markdown(
+            "<h1 style='margin-top: 30px; vertical-align: middle;'>SISTEMA DE CUSTO E PLANEJAMENTO</h1>",
+            unsafe_allow_html=True,
+        )
     # resto do seu código...
 
 

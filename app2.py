@@ -53,19 +53,21 @@ def dashboard_efetivo():
     st.markdown(css, unsafe_allow_html=True)
 
     @st.cache_data
-    def carregar_dados_efetivo():
-        df = pd.read_excel("efetivo_abril.xlsx", engine="openpyxl")
-        df.columns = df.columns.str.strip()
-        df = df.fillna(0)
-        for col in ['Hora Extra 70% - Sabado', 'Hora Extra 70% - Semana', 'PRODUÇÃO']:
-            if col in df.columns:
-                df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
-        if 'DIRETO / INDIRETO' in df.columns:
-            df['Tipo'] = df['DIRETO / INDIRETO'].astype(str).str.upper().str.strip()
-        else:
-            df['Tipo'] = 'INDEFINIDO'
-        df['Total Extra'] = df['Hora Extra 70% - Sabado'] + df['Hora Extra 70% - Semana']
-        return df
+def carregar_dados_efetivo():
+    df = pd.read_excel("efetivo_abril.xlsx", engine="openpyxl")
+    df.columns = df.columns.str.strip()  # Remove espaços extras nos nomes das colunas
+    st.write(df.columns)  # Verifique os nomes das colunas
+    df = df.fillna(0)
+    for col in ['Hora Extra 70% - Sabado', 'Hora Extra 70% - Semana', 'PRODUÇÃO']:
+        if col in df.columns:
+            df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
+    if 'DIRETO / INDIRETO' in df.columns:
+        df['Tipo'] = df['DIRETO / INDIRETO'].astype(str).str.upper().str.strip()
+    else:
+        df['Tipo'] = 'INDEFINIDO'
+    df['Total Extra'] = df['Hora Extra 70% - Sabado'] + df['Hora Extra 70% - Semana']
+    return df
+
 
     st.title("📊 Análise de Efetivo - Abril 2025")
     df = carregar_dados_efetivo()

@@ -6,7 +6,7 @@ import plotly.express as px
 st.set_page_config(page_title="Dashboards de Obra", layout="wide")
 
 # --- Inserir Logo ---
-st.image('caminho/para/sua/logo.png', width=200)  # Insira o caminho da logo aqui
+st.image('logotipo.png', width=200)  # Insira o caminho da logo aqui
 
 # --- ABA 1: DASHBOARD DE EFETIVO ---
 def dashboard_efetivo():

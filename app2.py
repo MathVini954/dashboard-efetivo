@@ -11,11 +11,13 @@ modo_escuro = st.sidebar.toggle("🌙 Modo Escuro", value=False)
 cor_fundo = "#0e1117" if modo_escuro else "#ffffff"
 cor_texto = "#ffffff" if modo_escuro else "#000000"
 cor_sidebar = "#161b22" if modo_escuro else "#f0f2f6"
+# Adicionando degradê de fundo
+degrade_fundo = "linear-gradient(135deg, #00c6ff, #0072ff)" if not modo_escuro else "#0e1117"
 
 css = f"""
 <style>
 body {{
-    background-color: {cor_fundo};
+    background: {degrade_fundo};
     color: {cor_texto};
 }}
 

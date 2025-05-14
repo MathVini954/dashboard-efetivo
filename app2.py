@@ -142,7 +142,16 @@ def dashboard_efetivo():
     st.divider()
     graf_funcao = df_filtrado['Função'].value_counts().reset_index()
     graf_funcao.columns = ['Função', 'Qtd']
-    fig_bar = px.bar(graf_funcao, x='Função', y='Qtd', title='Efetivo por Função', text='Qtd')
+   fig_bar = px.bar(
+    graf_funcao,
+    x='Função',
+    y='Qtd',
+    color='Qtd',  # usa o próprio valor para o degradê
+    color_continuous_scale='Blues',  # pode trocar para 'Viridis', 'Tealgrn', 'Plasma', etc.
+    title='Efetivo por Função',
+    text='Qtd'
+)
+
     fig_bar.update_layout(xaxis_tickangle=-45)
     st.plotly_chart(fig_bar, use_container_width=True)
 

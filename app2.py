@@ -5,22 +5,18 @@ import plotly.express as px
 # --- Configuração da página ---
 st.set_page_config(page_title="Dashboard de Efetivo", layout="wide")
 
-# --- Cores fixas (modo escuro sempre ativado) ---
-cor_fundo = "#0e1117"
-cor_texto = "#0e1117"
-cor_sidebar = "#161b22"
-cor_texto_sidebar = "#ffffff"
+# --- Estilos CSS com tema e sidebar flutuante ---
+modo_escuro = st.sidebar.toggle("🌙 Modo Escuro", value=False)
 
-# --- Estilo CSS fixo com logo e texto branco ---
+cor_fundo = "#0e1117" if modo_escuro else "#ffffff"
+cor_texto = "#ffffff" if modo_escuro else "#000000"
+cor_sidebar = "#161b22" if modo_escuro else "#f0f2f6"
+
 css = f"""
 <style>
 body {{
     background-color: {cor_fundo};
     color: {cor_texto};
-}}
-
-h1, h2, h3, h4, h5, h6, p, span, div, label {{
-    color: {cor_texto} !important;
 }}
 
 [data-testid="stSidebar"] {{
@@ -30,7 +26,6 @@ h1, h2, h3, h4, h5, h6, p, span, div, label {{
     width: 300px;
     height: 100%;
     background-color: {cor_sidebar};
-    color: {cor_texto_sidebar}:
     transition: left 0.3s ease;
     z-index: 100;
 }}
@@ -49,30 +44,7 @@ h1, h2, h3, h4, h5, h6, p, span, div, label {{
     background: transparent;
     z-index: 101;
 }}
-
-thead tr th {{
-    color: {cor_texto} !important;
-}}
-
-tbody tr td {{
-    color: {cor_texto} !important;
-}}
-
-#logo-container {{
-    position: fixed;
-    top: 10px;
-    left: 10px;
-    z-index: 999;
-}}
-
-#logo-container img {{
-    width: 150px;
-}}
 </style>
-
-<div id="logo-container">
-    <img src="logotipo.png">
-</div>
 """
 st.markdown(css, unsafe_allow_html=True)
 
@@ -141,6 +113,7 @@ with col_g2:
         'Hora Extra Sábado': 'Hora Extra 70% - Sabado'
     }[tipo_analise]
 
+    # Adicionar a coluna REFLEXO S PRODUÇÃO apenas quando Produção for selecionada
     if tipo_analise == 'Produção' and 'REFLEXO S PRODUÇÃO' in df.columns:
         df_filtrado['DSR'] = df_filtrado['REFLEXO S PRODUÇÃO']
         ranking = df_filtrado[['Funcionário', 'Função', 'Obra', 'Tipo', 'PRODUÇÃO', 'DSR']].sort_values(by='PRODUÇÃO', ascending=False)
@@ -154,6 +127,7 @@ with col_g2:
     if qtd_linhas != 'Todos':
         ranking = ranking.head(int(qtd_linhas))
 
+    # Formatar como R$
     ranking[coluna_valor] = ranking[coluna_valor].apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
     if 'DSR' in ranking.columns:
         ranking['DSR'] = ranking['DSR'].apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
@@ -182,4 +156,4 @@ fig_disp = px.scatter(df_filtrado,
                       trendline="ols",
                       labels={"Total Extra": "Hora Extra Total", "PRODUÇÃO": "Produção"},
                       title="Dispersão: Hora Extra Total vs Produção")
-st.plotly_chart(fig_disp, use_container_width=True)
+st.plotly_chart(fig_disp, use_container_width=True) 

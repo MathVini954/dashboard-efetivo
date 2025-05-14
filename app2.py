@@ -104,7 +104,12 @@ with aba[1]:
     st.title("📊 Análise de Efetivo - Abril 2025")
 
     # Carregar os dados de efetivo
-    df = carregar_dados("efetivo_abril.xlsx")
+   uploaded_file = st.file_uploader("efetivo_abril", type="xlsx")
+if uploaded_file is not None:
+    df = pd.read_excel(uploaded_file, engine="openpyxl")
+    df.columns = df.columns.str.strip()
+    # Restante do seu código
+
 
     # FILTROS
     st.sidebar.header("🔍 Filtros")

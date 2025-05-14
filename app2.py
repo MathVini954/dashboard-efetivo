@@ -5,9 +5,13 @@ import plotly.express as px
 # --- Configuração da página ---
 st.set_page_config(page_title="Dashboard de Efetivo", layout="wide")
 
-# --- Adicionar a Logo da Empresa ---
-logo_path = "logo_empresa.png"  # Altere para o caminho correto da sua logo
-st.image(logo_path, use_column_width=True)
+# --- Adicionar logo no canto superior direito ---
+logo_html = """
+<div style="position: absolute; top: 10px; right: 10px; z-index: 999;">
+    <img src="logo.png" width="120">
+</div>
+"""
+st.markdown(logo_html, unsafe_allow_html=True)
 
 # --- Estilos CSS com tema e sidebar flutuante ---
 modo_escuro = st.sidebar.toggle("🌙 Modo Escuro", value=False)

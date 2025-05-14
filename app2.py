@@ -72,23 +72,17 @@ st.title("📊 Análise de Efetivo - Abril 2025")
 # Carregar o arquivo Excel diretamente
 df = carregar_dados("efetivo_abril.xlsx")
 
-# --- Filtros ---
+# FILTROS
 st.sidebar.header("🔍 Filtros")
 lista_obras = sorted(df['Obra'].astype(str).unique())
-lista_obras.insert(0, 'Todos')  # Adiciona a opção "Todos" no início
-obra_selecionada = st.sidebar.radio("Obra:", lista_obras, horizontal=True)
+obras_selecionadas = st.sidebar.multiselect("Obras:", lista_obras, default=lista_obras)
 
-# Outros filtros
 tipo_selecionado = st.sidebar.radio("Tipo:", ['Todos', 'DIRETO', 'INDIRETO', 'TERCEIRO'], horizontal=True)
 tipo_analise = st.sidebar.radio("Tipo de Análise da Tabela:", ['Produção', 'Hora Extra Semana', 'Hora Extra Sábado'])
 qtd_linhas = st.sidebar.radio("Qtd. de Funcionários na Tabela:", ['5', '10', '20', 'Todos'], horizontal=True)
 
 # Aplicar filtros gerais
-if obra_selecionada == 'Todos':
-    df_filtrado = df  # Não filtra por obra se "Todos" for selecionado
-else:
-    df_filtrado = df[df['Obra'] == obra_selecionada]
-
+df_filtrado = df[df['Obra'].isin(obras_selecionadas)]
 if tipo_selecionado != 'Todos':
     df_filtrado = df_filtrado[df_filtrado['Tipo'] == tipo_selecionado]
 
@@ -105,8 +99,8 @@ st.divider()
 col_g1, col_g2 = st.columns([1, 2])
 
 with col_g1:
-    # Corrigido para utilizar df_filtrado diretamente
-    pizza = df_filtrado['Tipo'].value_counts().reset_index()
+    df_pizza = df[df['Obra'].isin(obras_selecionadas)]
+    pizza = df_pizza['Tipo'].value_counts().reset_index()
     pizza.columns = ['Tipo', 'count']
     fig_pizza = px.pie(pizza, names='Tipo', values='count', title='Distribuição por Tipo de Efetivo',
                        color_discrete_sequence=px.colors.sequential.Plasma)
@@ -119,18 +113,24 @@ with col_g2:
         'Hora Extra Sábado': 'Hora Extra 70% - Sabado'
     }[tipo_analise]
 
+    # Adicionar a coluna REFLEXO S PRODUÇÃO apenas quando Produção for selecionada
+    if tipo_analise == 'Produção' and 'REFLEXO S PRODUÇÃO' in df.columns:
+        df_filtrado['DSR'] = df_filtrado['REFLEXO S PRODUÇÃO']
+        ranking = df_filtrado[['Funcionário', 'Função', 'Obra', 'Tipo', 'PRODUÇÃO', 'DSR']].sort_values(by='PRODUÇÃO', ascending=False)
+    else:
+        ranking = df_filtrado[['Funcionário', 'Função', 'Obra', 'Tipo', coluna_valor]].sort_values(by=coluna_valor, ascending=False)
+
     valor_total = df_filtrado[coluna_valor].sum()
     st.markdown(f"### 📋 Top Funcionários por **{tipo_analise}**")
     st.markdown(f"**Total em {tipo_analise}:** R$ {valor_total:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
-
-    ranking = df_filtrado.groupby(['Funcionário', 'Função', 'Obra', 'Tipo'])[coluna_valor] \
-                         .sum().reset_index().sort_values(by=coluna_valor, ascending=False)
 
     if qtd_linhas != 'Todos':
         ranking = ranking.head(int(qtd_linhas))
 
     # Formatar como R$
     ranking[coluna_valor] = ranking[coluna_valor].apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+    if 'DSR' in ranking.columns:
+        ranking['DSR'] = ranking['DSR'].apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
 
     st.dataframe(ranking, use_container_width=True)
 

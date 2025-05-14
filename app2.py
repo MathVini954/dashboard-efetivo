@@ -40,7 +40,6 @@ def tela_login():
                 if verificar_senha(senha, senha_hash):
                     st.session_state['logado'] = True
                     st.session_state['usuario'] = usuario
-                    # Não chamar st.experimental_rerun aqui para evitar erros
                 else:
                     st.error("❌ Senha incorreta.")
             else:
@@ -65,7 +64,6 @@ def tela_login():
                     salvar_usuario(novo_usuario, hash_senha(nova_senha))
                     st.success("✅ Usuário cadastrado com sucesso! Faça login.")
     
-    # Força o rerun se estiver logado (fora do clique do botão)
     if st.session_state.get('logado', False):
         st.experimental_rerun()
 
@@ -246,11 +244,10 @@ def main():
                 """
                 <div style="text-align: center; margin-top: 100px;">
                     <h2>ESTAMOS EM DESENVOLVIMENTO</h2>
-                    <div style
-="font-size: 50px; color: grey;">👷‍♂️🚧</div>
-</div>
-""", unsafe_allow_html=True
-)
+                    <div style="font-size: 50px; color: grey;">👷‍♂️🚧</div>
+                </div>
+                """, unsafe_allow_html=True
+            )
 
-if name == "main":
-main()
+if __name__ == "__main__":
+    main()

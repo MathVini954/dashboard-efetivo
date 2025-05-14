@@ -40,7 +40,7 @@ def criar_grafico_produtividade(df):
     }).reset_index()
 
     # Gráfico de linha para Produtividade Prof. Dia/M² e Produtividade Orçada
-    fig = px.line(df_mensal, x='DATA_FORMATADA', y=['PRODUTIVIDADE_PROF_DIAM2', 'PRODUTIVIDADE_ORCADA_DIAM2'],
+    fig = px.line(df_mensal, x='DATA_FORMATADA', y=['PRODUTIVIDADE_MENSAL', 'PRODUTIVIDADE_ORCADA'],
                   labels={'value': 'Produtividade', 'DATA_FORMATADA': 'Mês/Ano'},
                   title="Produtividade Profissional por M² (Real x Orçado)",
                   line_shape='linear',  # Linha mais suave
@@ -55,8 +55,8 @@ def criar_grafico_produtividade(df):
 # Função para criar gráfico de barras de produtividade por tipo de obra
 def criar_grafico_barras(df):
     df_produtividade_obra = df.groupby('TIPO_OBRA').agg({
-        'PRODUTIVIDADE_PROF_DIAM2': 'mean'
+        'PRODUTIVIDADE_MENSAL': 'mean'
     }).reset_index()
     
-    fig_barras = px.bar(df_produtividade_obra, x='TIPO_OBRA', y='PRODUTIVIDADE_PROF_DIAM2',
+    fig_barras = px.bar(df_produtividade_obra, x='TIPO_OBRA', y='PRODUTIVIDADE_MENSAL',
                         title

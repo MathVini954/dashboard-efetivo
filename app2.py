@@ -138,30 +138,21 @@ def dashboard_efetivo():
             ranking['DSR'] = ranking['DSR'].apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
 
         st.dataframe(ranking, use_container_width=True)
-
     st.divider()
     graf_funcao = df_filtrado['Função'].value_counts().reset_index()
     graf_funcao.columns = ['Função', 'Qtd']
-   fig_bar = px.bar(
-    graf_funcao,
-    x='Função',
-    y='Qtd',
-    color='Qtd',  # usa o próprio valor para o degradê
-    color_continuous_scale='Blues',  # pode trocar para 'Viridis', 'Tealgrn', 'Plasma', etc.
-    title='Efetivo por Função',
-    text='Qtd'
-)
 
+    fig_bar = px.bar(
+        graf_funcao,
+        x='Função',
+        y='Qtd',
+        color='Qtd',  # usa a própria contagem para criar o degradê
+        color_continuous_scale='Blues',  # escala de cor em degradê
+        title='Efetivo por Função',
+        text='Qtd'
+    )
     fig_bar.update_layout(xaxis_tickangle=-45)
     st.plotly_chart(fig_bar, use_container_width=True)
-
-    st.divider()
-    st.markdown("### 🔍 Correlação: Produção vs. Hora Extra Total")
-    fig_disp = px.scatter(df_filtrado, x="Total Extra", y="PRODUÇÃO", color="Tipo",
-                          hover_data=["Funcionário", "Função", "Obra"], trendline="ols",
-                          labels={"Total Extra": "Hora Extra Total", "PRODUÇÃO": "Produção"},
-                          title="Dispersão: Hora Extra Total vs Produção")
-    st.plotly_chart(fig_disp, use_container_width=True)
 
 # ---------- Dashboard de Produtividade ----------
 def dashboard_produtividade():

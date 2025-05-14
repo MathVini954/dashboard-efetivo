@@ -15,8 +15,8 @@ def carregar_dados():
     
     return produtividade_df
 
-# Função para filtrar os dados com base nos filtros de tipo de obra, serviço e mês/ano
-def filtrar_dados(df, tipo_obra, servico, mes_ano):
+# Função para filtrar os dados com base nos filtros de tipo de obra, serviço e múltiplas datas
+def filtrar_dados(df, tipo_obra, servico, datas_selecionadas):
     if tipo_obra != "Todos":
         df_filtrado = df[df['TIPO_OBRA'] == tipo_obra]
     else:
@@ -25,9 +25,9 @@ def filtrar_dados(df, tipo_obra, servico, mes_ano):
     if servico:
         df_filtrado = df_filtrado[df_filtrado['SERVIÇO'] == servico]
     
-    # Filtrar pelo mês e ano selecionado
-    if mes_ano != "Todos":
-        df_filtrado = df_filtrado[df_filtrado['DATA_FORMATADA'] == mes_ano]
+    # Filtrar pelas datas selecionadas
+    if datas_selecionadas:
+        df_filtrado = df_filtrado[df_filtrado['DATA_FORMATADA'].isin(datas_selecionadas)]
     
     return df_filtrado
 
@@ -76,7 +76,7 @@ def app():
     # Carregar dados
     df = carregar_dados()
     
-    # Filtros para seleção de tipo de obra, serviço e mês/ano
+    # Filtros para seleção de tipo de obra, serviço e múltiplas datas
     tipo_obra_opcoes = ["Todos"] + df['TIPO_OBRA'].unique().tolist()
     tipo_obra = st.sidebar.selectbox('Selecione o Tipo de Obra', tipo_obra_opcoes)
     
@@ -84,10 +84,10 @@ def app():
     servico = st.sidebar.selectbox('Selecione o Serviço', servicos_opcoes)
     
     mes_ano_opcoes = ["Todos"] + df['DATA_FORMATADA'].unique().tolist()
-    mes_ano = st.sidebar.selectbox('Selecione o Mês/Ano', mes_ano_opcoes)
+    datas_selecionadas = st.sidebar.multiselect('Selecione o(s) Mês/Ano', mes_ano_opcoes, default=mes_ano_opcoes)
     
     # Filtrar os dados com base nos filtros aplicados
-    df_filtrado = filtrar_dados(df, tipo_obra, servico, mes_ano)
+    df_filtrado = filtrar_dados(df, tipo_obra, servico, datas_selecionadas)
     
     # Criar gráficos
     fig_produtividade = criar_grafico_produtividade(df_filtrado)

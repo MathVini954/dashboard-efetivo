@@ -7,9 +7,9 @@ def verificar_login(usuario, senha):
     usuarios_df = pd.read_excel('usuarios.xlsx')
 
     # Verificar se o usuário e senha existem
-    if usuario in usuarios_df['Usuário'].values:
-        usuario_info = usuarios_df[usuarios_df['Usuário'] == usuario]
-        senha_correta = usuario_info['Senha'].values[0]
+    if usuario in usuarios_df['usuario'].values:
+        usuario_info = usuarios_df[usuarios_df['usuario'] == usuario]
+        senha_correta = usuario_info['senha'].values[0]
         if senha == senha_correta:
             return True
     return False
@@ -19,8 +19,8 @@ def pagina_login():
     st.title("Login")
     
     # Campos para o login
-    usuario = st.text_input("Usuário")
-    senha = st.text_input("Senha", type='password')
+    usuario = st.text_input("usuario")
+    senha = st.text_input("senha", type='password')
     
     # Verificar login ao pressionar o botão
     if st.button("Entrar"):

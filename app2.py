@@ -132,7 +132,7 @@ with aba[1]:
     st.title("📊 Dashboard de Efetivo")
 
     # Carregar os dados de efetivo
-    df_efetivo = carregar_dados_efetivo()
+    df_efetivo = carregar_dados("efetivo_abril.xlsx")
 
     # Filtros para a aba de Efetivo
     tipo_obra_efetivo_opcoes = ["Todos"] + df_efetivo['Obra'].unique().tolist()

@@ -5,14 +5,15 @@ import plotly.express as px
 # --- Configuração da página ---
 st.set_page_config(page_title="Dashboard de Efetivo", layout="wide")
 
-# --- Adicionar logo no canto superior direito ---
 import streamlit as st
+import pandas as pd
+import plotly.express as px
 from PIL import Image
 
-# ✅ ISSO DEVE VIR ANTES DE QUALQUER COMANDO ST.*
+# ✅ TEM QUE SER O PRIMEIRO COMANDO DO STREAMLIT
 st.set_page_config(page_title="Dashboard de Efetivo", layout="wide")
 
-# Logo no canto superior direito
+# Logo no canto direito superior
 col_title, col_logo = st.columns([9, 1])
 with col_title:
     st.title("📊 Análise de Efetivo - Abril 2025")
@@ -23,17 +24,16 @@ with col_logo:
     except:
         st.warning("⚠️ Não foi possível carregar a logo.")
 
+# ✅ Agora sim você pode colocar a sidebar toggle
+modo_escuro = st.sidebar.toggle("🌙 Modo Escuro", value=False)
+
 
 with col_title:
     st.title("📊 Análise de Efetivo - Abril 2025")
 
 
 # --- Estilos CSS com tema e sidebar flutuante ---
-modo_escuro = st.sidebar.toggle("🌙 Modo Escuro", value=False)
-
-cor_fundo = "#0e1117" if modo_escuro else "#ffffff"
-cor_texto = "#ffffff" if modo_escuro else "#000000"
-cor_sidebar = "#161b22" if modo_escuro else "#f0f2f6"
+    
 
 css = f"""
 <style>

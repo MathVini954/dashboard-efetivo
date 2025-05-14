@@ -211,7 +211,13 @@ def dashboard_produtividade():
 # ---------- Execução Principal ----------
 def main():
     st.set_page_config(page_title="Dashboards de Obra", layout="wide")
-    st.image('logotipo.png', width=200)
+
+    # Topo: logo + texto lado a lado
+    col1, col2 = st.columns([1, 4])
+    with col1:
+        st.image('logotipo.png', width=100)
+    with col2:
+        st.markdown("<h1 style='margin-top: 30px;'>SISTEMA DE CUSTO E PLANEJAMENTO</h1>", unsafe_allow_html=True)
 
     if "logado" not in st.session_state:
         st.session_state['logado'] = False
@@ -220,11 +226,27 @@ def main():
         tela_login()
     else:
         st.sidebar.title(f"👋 Bem-vindo, {st.session_state['usuario']}")
-        aba1, aba2 = st.tabs(["📊 Efetivo", "📈 Produtividade"])
+        
+        # Abas incluindo a nova aba "Análise Custo e Planejamento"
+        aba1, aba2, aba3 = st.tabs(["📊 Efetivo", "📈 Produtividade", "🏗️ Análise Custo e Planejamento"])
+
         with aba1:
             dashboard_efetivo()
+
         with aba2:
             dashboard_produtividade()
+
+        with aba3:
+            st.title("🏗️ ANÁLISE CUSTO E PLANEJAMENTO")
+            st.markdown(
+                """
+                <div style="text-align: center; margin-top: 100px;">
+                    <h2>ESTAMOS EM DESENVOLVIMENTO</h2>
+                    <div style="font-size: 100px;">🏗️</div>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
 
         if st.sidebar.button("Sair"):
             st.session_state['logado'] = False

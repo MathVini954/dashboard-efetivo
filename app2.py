@@ -151,23 +151,27 @@ with aba[1]:
 
     st.divider()
 
-    # --- Gráfico de colunas: produção total por obra ---
-    df_total_obra = df_e.groupby('Obra').agg({'PRODUÇÃO': 'sum'}).reset_index()
-    fig_bar = px.bar(df_total_obra, x='Obra', y='PRODUÇÃO',
-                     title='Produção Total por Obra',
-                     text_auto=True,
-                     template='plotly_dark' if modo_escuro else 'plotly_white')
-    fig_bar.update_layout(height=450)
+    # --- GRÁFICO DE BARRAS (embaixo) ---
+st.divider()
+col_bar = st.container()
+with col_bar:
+    graf_funcao = df_filtrado['Função'].value_counts().reset_index()
+    graf_funcao.columns = ['Função', 'Qtd']
+    fig_bar = px.bar(graf_funcao, x='Função', y='Qtd', title='Efetivo por Função', text='Qtd',
+                     color='Qtd', color_continuous_scale='Blues')
+    fig_bar.update_layout(xaxis_tickangle=-45)
     st.plotly_chart(fig_bar, use_container_width=True)
 
-    # --- Gráfico de dispersão: Hora Extra vs Produção ---
-    fig_disp = px.scatter(df_e,
-                          x='Total Extra',
-                          y='PRODUÇÃO',
-                          color='Obra',
-                          size='PRODUÇÃO',
-                          hover_data=['Funcionário', 'Função'],
-                          title='Correlação entre Hora Extra e Produção',
-                          template='plotly_dark' if modo_escuro else 'plotly_white')
-    fig_disp.update_layout(height=500)
-    st.plotly_chart(fig_disp, use_container_width=True)
+
+ # --- GRÁFICO DE DISPERSÃO ---
+st.divider()
+st.markdown("### 🔍 Correlação: Produção vs. Hora Extra Total")
+fig_disp = px.scatter(df_filtrado,
+                      x="Total Extra",
+                      y="PRODUÇÃO",
+                      color="Tipo",
+                      hover_data=["Funcionário", "Função", "Obra"],
+                      trendline="ols",
+                      labels={"Total Extra": "Hora Extra Total", "PRODUÇÃO": "Produção"},
+                      title="Dispersão: Hora Extra Total vs Produção")
+st.plotly_chart(fig_disp, use_container_width=True)

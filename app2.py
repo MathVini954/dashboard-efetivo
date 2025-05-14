@@ -42,11 +42,17 @@ def criar_grafico_produtividade(df):
     # Gráfico de linha para Produtividade Prof. Dia/M² e Produtividade Orçada
     fig = px.line(df_mensal, x='DATA_FORMATADA', y=['PRODUTIVIDADE_PROF_DIAM2', 'PRODUTIVIDADE_ORCADA_DIAM2'],
                   labels={'value': 'Produtividade', 'DATA_FORMATADA': 'Mês/Ano'},
-                  title="Produtividade Profissional por M² (Real x Orçado)")
+                  title="Produtividade Profissional por M² (Real x Orçado)",
+                  line_shape='linear',  # Linha mais suave
+                  markers=True,  # Adiciona marcadores nos pontos
+                  template='plotly_dark')  # Estilo de fundo moderno
+    
+    # Aumentando o tamanho do gráfico
+    fig.update_layout(width=900, height=500)
     
     return fig
 
-# Função para criar gráfico de barra de produtividade por tipo de obra
+# Função para criar gráfico de barras de produtividade por tipo de obra
 def criar_grafico_barras(df):
     df_produtividade_obra = df.groupby('TIPO_OBRA').agg({
         'PRODUTIVIDADE_PROF_DIAM2': 'mean'
@@ -55,9 +61,30 @@ def criar_grafico_barras(df):
     fig_barras = px.bar(df_produtividade_obra, x='TIPO_OBRA', y='PRODUTIVIDADE_PROF_DIAM2',
                         title="Produtividade Profissional Média por Tipo de Obra",
                         labels={'TIPO_OBRA': 'Tipo de Obra', 'PRODUTIVIDADE_PROF_DIAM2': 'Produtividade Média'},
-                        color='TIPO_OBRA')
+                        color='TIPO_OBRA',
+                        template='plotly_dark')  # Estilo de fundo moderno
+    
+    # Aumentando o tamanho do gráfico
+    fig_barras.update_layout(width=900, height=500)
     
     return fig_barras
+
+# Função para criar gráfico de barras comparando Profissional e Ajudante
+def criar_grafico_profissional_ajudante(df):
+    df_prof_ajudante = df.groupby(['DATA_FORMATADA', 'TIPO_OBRA']).agg({
+        'PROFISSIONAL': 'sum',
+        'AJUDANTE': 'sum'
+    }).reset_index()
+
+    fig_prof_ajudante = px.bar(df_prof_ajudante, x='DATA_FORMATADA', y=['PROFISSIONAL', 'AJUDANTE'],
+                               title="Comparação de Profissionais e Ajudantes por Mês/Ano",
+                               labels={'value': 'Quantidade', 'DATA_FORMATADA': 'Mês/Ano'},
+                               barmode='group', template='plotly_dark')  # Gráfico de barras lado a lado
+    
+    # Aumentando o tamanho do gráfico
+    fig_prof_ajudante.update_layout(width=900, height=500)
+    
+    return fig_prof_ajudante
 
 # Função para exibir o dashboard
 def exibir_dashboard():
@@ -75,7 +102,7 @@ def exibir_dashboard():
 
     # Filtros de seleção
     tipo_obra = st.sidebar.selectbox('Selecione o Tipo de Obra:', ['Todos'] + list(produtividade_df['TIPO_OBRA'].unique()))
-    servico = st.sidebar.selectbox('Selecione o Serviço:', [''] + list(produtividade_df['SERVIÇO'].unique()))  # Servicos
+    servico = st.sidebar.selectbox('Selecione o Serviço:', [''] + list(produtividade_df['SERVIÇO'].unique()))  # Serviços
     mes_ano = st.sidebar.selectbox('Selecione o Período (Mês/Ano):', ['Todos'] + sorted(produtividade_df['DATA_FORMATADA'].unique(), reverse=True))
 
     # Filtrando os dados com base nas seleções
@@ -93,14 +120,12 @@ def exibir_dashboard():
         with col2:
             fig_barras = criar_grafico_barras(df_filtrado)
             st.plotly_chart(fig_barras)
+
+        # Gráfico de Profissional vs Ajudante
+        fig_prof_ajudante = criar_grafico_profissional_ajudante(df_filtrado)
+        st.plotly_chart(fig_prof_ajudante)
     else:
         st.warning("Não há dados disponíveis para o filtro selecionado.")
-
-    # Gráfico de pizza para distribuição de serviços
-    if servico:
-        df_servico = df_filtrado.groupby('SERVIÇO').size().reset_index(name='Contagem')
-        fig_pizza = px.pie(df_servico, names='SERVIÇO', values='Contagem', title="Distribuição de Serviços")
-        st.plotly_chart(fig_pizza)
 
 # Chamando a função para exibir o dashboard
 exibir_dashboard()

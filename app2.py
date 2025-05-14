@@ -11,7 +11,7 @@ def carregar_dados():
     # Garantir que a coluna de data esteja no formato datetime
     produtividade_df['DATA_FORMATADA'] = pd.to_datetime(produtividade_df['DATA_FORMATADA'], format='%d/%m/%Y')
     # Converter para o formato 'Mai/25'
-    produtividade_df['DATA_FORMATADA'] = produtividade_df['DATA'].dt.strftime('%b/%y')
+    produtividade_df['DATA_FORMATADA'] = produtividade_df['DATA_FORMATADA'].dt.strftime('%b/%y')
     
     return produtividade_df
 

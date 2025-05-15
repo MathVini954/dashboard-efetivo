@@ -164,8 +164,8 @@ def dashboard_efetivo():
         hover_data=['Funcionário', 'Função', 'Obra'],
         title="Quadrantes de Eficiência - Produção vs Hora Extra"
     )
-    fig_quadrantes.add_vline(x=df_filtrado['Total Extra'].median(), line_dash="dash")
-    fig_quadrantes.add_hline(y=df_filtrado['PRODUÇÃO'].median(), line_dash="dash")
+    fig_quadrantes.add_vline(x=df_filtrado['Total Extra'].median())
+    fig_quadrantes.add_hline(y=df_filtrado['PRODUÇÃO'].median())
     st.plotly_chart(fig_quadrantes, use_container_width=True)
 
     

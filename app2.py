@@ -40,6 +40,7 @@ def tela_login():
                 if verificar_senha(senha, senha_hash):
                     st.session_state['logado'] = True
                     st.session_state['usuario'] = usuario
+                    st.experimental_rerun()  # <- Aqui dentro, só após login ok
                 else:
                     st.error("❌ Senha incorreta.")
             else:
@@ -63,9 +64,8 @@ def tela_login():
                 else:
                     salvar_usuario(novo_usuario, hash_senha(nova_senha))
                     st.success("✅ Usuário cadastrado com sucesso! Faça login.")
-    
-    if st.session_state.get('logado', False):
-        st.experimental_rerun()
+
+    # REMOVA o st.experimental_rerun() daqui
 
 # ---------- Dashboard de Efetivo ----------
 @st.cache_data

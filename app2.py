@@ -153,6 +153,19 @@ def dashboard_efetivo():
     )
     fig_bar.update_layout(xaxis_tickangle=-45)
     st.plotly_chart(fig_bar, use_container_width=True)
+        st.divider()
+    st.markdown("### 🎯 Quadrantes de Eficiência (Produção vs Hora Extra)")
+
+    fig_quadrantes = px.scatter(
+        df_filtrado, x='Total Extra', y='PRODUÇÃO', color='Tipo',
+        hover_data=['Funcionário', 'Função', 'Obra'],
+        title="Quadrantes de Eficiência - Produção vs Hora Extra"
+    )
+    fig_quadrantes.add_vline(x=df_filtrado['Total Extra'].median(), line_dash="dash")
+    fig_quadrantes.add_hline(y=df_filtrado['PRODUÇÃO'].median(), line_dash="dash")
+    st.plotly_chart(fig_quadrantes, use_container_width=True)
+
+    
 
 # ---------- Dashboard de Produtividade ----------
 def dashboard_produtividade():

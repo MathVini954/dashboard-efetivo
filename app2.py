@@ -138,6 +138,7 @@ def dashboard_efetivo():
             ranking['DSR'] = ranking['DSR'].apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
 
         st.dataframe(ranking, use_container_width=True)
+
     st.divider()
     graf_funcao = df_filtrado['Função'].value_counts().reset_index()
     graf_funcao.columns = ['Função', 'Qtd']
@@ -146,14 +147,16 @@ def dashboard_efetivo():
         graf_funcao,
         x='Função',
         y='Qtd',
-        color='Qtd',  # usa a própria contagem para criar o degradê
-        color_continuous_scale='Blues',  # escala de cor em degradê
+        color='Qtd',
+        color_continuous_scale='Blues',
         title='Efetivo por Função',
         text='Qtd'
     )
     fig_bar.update_layout(xaxis_tickangle=-45)
     st.plotly_chart(fig_bar, use_container_width=True)
-        st.divider()
+
+    # 🔹 Gráfico de Quadrantes de Eficiência
+    st.divider()
     st.markdown("### 🎯 Quadrantes de Eficiência (Produção vs Hora Extra)")
 
     fig_quadrantes = px.scatter(

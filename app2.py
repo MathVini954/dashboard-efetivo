@@ -38,10 +38,16 @@ def tela_login():
             if usuario in df_usuarios['usuario'].values:
                 senha_hash = df_usuarios[df_usuarios['usuario'] == usuario]['senha_hash'].values[0]
                 if verificar_senha(senha, senha_hash):
-                    st.session_state['logado'] = True
-                    st.session_state['usuario'] = usuario
-                    st.success("✅ Login realizado com sucesso!")
-                    st.stop()
+    st.session_state['logado'] = True
+    st.session_state['usuario'] = usuario
+    
+    # Splash Screen
+    with st.spinner('🔄 Carregando painel...'):
+        import time
+        time.sleep(2.5)  # Duração do splash (ajustável)
+
+    st.experimental_rerun()
+
                 else:
                     st.error("❌ Senha incorreta.")
             else:

@@ -65,7 +65,36 @@ def tela_login():
                 else:
                     salvar_usuario(novo_usuario, hash_senha(nova_senha))
                     st.success("✅ Usuário cadastrado com sucesso! Faça login.")
+# Tela de splash
+def splash_screen():
+    splash = tk.Tk()
+    splash.overrideredirect(True)  # Remove bordas
+    splash.geometry("300x300+600+300")  # Centraliza
 
+    # Fundo preto
+    splash.configure(bg='black')
+
+    # Carregar a logo (substitua pelo seu caminho real)
+    logo = PhotoImage(file="logo.png")  # Idealmente PNG transparente
+    logo_label = tk.Label(splash, image=logo, bg='black')
+    logo_label.pack(expand=True)
+
+    # Efeito de brilho: alternar opacidade
+    def efeito_brilho():
+        for _ in range(10):
+            splash.attributes('-alpha', 0.5)
+            time.sleep(0.25)
+            splash.attributes('-alpha', 1.0)
+            time.sleep(0.25)
+
+        splash.destroy()
+        abrir_app_principal()
+
+    threading.Thread(target=efeito_brilho).start()
+    splash.mainloop()
+
+# Após login com sucesso, chame:
+splash_screen()
 
 # ---------- Dashboard de Efetivo ----------
 @st.cache_data

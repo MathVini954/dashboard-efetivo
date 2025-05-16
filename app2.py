@@ -40,8 +40,7 @@ def tela_login():
                 if verificar_senha(senha, senha_hash):
                     st.session_state['logado'] = True
                     st.session_state['usuario'] = usuario
-                    st.success("✅ Login realizado com sucesso!")
-                    st.stop()
+                    st.experimental_rerun()
                 else:
                     st.error("❌ Senha incorreta.")
             else:
@@ -66,9 +65,6 @@ def tela_login():
                     salvar_usuario(novo_usuario, hash_senha(nova_senha))
                     st.success("✅ Usuário cadastrado com sucesso! Faça login.")
 
-
-    # REMOVA o st.experimental_rerun() daqui
-
 # ---------- Dashboard de Efetivo ----------
 @st.cache_data
 def carregar_dados_efetivo():
@@ -89,15 +85,13 @@ def dashboard_efetivo():
     st.title("📊 Análise de Efetivo - Abril 2025")
     df = carregar_dados_efetivo()
 
-    # 🔍 Filtros EXCLUSIVOS deste dashboard
-    st.sidebar.header("🔍 Filtros - Efetivo")
-    lista_obras = sorted(df['Obra'].astype(str).unique())
-    obras_selecionadas = st.sidebar.multiselect("Obras:", lista_obras, default=lista_obras)
-    tipo_selecionado = st.sidebar.radio("Tipo:", ['Todos', 'DIRETO', 'INDIRETO', 'TERCEIRO'], horizontal=True)
-    tipo_analise = st.sidebar.radio("Tipo de Análise da Tabela:", ['Produção', 'Hora Extra Semana', 'Hora Extra Sábado'])
-    qtd_linhas = st.sidebar.radio("Qtd. de Funcionários na Tabela:", ['5', '10', '20', 'Todos'], horizontal=True)
-    
-    # ... resto da análise
+    with st.sidebar:
+        st.header("🔍 Filtros - Efetivo")
+        lista_obras = sorted(df['Obra'].astype(str).unique())
+        obras_selecionadas = st.multiselect("Obras:", lista_obras, default=lista_obras)
+        tipo_selecionado = st.radio("Tipo:", ['Todos', 'DIRETO', 'INDIRETO', 'TERCEIRO'], horizontal=True)
+        tipo_analise = st.radio("Tipo de Análise da Tabela:", ['Produção', 'Hora Extra Semana', 'Hora Extra Sábado'])
+        qtd_linhas = st.radio("Qtd. de Funcionários na Tabela:", ['5', '10', '20', 'Todos'], horizontal=True)
 
     df_filtrado = df[df['Obra'].isin(obras_selecionadas)]
     if tipo_selecionado != 'Todos':
@@ -160,7 +154,6 @@ def dashboard_efetivo():
     fig_bar.update_layout(xaxis_tickangle=-45)
     st.plotly_chart(fig_bar, use_container_width=True)
 
-    # 🔹 Gráfico de Quadrantes de Eficiência
     st.divider()
     st.markdown("### 🎯 Quadrantes de Eficiência (Produção vs Hora Extra)")
 
@@ -169,19 +162,17 @@ def dashboard_efetivo():
         hover_data=['Funcionário', 'Função', 'Obra'],
         title="Quadrantes de Eficiência - Produção vs Hora Extra"
     )
-    
+
     st.plotly_chart(fig_quadrantes, use_container_width=True)
 
-    
 # ---------- Dashboard de Produtividade ----------
-@st.cache_data
-def carregar_dados_produtividade():
-    df = pd.read_excel("produtividade.xlsx")
-    df['DATA'] = pd.to_datetime(df['DATA'], format='%d/%m/%Y')
-    df['DATA_FORMATADA'] = df['DATA'].dt.strftime('%b/%y')
-    return df
-
 def dashboard_produtividade():
+    def carregar_dados():
+        df = pd.read_excel("produtividade.xlsx")
+        df['DATA'] = pd.to_datetime(df['DATA'], format='%d/%m/%Y')
+        df['DATA_FORMATADA'] = df['DATA'].dt.strftime('%b/%y')
+        return df
+
     def filtrar_dados(df, tipo_obra, servico, datas_selecionadas):
         if tipo_obra != "Todos":
             df = df[df['TIPO_OBRA'] == tipo_obra]
@@ -210,16 +201,16 @@ def dashboard_produtividade():
                             title="Produtividade Profissional Média por Tipo de Obra")
         return fig_barras
 
-    df = carregar_dados_produtividade()
+    df = carregar_dados()
 
-    tipo_obra_opcoes = ["Todos"] + df['TIPO_OBRA'].unique().tolist()
-    tipo_obra = st.sidebar.selectbox('Selecione o Tipo de Obra', tipo_obra_opcoes)
-
-    servicos_opcoes = df['SERVIÇO'].unique().tolist()
-    servico = st.sidebar.selectbox('Selecione o Serviço', servicos_opcoes)
-
-    mes_ano_opcoes = df['DATA_FORMATADA'].unique().tolist()
-    datas_selecionadas = st.sidebar.multiselect('Selecione o(s) Mês/Ano', mes_ano_opcoes, default=mes_ano_opcoes)
+    with st.sidebar:
+        st.header("🔍 Filtros - Produtividade")
+        tipo_obra_opcoes = ["Todos"] + df['TIPO_OBRA'].unique().tolist()
+        tipo_obra = st.selectbox('Selecione o Tipo de Obra', tipo_obra_opcoes)
+        servicos_opcoes = df['SERVIÇO'].unique().tolist()
+        servico = st.selectbox('Selecione o Serviço', servicos_opcoes)
+        mes_ano_opcoes = df['DATA_FORMATADA'].unique().tolist()
+        datas_selecionadas = st.multiselect('Selecione o(s) Mês/Ano', mes_ano_opcoes, default=mes_ano_opcoes)
 
     df_filtrado = filtrar_dados(df, tipo_obra, servico, datas_selecionadas)
     fig_produtividade = criar_grafico_produtividade(df_filtrado)
@@ -228,7 +219,6 @@ def dashboard_produtividade():
     st.title("📈 Dashboard de Produtividade")
     st.plotly_chart(fig_produtividade)
     st.plotly_chart(fig_barras)
-
 
 # ---------- Execução Principal ----------
 def main():
@@ -244,8 +234,6 @@ def main():
             "<h1 style='margin-top: 30px; vertical-align: middle;'>SISTEMA DE CUSTO E PLANEJAMENTO</h1>",
             unsafe_allow_html=True,
         )
-    # resto do seu código...
-
 
     if "logado" not in st.session_state:
         st.session_state['logado'] = False

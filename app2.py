@@ -38,21 +38,14 @@ def tela_login():
             if usuario in df_usuarios['usuario'].values:
                 senha_hash = df_usuarios[df_usuarios['usuario'] == usuario]['senha_hash'].values[0]
                 if verificar_senha(senha, senha_hash):
-    st.session_state['logado'] = True
-    st.session_state['usuario'] = usuario
-    
-    # Splash Screen
-    with st.spinner('🔄 Carregando painel...'):
-        import time
-        time.sleep(2.5)  # Duração do splash (ajustável)
-
-    st.experimental_rerun()
-
+                    st.session_state['logado'] = True
+                    st.session_state['usuario'] = usuario
+                    st.success("✅ Login realizado com sucesso!")
+                    st.stop()
                 else:
                     st.error("❌ Senha incorreta.")
             else:
                 st.error("❌ Usuário não encontrado.")
-
     else:
         st.subheader("📋 Cadastro de Novo Usuário")
         novo_usuario = st.text_input("Novo usuário")
@@ -75,18 +68,19 @@ def tela_login():
 # ---------- Dashboard de Efetivo ----------
 @st.cache_data
 def carregar_dados_efetivo():
-    df = pd.read_excel("efetivo_abril.xlsx", engine="openpyxl")
-    df.columns = df.columns.str.strip()
-    df = df.fillna(0)
-    for col in ['Hora Extra 70% - Sabado', 'Hora Extra 70% - Semana', 'PRODUÇÃO']:
-        if col in df.columns:
-            df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
-    if 'DIRETO / INDIRETO' in df.columns:
-        df['Tipo'] = df['DIRETO / INDIRETO'].astype(str).str.upper().str.strip()
-    else:
-        df['Tipo'] = 'INDEFINIDO'
-    df['Total Extra'] = df['Hora Extra 70% - Sabado'] + df['Hora Extra 70% - Semana']
-    return df
+    with st.spinner("🔄 Carregando dados de efetivo..."):
+        df = pd.read_excel("efetivo_abril.xlsx", engine="openpyxl")
+        df.columns = df.columns.str.strip()
+        df = df.fillna(0)
+        for col in ['Hora Extra 70% - Sabado', 'Hora Extra 70% - Semana', 'PRODUÇÃO']:
+            if col in df.columns:
+                df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
+        if 'DIRETO / INDIRETO' in df.columns:
+            df['Tipo'] = df['DIRETO / INDIRETO'].astype(str).str.upper().str.strip()
+        else:
+            df['Tipo'] = 'INDEFINIDO'
+        df['Total Extra'] = df['Hora Extra 70% - Sabado'] + df['Hora Extra 70% - Semana']
+        return df
 
 def dashboard_efetivo():
     st.title("📊 Análise de Efetivo - Abril 2025")
@@ -163,113 +157,56 @@ def dashboard_efetivo():
 
     st.divider()
     st.markdown("### 🎯 Quadrantes de Eficiência (Produção vs Hora Extra)")
-
     fig_quadrantes = px.scatter(
         df_filtrado, x='Total Extra', y='PRODUÇÃO', color='Tipo',
         hover_data=['Funcionário', 'Função', 'Obra'],
         title="Quadrantes de Eficiência - Produção vs Hora Extra"
     )
-
     st.plotly_chart(fig_quadrantes, use_container_width=True)
 
 # ---------- Dashboard de Produtividade ----------
 def dashboard_produtividade():
-    def carregar_dados():
+    with st.spinner("🔄 Carregando dados de produtividade..."):
         df = pd.read_excel("produtividade.xlsx")
         df['DATA'] = pd.to_datetime(df['DATA'], format='%d/%m/%Y')
         df['DATA_FORMATADA'] = df['DATA'].dt.strftime('%b/%y')
-        return df
-
-    def filtrar_dados(df, tipo_obra, servico, datas_selecionadas):
-        if tipo_obra != "Todos":
-            df = df[df['TIPO_OBRA'] == tipo_obra]
-        if servico:
-            df = df[df['SERVIÇO'] == servico]
-        if datas_selecionadas:
-            df = df[df['DATA_FORMATADA'].isin(datas_selecionadas)]
-        return df
-
-    def criar_grafico_produtividade(df):
-        df_mensal = df.groupby('DATA_FORMATADA').agg({
-            'PRODUTIVIDADE_PROF_DIAM2': 'mean',
-            'PRODUTIVIDADE_ORCADA_DIAM2': 'mean'
-        }).reset_index()
-        fig = px.line(df_mensal, x='DATA_FORMATADA', y=['PRODUTIVIDADE_PROF_DIAM2', 'PRODUTIVIDADE_ORCADA_DIAM2'],
-                      labels={'value': 'Produtividade', 'DATA_FORMATADA': 'Mês/Ano'},
-                      title="Produtividade Profissional por M² (Real x Orçado)",
-                      line_shape='linear', markers=True)
-        return fig
-
-    def criar_grafico_barras(df):
-        df_produtividade_obra = df.groupby('TIPO_OBRA').agg({
-            'PRODUTIVIDADE_PROF_DIAM2': 'mean'
-        }).reset_index()
-        fig_barras = px.bar(df_produtividade_obra, x='TIPO_OBRA', y='PRODUTIVIDADE_PROF_DIAM2',
-                            title="Produtividade Profissional Média por Tipo de Obra")
-        return fig_barras
-
-    df = carregar_dados()
 
     with st.sidebar:
         st.header("🔍 Filtros - Produtividade")
         tipo_obra_opcoes = ["Todos"] + df['TIPO_OBRA'].unique().tolist()
         tipo_obra = st.selectbox('Selecione o Tipo de Obra', tipo_obra_opcoes)
-        servicos_opcoes = df['SERVIÇO'].unique().tolist()
-        servico = st.selectbox('Selecione o Serviço', servicos_opcoes)
-        mes_ano_opcoes = df['DATA_FORMATADA'].unique().tolist()
-        datas_selecionadas = st.multiselect('Selecione o(s) Mês/Ano', mes_ano_opcoes, default=mes_ano_opcoes)
+        servico = st.selectbox('Selecione o Serviço', [""] + df['SERVIÇO'].unique().tolist())
+        datas_selecionadas = st.multiselect("Selecione os meses:", df['DATA_FORMATADA'].unique())
 
-    df_filtrado = filtrar_dados(df, tipo_obra, servico, datas_selecionadas)
-    fig_produtividade = criar_grafico_produtividade(df_filtrado)
-    fig_barras = criar_grafico_barras(df_filtrado)
+    df_filtrado = df.copy()
+    if tipo_obra != "Todos":
+        df_filtrado = df_filtrado[df_filtrado['TIPO_OBRA'] == tipo_obra]
+    if servico:
+        df_filtrado = df_filtrado[df_filtrado['SERVIÇO'] == servico]
+    if datas_selecionadas:
+        df_filtrado = df_filtrado[df_filtrado['DATA_FORMATADA'].isin(datas_selecionadas)]
 
-    st.title("📈 Dashboard de Produtividade")
-    st.plotly_chart(fig_produtividade)
-    st.plotly_chart(fig_barras)
+    st.title("📈 Análise de Produtividade")
+    fig1 = px.line(df_filtrado, x='DATA_FORMATADA', y=['PRODUTIVIDADE_PROF_DIAM2', 'PRODUTIVIDADE_ORCADA_DIAM2'],
+                   title="Produtividade Profissional por M² (Real x Orçado)",
+                   markers=True, labels={"value": "Produtividade", "DATA_FORMATADA": "Mês"})
+    st.plotly_chart(fig1, use_container_width=True)
 
-# ---------- Execução Principal ----------
+    fig2 = px.bar(df_filtrado.groupby('TIPO_OBRA')['PRODUTIVIDADE_PROF_DIAM2'].mean().reset_index(),
+                  x='TIPO_OBRA', y='PRODUTIVIDADE_PROF_DIAM2',
+                  title="Produtividade Média por Tipo de Obra")
+    st.plotly_chart(fig2, use_container_width=True)
+
+# ---------- App Principal ----------
 def main():
-    st.set_page_config(page_title="Dashboards de Obra", layout="wide")
-
-    col1, col2 = st.columns([1, 4])
-
-    with col1:
-        st.image("logotipo.png", width=400)
-
-    with col2:
-        st.markdown(
-            "<h1 style='margin-top: 30px; vertical-align: middle;'>SISTEMA DE CUSTO E PLANEJAMENTO</h1>",
-            unsafe_allow_html=True,
-        )
-
-    if "logado" not in st.session_state:
-        st.session_state['logado'] = False
-    if "usuario" not in st.session_state:
-        st.session_state['usuario'] = ""
-
-    if not st.session_state['logado']:
+    if 'logado' not in st.session_state or not st.session_state['logado']:
         tela_login()
     else:
-        st.sidebar.title(f"👋 Bem-vindo, {st.session_state['usuario']}")
-
-        aba1, aba2, aba3 = st.tabs(["📊 Efetivo", "📈 Produtividade", "🏗️ Análise Custo e Planejamento"])
-
-        with aba1:
+        aba = st.sidebar.selectbox("Menu", ["Efetivo", "Produtividade"])
+        if aba == "Efetivo":
             dashboard_efetivo()
-
-        with aba2:
+        elif aba == "Produtividade":
             dashboard_produtividade()
-
-        with aba3:
-            st.title("🏗️ ANÁLISE CUSTO E PLANEJAMENTO")
-            st.markdown(
-                """
-                <div style="text-align: center; margin-top: 100px;">
-                    <h2>ESTAMOS EM DESENVOLVIMENTO</h2>
-                    <div style="font-size: 50px; color: grey;">👷‍♂️🚧</div>
-                </div>
-                """, unsafe_allow_html=True
-            )
 
 if __name__ == "__main__":
     main()

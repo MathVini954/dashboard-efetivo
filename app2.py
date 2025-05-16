@@ -33,7 +33,7 @@ def tela_login():
         usuario = st.text_input("Usuário")
         senha = st.text_input("Senha", type="password")
 
-        if st.button("Entrar"):
+      if st.button("Entrar"):
     df_usuarios = carregar_usuarios()
     if usuario in df_usuarios['usuario'].values:
         senha_hash = df_usuarios[df_usuarios['usuario'] == usuario]['senha_hash'].values[0]
@@ -41,11 +41,12 @@ def tela_login():
             st.session_state['logado'] = True
             st.session_state['usuario'] = usuario
             st.success("✅ Login realizado com sucesso!")
-            st.stop()  # <- INTERROMPE a execução atual e força o rerun de forma segura
+            st.stop()
         else:
             st.error("❌ Senha incorreta.")
     else:
         st.error("❌ Usuário não encontrado.")
+
 
 
     else:

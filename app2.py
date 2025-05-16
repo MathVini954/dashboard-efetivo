@@ -173,29 +173,15 @@ def dashboard_efetivo():
     st.plotly_chart(fig_quadrantes, use_container_width=True)
 
     
-
 # ---------- Dashboard de Produtividade ----------
+@st.cache_data
+def carregar_dados_produtividade():
+    df = pd.read_excel("produtividade.xlsx")
+    df['DATA'] = pd.to_datetime(df['DATA'], format='%d/%m/%Y')
+    df['DATA_FORMATADA'] = df['DATA'].dt.strftime('%b/%y')
+    return df
+
 def dashboard_produtividade():
-   
-    @st.cache_data
-def carregar_dados():
-    caminho_arquivo = "produtividade.xlsx"
-    return pd.read_excel(caminho_arquivo)
-
-
-    # 🔍 Filtros EXCLUSIVOS deste dashboard
-    st.sidebar.header("🔍 Filtros - Produtividade")
-    tipo_obra_opcoes = ["Todos"] + df['TIPO_OBRA'].unique().tolist()
-    tipo_obra = st.sidebar.selectbox('Selecione o Tipo de Obra', tipo_obra_opcoes)
-
-    servicos_opcoes = df['SERVIÇO'].unique().tolist()
-    servico = st.sidebar.selectbox('Selecione o Serviço', servicos_opcoes)
-
-    mes_ano_opcoes = df['DATA_FORMATADA'].unique().tolist()
-    datas_selecionadas = st.sidebar.multiselect('Selecione o(s) Mês/Ano', mes_ano_opcoes, default=mes_ano_opcoes)
-
-    # ... resto da análise
-
     def filtrar_dados(df, tipo_obra, servico, datas_selecionadas):
         if tipo_obra != "Todos":
             df = df[df['TIPO_OBRA'] == tipo_obra]
@@ -224,7 +210,7 @@ def carregar_dados():
                             title="Produtividade Profissional Média por Tipo de Obra")
         return fig_barras
 
-    df = carregar_dados()
+    df = carregar_dados_produtividade()
 
     tipo_obra_opcoes = ["Todos"] + df['TIPO_OBRA'].unique().tolist()
     tipo_obra = st.sidebar.selectbox('Selecione o Tipo de Obra', tipo_obra_opcoes)
@@ -242,6 +228,7 @@ def carregar_dados():
     st.title("📈 Dashboard de Produtividade")
     st.plotly_chart(fig_produtividade)
     st.plotly_chart(fig_barras)
+
 
 # ---------- Execução Principal ----------
 def main():

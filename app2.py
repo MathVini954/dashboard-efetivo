@@ -29,7 +29,7 @@ def tela_login():
 
     menu = st.radio("Escolha uma opção:", ["Login", "Cadastrar"])
 
-        if menu == "Login":
+    if menu == "Login":
         usuario = st.text_input("Usuário")
         senha = st.text_input("Senha", type="password")
 
@@ -65,6 +65,7 @@ def tela_login():
                 else:
                     salvar_usuario(novo_usuario, hash_senha(nova_senha))
                     st.success("✅ Usuário cadastrado com sucesso! Faça login.")
+
 
     # REMOVA o st.experimental_rerun() daqui
 

@@ -89,12 +89,15 @@ def dashboard_efetivo():
     st.title("📊 Análise de Efetivo - Abril 2025")
     df = carregar_dados_efetivo()
 
-    st.sidebar.header("🔍 Filtros")
+    # 🔍 Filtros EXCLUSIVOS deste dashboard
+    st.sidebar.header("🔍 Filtros - Efetivo")
     lista_obras = sorted(df['Obra'].astype(str).unique())
     obras_selecionadas = st.sidebar.multiselect("Obras:", lista_obras, default=lista_obras)
     tipo_selecionado = st.sidebar.radio("Tipo:", ['Todos', 'DIRETO', 'INDIRETO', 'TERCEIRO'], horizontal=True)
     tipo_analise = st.sidebar.radio("Tipo de Análise da Tabela:", ['Produção', 'Hora Extra Semana', 'Hora Extra Sábado'])
     qtd_linhas = st.sidebar.radio("Qtd. de Funcionários na Tabela:", ['5', '10', '20', 'Todos'], horizontal=True)
+    
+    # ... resto da análise
 
     df_filtrado = df[df['Obra'].isin(obras_selecionadas)]
     if tipo_selecionado != 'Todos':
@@ -173,11 +176,20 @@ def dashboard_efetivo():
 
 # ---------- Dashboard de Produtividade ----------
 def dashboard_produtividade():
-    def carregar_dados():
-        df = pd.read_excel("produtividade.xlsx")
-        df['DATA'] = pd.to_datetime(df['DATA'], format='%d/%m/%Y')
-        df['DATA_FORMATADA'] = df['DATA'].dt.strftime('%b/%y')
-        return df
+    df = carregar_dados()
+
+    # 🔍 Filtros EXCLUSIVOS deste dashboard
+    st.sidebar.header("🔍 Filtros - Produtividade")
+    tipo_obra_opcoes = ["Todos"] + df['TIPO_OBRA'].unique().tolist()
+    tipo_obra = st.sidebar.selectbox('Selecione o Tipo de Obra', tipo_obra_opcoes)
+
+    servicos_opcoes = df['SERVIÇO'].unique().tolist()
+    servico = st.sidebar.selectbox('Selecione o Serviço', servicos_opcoes)
+
+    mes_ano_opcoes = df['DATA_FORMATADA'].unique().tolist()
+    datas_selecionadas = st.sidebar.multiselect('Selecione o(s) Mês/Ano', mes_ano_opcoes, default=mes_ano_opcoes)
+
+    # ... resto da análise
 
     def filtrar_dados(df, tipo_obra, servico, datas_selecionadas):
         if tipo_obra != "Todos":

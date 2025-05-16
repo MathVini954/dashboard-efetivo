@@ -176,8 +176,12 @@ def dashboard_efetivo():
 
 # ---------- Dashboard de Produtividade ----------
 def dashboard_produtividade():
-    df = carregar_dados()
-    df = pd.read_excel("produtividade.xlsx", engine="openpyxl")
+   
+    @st.cache_data
+def carregar_dados():
+    caminho_arquivo = "produtividade.xlsx"
+    return pd.read_excel(caminho_arquivo)
+
 
     # 🔍 Filtros EXCLUSIVOS deste dashboard
     st.sidebar.header("🔍 Filtros - Produtividade")

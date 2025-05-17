@@ -186,122 +186,84 @@ def dashboard_produtividade():
     def criar_grafico_produtividade(df):
         df_mensal = df.groupby('DATA_FORMATADA').agg({
             'PRODUTIVIDADE_PROF_DIAM2': 'mean',
-            'PRODUTIVIDADE_PROF_GESSO': 'mean',
-            'PRODUTIVIDADE_PROF_PINTURA': 'mean'
+            'PRODUTIVIDADE_ORCADA_DIAM2': 'mean'
         }).reset_index()
-
-        fig = px.line(df_mensal, x='DATA_FORMATADA', y=[
-            'PRODUTIVIDADE_PROF_DIAM2',
-            'PRODUTIVIDADE_PROF_GESSO',
-            'PRODUTIVIDADE_PROF_PINTURA'],
-            labels={
-                'value': 'Produtividade',
-                'DATA_FORMATADA': 'Mês',
-                'variable': 'Serviço'
-            },
-            title='Produtividade Média Mensal por Serviço')
-
-        fig.update_layout(legend_title_text='Serviço')
+        fig = px.line(df_mensal, x='DATA_FORMATADA', y=['PRODUTIVIDADE_PROF_DIAM2', 'PRODUTIVIDADE_ORCADA_DIAM2'],
+                      labels={'value': 'Produtividade', 'DATA_FORMATADA': 'Mês/Ano'},
+                      title="Produtividade Profissional por M² (Real x Orçado)",
+                      line_shape='linear', markers=True)
         return fig
 
-    st.title("📈 Dashboard de Produtividade")
+    def criar_grafico_barras(df):
+        df_produtividade_obra = df.groupby('TIPO_OBRA').agg({
+            'PRODUTIVIDADE_PROF_DIAM2': 'mean'
+        }).reset_index()
+        fig_barras = px.bar(df_produtividade_obra, x='TIPO_OBRA', y='PRODUTIVIDADE_PROF_DIAM2',
+                            title="Produtividade Profissional Média por Tipo de Obra")
+        return fig_barras
 
     df = carregar_dados()
 
     with st.sidebar:
-        st.header("Filtros - Produtividade")
-        tipos_obras = sorted(df['TIPO_OBRA'].unique())
-        tipo_obra = st.selectbox("Tipo de Obra", ["Todos"] + tipos_obras)
-        servicos = sorted(df['SERVIÇO'].unique())
-        servico = st.selectbox("Serviço", [""] + servicos)
-        datas = sorted(df['DATA_FORMATADA'].unique())
-        datas_selecionadas = st.multiselect("Meses", datas, default=datas)
+        st.header("🔍 Filtros - Produtividade")
+        tipo_obra_opcoes = ["Todos"] + df['TIPO_OBRA'].unique().tolist()
+        tipo_obra = st.selectbox('Selecione o Tipo de Obra', tipo_obra_opcoes)
+        servicos_opcoes = df['SERVIÇO'].unique().tolist()
+        servico = st.selectbox('Selecione o Serviço', servicos_opcoes)
+        mes_ano_opcoes = df['DATA_FORMATADA'].unique().tolist()
+        datas_selecionadas = st.multiselect('Selecione o(s) Mês/Ano', mes_ano_opcoes, default=mes_ano_opcoes)
 
     df_filtrado = filtrar_dados(df, tipo_obra, servico, datas_selecionadas)
+    fig_produtividade = criar_grafico_produtividade(df_filtrado)
+    fig_barras = criar_grafico_barras(df_filtrado)
 
-    fig_prod = criar_grafico_produtividade(df_filtrado)
-    st.plotly_chart(fig_prod, use_container_width=True)
+    st.title("📈 Dashboard de Produtividade")
+    st.plotly_chart(fig_produtividade)
+    st.plotly_chart(fig_barras)
 
-# ---------- Personalização CSS ----------
-def estilizar_fundo():
-    st.markdown(
-        """
-        <style>
-        /* Fundo com gradiente suave e fixo */
-        body, .main, .block-container {
-            background: linear-gradient(135deg, #f0f4f8 0%, #d9e2ec 100%);
-            min-height: 100vh;
-            padding: 2rem;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        /* Sombra suave para os blocos de conteúdo */
-        .stApp > div > div > section > div {
-            background-color: white !important;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            padding: 1.5rem;
-        }
-        /* Títulos com cor personalizada */
-        h1, h2, h3 {
-            color: #2c3e50;
-            font-weight: 700;
-        }
-        /* Botões com cor personalizada */
-        div.stButton > button {
-            background-color: #0077cc;
-            color: white;
-            border-radius: 6px;
-            border: none;
-            padding: 0.5rem 1.2rem;
-            font-weight: 600;
-            transition: background-color 0.3s ease;
-        }
-        div.stButton > button:hover {
-            background-color: #005fa3;
-            cursor: pointer;
-        }
-        /* Sidebar com fundo branco translúcido */
-        [data-testid="stSidebar"] {
-            background-color: rgba(255,255,255,0.95);
-            border-radius: 12px;
-            padding: 1rem;
-        }
-        /* Inputs estilizados */
-        input, select, textarea {
-            border-radius: 6px;
-            border: 1px solid #ccc;
-            padding: 0.4rem 0.6rem;
-            transition: border-color 0.3s ease;
-        }
-        input:focus, select:focus, textarea:focus {
-            border-color: #0077cc;
-            outline: none;
-        }
-        </style>
-        """, unsafe_allow_html=True
-    )
-
-# ---------- Main ----------
+# ---------- Execução Principal ----------
 def main():
-    estilizar_fundo()
+    st.set_page_config(page_title="Dashboards de Obra", layout="wide")
 
-    if 'logado' not in st.session_state:
+    col1, col2 = st.columns([1, 4])
+
+    with col1:
+        st.image("logotipo.png", width=400)
+
+    with col2:
+        st.markdown(
+            "<h1 style='margin-top: 30px; vertical-align: middle;'>SISTEMA DE CUSTO E PLANEJAMENTO</h1>",
+            unsafe_allow_html=True,
+        )
+
+    if "logado" not in st.session_state:
         st.session_state['logado'] = False
+    if "usuario" not in st.session_state:
+        st.session_state['usuario'] = ""
 
     if not st.session_state['logado']:
         tela_login()
     else:
-        st.sidebar.success(f"👋 Olá, {st.session_state['usuario']}! Você está logado.")
+        st.sidebar.title(f"👋 Bem-vindo, {st.session_state['usuario']}")
 
-        menu = st.sidebar.radio("Navegação:", ["Dashboard Efetivo", "Dashboard Produtividade", "Sair"])
+        aba1, aba2, aba3 = st.tabs(["📊 Efetivo", "📈 Produtividade", "🏗️ Análise Custo e Planejamento"])
 
-        if menu == "Dashboard Efetivo":
+        with aba1:
             dashboard_efetivo()
-        elif menu == "Dashboard Produtividade":
+
+        with aba2:
             dashboard_produtividade()
-        else:
-            st.session_state['logado'] = False
-            st.experimental_rerun()
+
+        with aba3:
+            st.title("🏗️ ANÁLISE CUSTO E PLANEJAMENTO")
+            st.markdown(
+                """
+                <div style="text-align: center; margin-top: 100px;">
+                    <h2>ESTAMOS EM DESENVOLVIMENTO</h2>
+                    <div style="font-size: 50px; color: grey;">👷‍♂️🚧</div>
+                </div>
+                """, unsafe_allow_html=True
+            )
 
 if __name__ == "__main__":
-    main()
+    main()  

@@ -1,8 +1,35 @@
-import streamlit as st
+
 import pandas as pd
 import plotly.express as px
 import hashlib
 import os
+import streamlit as st
+
+# CSS personalizado
+st.markdown("""
+    <style>
+    .stButton>button {
+        background-color: #0E76A8;
+        color: white;
+        border-radius: 8px;
+        padding: 0.5em 1em;
+        font-weight: bold;
+    }
+    .css-1d391kg {
+        font-size: 32px !important;
+        font-weight: bold;
+        color: #1f77b4;
+    }
+    .stRadio > label {
+        font-weight: bold;
+    }
+    .stDataFrame {
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        padding: 8px;
+    }
+    </style>
+""", unsafe_allow_html=True)
 
 # ---------- Funções de autenticação ----------
 def hash_senha(senha):

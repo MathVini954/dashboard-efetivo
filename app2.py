@@ -5,6 +5,7 @@ import hashlib
 import os
 
 # ---------- Funções de autenticação ----------
+
 def hash_senha(senha):
     return hashlib.sha256(senha.encode()).hexdigest()
 
@@ -24,6 +25,7 @@ def salvar_usuario(usuario, senha_hash):
     df.to_csv("usuarios.csv", index=False)
 
 # ---------- Tela de login/cadastro ----------
+
 def tela_login():
     st.title("🔐 Login")
 
@@ -66,7 +68,87 @@ def tela_login():
                     salvar_usuario(novo_usuario, hash_senha(nova_senha))
                     st.success("✅ Usuário cadastrado com sucesso! Faça login.")
 
+# ---------- Função para adicionar a sidebar flutuante com fixação ----------
+
+def sidebar_flutuante():
+    # HTML, CSS e JS para o comportamento da sidebar
+    html_code = """
+    <style>
+    /* Sidebar estilos */
+    #sidebar {
+        position: fixed;
+        top: 0;
+        left: -220px;
+        height: 100%;
+        width: 220px;
+        background-color: #262730;
+        color: white;
+        transition: left 0.3s ease;
+        padding: 20px;
+        z-index: 100;
+    }
+
+    #sidebar:hover {
+        left: 0px;
+    }
+
+    #sidebar.fixed {
+        left: 0px !important;
+    }
+
+    /* Botão fixar sidebar */
+    #fixar-btn {
+        position: fixed;
+        top: 20px;
+        left: 220px;
+        background-color: #007bff;
+        color: white;
+        padding: 10px;
+        border-radius: 5px;
+        cursor: pointer;
+        z-index: 101;
+    }
+
+    #fixar-btn:hover {
+        background-color: #0056b3;
+    }
+    </style>
+
+    <div id="sidebar">
+        <h3>Menu Lateral</h3>
+        <ul>
+            <li><a href="#">Efetivo</a></li>
+            <li><a href="#">Produtividade</a></li>
+            <li><a href="#">Planejamento</a></li>
+        </ul>
+    </div>
+
+    <div id="fixar-btn" onclick="fixarSidebar()">Fixar Sidebar</div>
+
+    <script>
+    let sidebar = document.getElementById('sidebar');
+    let fixarBtn = document.getElementById('fixar-btn');
+
+    function fixarSidebar() {
+        sidebar.classList.toggle('fixed');
+    }
+    
+    // Adiciona a funcionalidade de "hover"
+    sidebar.addEventListener('mouseover', function() {
+        sidebar.style.left = '0';
+    });
+
+    sidebar.addEventListener('mouseout', function() {
+        if (!sidebar.classList.contains('fixed')) {
+            sidebar.style.left = '-220px';
+        }
+    });
+    </script>
+    """
+    components.html(html_code, height=800, width=220)
+
 # ---------- Dashboard de Efetivo ----------
+
 @st.cache_data
 def carregar_dados_efetivo():
     df = pd.read_excel("efetivo_abril.xlsx", engine="openpyxl")
@@ -82,146 +164,8 @@ def carregar_dados_efetivo():
     df['Total Extra'] = df['Hora Extra 70% - Sabado'] + df['Hora Extra 70% - Semana']
     return df
 
-def dashboard_efetivo():
-    st.title("📊 Análise de Efetivo - Abril 2025")
-    df = carregar_dados_efetivo()
-
-    with st.sidebar:
-        st.header("🔍 Filtros - Efetivo")
-        lista_obras = sorted(df['Obra'].astype(str).unique())
-        obras_selecionadas = st.multiselect("Obras:", lista_obras, default=lista_obras)
-        tipo_selecionado = st.radio("Tipo:", ['Todos', 'DIRETO', 'INDIRETO', 'TERCEIRO'], horizontal=True)
-        tipo_analise = st.radio("Tipo de Análise da Tabela:", ['Produção', 'Hora Extra Semana', 'Hora Extra Sábado'])
-        qtd_linhas = st.radio("Qtd. de Funcionários na Tabela:", ['5', '10', '20', 'Todos'], horizontal=True)
-
-    df_filtrado = df[df['Obra'].isin(obras_selecionadas)]
-    if tipo_selecionado != 'Todos':
-        df_filtrado = df_filtrado[df_filtrado['Tipo'] == tipo_selecionado]
-
-    col1, col2, col3, col4 = st.columns(4)
-    col1.metric("👷 Direto", len(df_filtrado[df_filtrado['Tipo'] == 'DIRETO']))
-    col2.metric("👷‍♂️ Indireto", len(df_filtrado[df_filtrado['Tipo'] == 'INDIRETO']))
-    col3.metric("🏗️ Terceiro", len(df_filtrado[df_filtrado['Tipo'] == 'TERCEIRO']))
-    col4.metric("👥 Total", len(df_filtrado))
-    st.divider()
-
-    col_g1, col_g2 = st.columns([1, 2])
-    with col_g1:
-        df_pizza = df[df['Obra'].isin(obras_selecionadas)]
-        pizza = df_pizza['Tipo'].value_counts().reset_index()
-        pizza.columns = ['Tipo', 'count']
-        fig_pizza = px.pie(pizza, names='Tipo', values='count', title='Distribuição por Tipo de Efetivo')
-        st.plotly_chart(fig_pizza, use_container_width=True)
-
-    with col_g2:
-        coluna_valor = {
-            'Produção': 'PRODUÇÃO',
-            'Hora Extra Semana': 'Hora Extra 70% - Semana',
-            'Hora Extra Sábado': 'Hora Extra 70% - Sabado'
-        }[tipo_analise]
-
-        if tipo_analise == 'Produção' and 'REFLEXO S PRODUÇÃO' in df.columns:
-            df_filtrado['DSR'] = df_filtrado['REFLEXO S PRODUÇÃO']
-            ranking = df_filtrado[['Funcionário', 'Função', 'Obra', 'Tipo', 'PRODUÇÃO', 'DSR']].sort_values(by='PRODUÇÃO', ascending=False)
-        else:
-            ranking = df_filtrado[['Funcionário', 'Função', 'Obra', 'Tipo', coluna_valor]].sort_values(by=coluna_valor, ascending=False)
-
-        valor_total = df_filtrado[coluna_valor].sum()
-        st.markdown(f"### 📋 Top Funcionários por **{tipo_analise}**")
-        st.markdown(f"**Total em {tipo_analise}:** R$ {valor_total:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
-
-        if qtd_linhas != 'Todos':
-            ranking = ranking.head(int(qtd_linhas))
-
-        ranking[coluna_valor] = ranking[coluna_valor].apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
-        if 'DSR' in ranking.columns:
-            ranking['DSR'] = ranking['DSR'].apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
-
-        st.dataframe(ranking, use_container_width=True)
-
-    st.divider()
-    graf_funcao = df_filtrado['Função'].value_counts().reset_index()
-    graf_funcao.columns = ['Função', 'Qtd']
-
-    fig_bar = px.bar(
-        graf_funcao,
-        x='Função',
-        y='Qtd',
-        color='Qtd',
-        color_continuous_scale='Blues',
-        title='Efetivo por Função',
-        text='Qtd'
-    )
-    fig_bar.update_layout(xaxis_tickangle=-45)
-    st.plotly_chart(fig_bar, use_container_width=True)
-
-    st.divider()
-    st.markdown("### 🎯 Quadrantes de Eficiência (Produção vs Hora Extra)")
-
-    fig_quadrantes = px.scatter(
-        df_filtrado, x='Total Extra', y='PRODUÇÃO', color='Tipo',
-        hover_data=['Funcionário', 'Função', 'Obra'],
-        title="Quadrantes de Eficiência - Produção vs Hora Extra"
-    )
-
-    st.plotly_chart(fig_quadrantes, use_container_width=True)
-
-# ---------- Dashboard de Produtividade ----------
-def dashboard_produtividade():
-    def carregar_dados():
-        df = pd.read_excel("produtividade.xlsx")
-        df['DATA'] = pd.to_datetime(df['DATA'], format='%d/%m/%Y')
-        df['DATA_FORMATADA'] = df['DATA'].dt.strftime('%b/%y')
-        return df
-
-    def filtrar_dados(df, tipo_obra, servico, datas_selecionadas):
-        if tipo_obra != "Todos":
-            df = df[df['TIPO_OBRA'] == tipo_obra]
-        if servico:
-            df = df[df['SERVIÇO'] == servico]
-        if datas_selecionadas:
-            df = df[df['DATA_FORMATADA'].isin(datas_selecionadas)]
-        return df
-
-    def criar_grafico_produtividade(df):
-        df_mensal = df.groupby('DATA_FORMATADA').agg({
-            'PRODUTIVIDADE_PROF_DIAM2': 'mean',
-            'PRODUTIVIDADE_ORCADA_DIAM2': 'mean'
-        }).reset_index()
-        fig = px.line(df_mensal, x='DATA_FORMATADA', y=['PRODUTIVIDADE_PROF_DIAM2', 'PRODUTIVIDADE_ORCADA_DIAM2'],
-                      labels={'value': 'Produtividade', 'DATA_FORMATADA': 'Mês/Ano'},
-                      title="Produtividade Profissional por M² (Real x Orçado)",
-                      line_shape='linear', markers=True)
-        return fig
-
-    def criar_grafico_barras(df):
-        df_produtividade_obra = df.groupby('TIPO_OBRA').agg({
-            'PRODUTIVIDADE_PROF_DIAM2': 'mean'
-        }).reset_index()
-        fig_barras = px.bar(df_produtividade_obra, x='TIPO_OBRA', y='PRODUTIVIDADE_PROF_DIAM2',
-                            title="Produtividade Profissional Média por Tipo de Obra")
-        return fig_barras
-
-    df = carregar_dados()
-
-    with st.sidebar:
-        st.header("🔍 Filtros - Produtividade")
-        tipo_obra_opcoes = ["Todos"] + df['TIPO_OBRA'].unique().tolist()
-        tipo_obra = st.selectbox('Selecione o Tipo de Obra', tipo_obra_opcoes)
-        servicos_opcoes = df['SERVIÇO'].unique().tolist()
-        servico = st.selectbox('Selecione o Serviço', servicos_opcoes)
-        mes_ano_opcoes = df['DATA_FORMATADA'].unique().tolist()
-        datas_selecionadas = st.multiselect('Selecione o(s) Mês/Ano', mes_ano_opcoes, default=mes_ano_opcoes)
-
-    df_filtrado = filtrar_dados(df, tipo_obra, servico, datas_selecionadas)
-    fig_produtividade = criar_grafico_produtividade(df_filtrado)
-    fig_barras = criar_grafico_barras(df_filtrado)
-
-    st.title("📈 Dashboard de Produtividade")
-    st.plotly_chart(fig_produtividade)
-    st.plotly_chart(fig_barras)
-
 # ---------- Execução Principal ----------
+
 def main():
     st.set_page_config(page_title="Dashboards de Obra", layout="wide")
 
@@ -244,6 +188,7 @@ def main():
     if not st.session_state['logado']:
         tela_login()
     else:
+        sidebar_flutuante()  # Adiciona a sidebar flutuante
         st.sidebar.title(f"👋 Bem-vindo, {st.session_state['usuario']}")
 
         aba1, aba2, aba3 = st.tabs(["📊 Efetivo", "📈 Produtividade", "🏗️ Análise Custo e Planejamento"])
@@ -266,4 +211,4 @@ def main():
             )
 
 if __name__ == "__main__":
-    main() 
+    main()

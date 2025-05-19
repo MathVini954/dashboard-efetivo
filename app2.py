@@ -1,33 +1,8 @@
-import streamlit as st
+ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import hashlib
 import os
-
-# ---------- SIDEBAR INTERATIVA FIXÁVEL ----------
-if "sidebar_fixed" not in st.session_state:
-    st.session_state.sidebar_fixed = False
-
-with st.sidebar:
-    fixar = st.checkbox("📌 Fixar Sidebar", value=st.session_state.sidebar_fixed)
-    st.session_state.sidebar_fixed = fixar
-
-    if not st.session_state.sidebar_fixed:
-        st.markdown("""
-            <style>
-                [data-testid="stSidebar"] {
-                    transition: all 0.3s ease-in-out;
-                    width: 0;
-                    overflow-x: hidden;
-                }
-                [data-testid="stSidebar"]:hover {
-                    width: 300px !important;
-                    overflow-x: visible;
-                    background-color: #f0f2f6;
-                    padding: 1rem;
-                }
-            </style>
-        """, unsafe_allow_html=True)
 
 # ---------- Funções de autenticação ----------
 def hash_senha(senha):

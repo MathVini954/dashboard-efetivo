@@ -101,7 +101,6 @@ def carregar_dados_efetivo():
 
     return df, df_terceiros
 
-
 def dashboard_efetivo():
     st.header("📊 Efetivo da Obra")
 
@@ -121,61 +120,38 @@ def dashboard_efetivo():
     col2.metric("🧑‍💼 Indireto", df_filtrado[df_filtrado['Tipo'] == 'INDIRETO'].shape[0])
     col3.metric("🏗️ Terceiros", int(total_terceiros))
 
-    # Gráfico 1: Barras por função
+    # Gráfico de Pizza
+    pizza = df_filtrado['Tipo'].value_counts().reset_index()
+    pizza.columns = ['Tipo', 'count']
+    pizza = pd.concat([pizza, pd.DataFrame([{'Tipo': 'TERCEIROS', 'count': total_terceiros}])], ignore_index=True)
+
+    fig_pizza = px.pie(pizza, names='Tipo', values='count', title='Distribuição por Tipo de Efetivo')
+    st.plotly_chart(fig_pizza, use_container_width=True)
+
+    # Gráfico de Coluna por Função
     st.subheader("🔧 Quantidade por Função")
-    fig_barra = px.bar(
-        df_filtrado.groupby('Função').size().reset_index(name='Qtd'),
-        x='Função', y='Qtd',
+    qtd_funcao = df_filtrado.groupby('Função').size().reset_index(name='Qtd')
+    fig_coluna = px.bar(
+        qtd_funcao,
+        x='Função',
+        y='Qtd',
         title='Quantidade por Função',
-        labels={'Qtd': 'Quantidade de Funcionários'},
-        color='Qtd'
+        color='Qtd',
+        labels={'Qtd': 'Quantidade'}
     )
-    st.plotly_chart(fig_barra, use_container_width=True)
+    st.plotly_chart(fig_coluna, use_container_width=True)
 
-    # Gráfico 2: Dispersão Produção x Hora Extra
+    # Gráfico de Dispersão: Produção × Hora Extra
     st.subheader("📈 Produção x Hora Extra")
     fig_disp = px.scatter(
         df_filtrado,
-        x='PRODUÇÃO', y='Total Extra',
-        hover_data=['Nome', 'Função'],
+        x='PRODUÇÃO',
+        y='Total Extra',
         title='Relação entre Produção e Hora Extra',
-        labels={'PRODUÇÃO': 'Produção (m² ou un)', 'Total Extra': 'Horas Extras Totais'}
+        labels={'PRODUÇÃO': 'Produção (m² ou un)', 'Total Extra': 'Horas Extras Totais'},
+        hover_data=['Nome', 'Função']
     )
     st.plotly_chart(fig_disp, use_container_width=True)
-
-    # Gráfico 3: Pizza por tipo
-    st.subheader("🧩 Distribuição por Tipo")
-    pizza = df_filtrado['Tipo'].value_counts().reset_index()
-    pizza.columns = ['Tipo', 'count']
-    pizza = pd.concat([pizza, pd.DataFrame([{'Tipo': 'TERCEIROS', 'count': total_terceiros}])], ignore_index=True)
-
-    fig_pizza = px.pie(pizza, names='Tipo', values='count', title='Distribuição por Tipo de Efetivo')
-    st.plotly_chart(fig_pizza, use_container_width=True)
-
-    # Tabela de Terceiros
-    with st.expander("🔎 Ver empresas terceirizadas"):
-        st.dataframe(df_terceiros_filtrado[['Obra', 'Empresa', 'Qtd']], hide_index=True)
-
-
-    # Gráfico 2: Dispersão Produção x Hora Extra
-    st.subheader("📈 Produção x Hora Extra")
-    fig_disp = px.scatter(
-        df_filtrado,
-        x='PRODUÇÃO', y='Total Extra',
-        hover_data=['Nome', 'Função'],
-        title='Relação entre Produção e Hora Extra',
-        labels={'PRODUÇÃO': 'Produção (m² ou un)', 'Total Extra': 'Horas Extras Totais'}
-    )
-    st.plotly_chart(fig_disp, use_container_width=True)
-
-    # Gráfico 3: Pizza por tipo
-    st.subheader("🧩 Distribuição por Tipo")
-    pizza = df_filtrado['Tipo'].value_counts().reset_index()
-    pizza.columns = ['Tipo', 'count']
-    pizza = pd.concat([pizza, pd.DataFrame([{'Tipo': 'TERCEIROS', 'count': total_terceiros}])], ignore_index=True)
-
-    fig_pizza = px.pie(pizza, names='Tipo', values='count', title='Distribuição por Tipo de Efetivo')
-    st.plotly_chart(fig_pizza, use_container_width=True)
 
     # Tabela de Terceiros
     with st.expander("🔎 Ver empresas terceirizadas"):

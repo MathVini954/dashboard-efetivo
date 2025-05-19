@@ -3,62 +3,84 @@ import pandas as pd
 import plotly.express as px
 import hashlib
 import os
-import streamlit.components.v1 as components
+ import streamlit as st
 
-def sidebar_interativa():
-    components.html("""
+# Inicializa o estado do botão
+if "sidebar_fixed" not in st.session_state:
+    st.session_state.sidebar_fixed = False
+
+# CSS customizado para animar a sidebar
+st.markdown(
+    """
     <style>
-    #custom-sidebar {
-        position: fixed;
-        top: 0;
-        left: -240px;
-        width: 240px;
-        height: 100%;
+    /* Oculta o cabeçalho padrão do Streamlit */
+    header, footer {visibility: hidden;}
+
+    /* Estiliza a sidebar nativa */
+    section[data-testid="stSidebar"] {
+        transition: all 0.3s ease;
         background-color: #111;
         color: white;
-        padding: 20px;
-        transition: left 0.3s;
-        z-index: 9999;
+        padding: 1rem;
+        width: 260px !important;
     }
-    #custom-sidebar:hover {
-        left: 0;
+
+    /* Esconde a sidebar se não estiver fixada */
+    body:not(:hover) section[data-testid="stSidebar"]:not(.fixed-sidebar) {
+        margin-left: -260px;
     }
-    #custom-sidebar.fixed {
-        left: 0 !important;
+
+    /* Quando fixada, a classe impede esconder */
+    .fixed-sidebar {
+        margin-left: 0 !important;
     }
-    #fix-btn {
-        position: absolute;
-        top: 10px;
-        right: 10px;
-        background-color: #444;
-        color: white;
-        border: none;
-        padding: 5px 10px;
-        cursor: pointer;
+
+    /* Botão flutuante para fixar/desafixar */
+    #fixar-btn {
+        position: fixed;
+        top: 20px;
+        left: 10px;
+        z-index: 10000;
     }
     </style>
-    <div id="custom-sidebar">
-        <button id="fix-btn">Fixar</button>
-        <h3 style="color:white;">Filtros</h3>
-        <p style="font-size: 14px;">(Coloque seus filtros aqui com Streamlit)</p>
-    </div>
-    <script>
-    const sidebar = document.getElementById("custom-sidebar");
-    const fixBtn = document.getElementById("fix-btn");
-    let fixed = false;
+    """,
+    unsafe_allow_html=True,
+)
 
-    fixBtn.addEventListener("click", () => {
-        fixed = !fixed;
-        if (fixed) {
-            sidebar.classList.add("fixed");
-            fixBtn.innerText = "Desafixar";
-        } else {
-            sidebar.classList.remove("fixed");
-            fixBtn.innerText = "Fixar";
-        }
-    });
-    </script>
-    """, height=600)
+# Botão de fixar/desafixar
+fixar = st.button(
+    "📌 Fixar" if not st.session_state.sidebar_fixed else "❌ Desafixar",
+    key="fixar-btn"
+)
+if fixar:
+    st.session_state.sidebar_fixed = not st.session_state.sidebar_fixed
+
+# Aplica a classe se a sidebar estiver fixada
+if st.session_state.sidebar_fixed:
+    st.markdown(
+        """<script>
+        document.querySelector('section[data-testid="stSidebar"]').classList.add('fixed-sidebar');
+        </script>""",
+        unsafe_allow_html=True,
+    )
+else:
+    st.markdown(
+        """<script>
+        document.querySelector('section[data-testid="stSidebar"]').classList.remove('fixed-sidebar');
+        </script>""",
+        unsafe_allow_html=True,
+    )
+
+# CONTEÚDO REAL NA SIDEBAR
+with st.sidebar:
+    st.header("🔍 Filtros")
+    st.selectbox("Categoria", ["Todos", "A", "B", "C"])
+    st.slider("Valor mínimo", 0, 100, 50)
+
+# CONTEÚDO PRINCIPAL
+st.title("📊 Meu Dashboard")
+st.write("Este é o conteúdo principal que permanece visível.")
+
 # ---------- Funções de autenticação ----------
 
 def hash_senha(senha):

@@ -66,106 +66,115 @@ def tela_login():
                     salvar_usuario(novo_usuario, hash_senha(nova_senha))
                     st.success("✅ Usuário cadastrado com sucesso! Faça login.")
 
+# --- Carregamento dos dados ---
 @st.cache_data
-def carregar_dados_efetivo():
-    df = pd.read_excel("efetivo_abril.xlsx", sheet_name="Efetivo", engine="openpyxl")
+def carregar_dados(arquivo):
+    df = pd.read_excel(arquivo, engine="openpyxl")
     df.columns = df.columns.str.strip()
     df = df.fillna(0)
 
-    # Corrige colunas de hora extra
     for col in ['Hora Extra 70% - Sabado', 'Hora Extra 70% - Semana', 'PRODUÇÃO']:
         if col in df.columns:
             df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
 
-    # Coluna Tipo: Direto ou Indireto
-    df['Tipo'] = df['DIRETO / INDIRETO'].astype(str).str.upper().str.strip()
+    if 'DIRETO / INDIRETO' in df.columns:
+        df['Tipo'] = df['DIRETO / INDIRETO'].astype(str).str.upper().str.strip()
+    else:
+        df['Tipo'] = 'INDEFINIDO'
+
     df['Total Extra'] = df['Hora Extra 70% - Sabado'] + df['Hora Extra 70% - Semana']
+    return df
 
-    # Lê a aba dos terceiros corretamente
-    try:
-        df_terceiros = pd.read_excel("efetivo_abril.xlsx", sheet_name="TERCEIROS", engine="openpyxl")
-        df_terceiros.columns = df_terceiros.columns.str.strip()
+st.title("📊 Análise de Efetivo - Abril 2025")
 
-        # Assume estrutura: Obra | Empresa | Qtd
-        df_terceiros = df_terceiros.rename(columns={
-            df_terceiros.columns[0]: 'Obra',
-            df_terceiros.columns[1]: 'Empresa',
-            df_terceiros.columns[2]: 'Qtd'
-        })
+# Carregar o arquivo Excel diretamente
+df = carregar_dados("efetivo_abril.xlsx")
 
-        df_terceiros['Qtd'] = pd.to_numeric(df_terceiros['Qtd'], errors='coerce').fillna(0)
-        df_terceiros['Obra'] = df_terceiros['Obra'].astype(str).str.strip()
+# FILTROS
+st.sidebar.header("🔍 Filtros")
+lista_obras = sorted(df['Obra'].astype(str).unique())
+obras_selecionadas = st.sidebar.multiselect("Obras:", lista_obras, default=lista_obras)
 
-    except Exception as e:
-        df_terceiros = pd.DataFrame(columns=['Obra', 'Empresa', 'Qtd'])
+tipo_selecionado = st.sidebar.radio("Tipo:", ['Todos', 'DIRETO', 'INDIRETO', 'TERCEIRO'], horizontal=True)
+tipo_analise = st.sidebar.radio("Tipo de Análise da Tabela:", ['Produção', 'Hora Extra Semana', 'Hora Extra Sábado'])
+qtd_linhas = st.sidebar.radio("Qtd. de Funcionários na Tabela:", ['5', '10', '20', 'Todos'], horizontal=True)
 
-    return df, df_terceiros
-# ---------- Dashboard de Efetivo ----------
-@st.cache_data
-def carregar_dados_efetivo():
-    df = pd.read_excel("efetivo_abril.xlsx", sheet_name="Efetivo", engine="openpyxl")
-    df.columns = df.columns.str.strip()
-    df = df.fillna(0)
+# Aplicar filtros gerais
+df_filtrado = df[df['Obra'].isin(obras_selecionadas)]
+if tipo_selecionado != 'Todos':
+    df_filtrado = df_filtrado[df_filtrado['Tipo'] == tipo_selecionado]
 
-    # Corrige colunas de hora extra
-    for col in ['Hora Extra 70% - Sabado', 'Hora Extra 70% - Semana', 'PRODUÇÃO']:
-        if col in df.columns:
-            df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
+# --- KPIs ---
+col1, col2, col3, col4 = st.columns(4)
+col1.metric("👷 Direto", len(df_filtrado[df_filtrado['Tipo'] == 'DIRETO']))
+col2.metric("👷‍♂️ Indireto", len(df_filtrado[df_filtrado['Tipo'] == 'INDIRETO']))
+col3.metric("🏗️ Terceiro", len(df_filtrado[df_filtrado['Tipo'] == 'TERCEIRO']))
+col4.metric("👥 Total", len(df_filtrado))
 
-    # Coluna Tipo: Direto ou Indireto
-    df['Tipo'] = df['DIRETO / INDIRETO'].astype(str).str.upper().str.strip()
-    df['Total Extra'] = df['Hora Extra 70% - Sabado'] + df['Hora Extra 70% - Semana']
+st.divider()
 
-    # Lê a aba dos terceiros
-    try:
-        df_terceiros = pd.read_excel("efetivo_abril.xlsx", sheet_name="Terceiros", engine="openpyxl")
-        df_terceiros.columns = df_terceiros.columns.str.strip()
+# --- GRÁFICO PIZZA + TABELA ---
+col_g1, col_g2 = st.columns([1, 2])
 
-        # Renomeia colunas (ajuste conforme necessário)
-        df_terceiros = df_terceiros.rename(columns={
-            df_terceiros.columns[0]: 'Obra',       # Nome da obra
-            df_terceiros.columns[1]: 'Empresa',    # Nome da empresa
-            df_terceiros.columns[2]: 'Qtd'         # Quantidade de funcionários
-        })
-
-        df_terceiros['Qtd'] = pd.to_numeric(df_terceiros['Qtd'], errors='coerce').fillna(0)
-        df_terceiros['Obra'] = df_terceiros['Obra'].astype(str).str.strip()
-    except Exception as e:
-        df_terceiros = pd.DataFrame(columns=['Obra', 'Empresa', 'Qtd'])
-
-    return df, df_terceiros
-
-
-def dashboard_efetivo():
-    st.header("📊 Efetivo da Obra")
-
-    df, df_terceiros = carregar_dados_efetivo()
-
-    obras = df['Obra'].dropna().unique()
-    obras_selecionadas = st.multiselect("Selecione a(s) obra(s):", obras, default=obras)
-
-    # Filtra dados principais e terceiros
-    df_filtrado = df[df['Obra'].isin(obras_selecionadas)]
-    df_terceiros_filtrado = df_terceiros[df_terceiros['Obra'].isin(obras_selecionadas)]
-    total_terceiros = df_terceiros_filtrado['Qtd'].sum()
-
-    # KPIs
-    col1, col2, col3 = st.columns(3)
-    col1.metric("👷‍♂️ Direto", df_filtrado[df_filtrado['Tipo'] == 'DIRETO'].shape[0])
-    col2.metric("🧑‍💼 Indireto", df_filtrado[df_filtrado['Tipo'] == 'INDIRETO'].shape[0])
-    col3.metric("🏗️ Terceiros", int(total_terceiros))
-
-    # Gráfico de Pizza
-    pizza = df_filtrado['Tipo'].value_counts().reset_index()
+with col_g1:
+    df_pizza = df[df['Obra'].isin(obras_selecionadas)]
+    pizza = df_pizza['Tipo'].value_counts().reset_index()
     pizza.columns = ['Tipo', 'count']
-    pizza = pd.concat([pizza, pd.DataFrame([{'Tipo': 'TERCEIROS', 'count': total_terceiros}])], ignore_index=True)
-
-    fig_pizza = px.pie(pizza, names='Tipo', values='count', title='Distribuição por Tipo de Efetivo')
+    fig_pizza = px.pie(pizza, names='Tipo', values='count', title='Distribuição por Tipo de Efetivo',
+                       color_discrete_sequence=px.colors.sequential.Plasma)
     st.plotly_chart(fig_pizza, use_container_width=True)
 
-    # (Opcional) Mostrar tabela de terceiros
-    with st.expander("🔎 Ver empresas terceirizadas"):
-        st.dataframe(df_terceiros_filtrado[['Obra', 'Empresa', 'Qtd']], hide_index=True)
+with col_g2:
+    coluna_valor = {
+        'Produção': 'PRODUÇÃO',
+        'Hora Extra Semana': 'Hora Extra 70% - Semana',
+        'Hora Extra Sábado': 'Hora Extra 70% - Sabado'
+    }[tipo_analise]
+
+    # Adicionar a coluna REFLEXO S PRODUÇÃO apenas quando Produção for selecionada
+    if tipo_analise == 'Produção' and 'REFLEXO S PRODUÇÃO' in df.columns:
+        df_filtrado['DSR'] = df_filtrado['REFLEXO S PRODUÇÃO']
+        ranking = df_filtrado[['Funcionário', 'Função', 'Obra', 'Tipo', 'PRODUÇÃO', 'DSR']].sort_values(by='PRODUÇÃO', ascending=False)
+    else:
+        ranking = df_filtrado[['Funcionário', 'Função', 'Obra', 'Tipo', coluna_valor]].sort_values(by=coluna_valor, ascending=False)
+
+    valor_total = df_filtrado[coluna_valor].sum()
+    st.markdown(f"### 📋 Top Funcionários por **{tipo_analise}**")
+    st.markdown(f"**Total em {tipo_analise}:** R$ {valor_total:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+
+    if qtd_linhas != 'Todos':
+        ranking = ranking.head(int(qtd_linhas))
+
+    # Formatar como R$
+    ranking[coluna_valor] = ranking[coluna_valor].apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+    if 'DSR' in ranking.columns:
+        ranking['DSR'] = ranking['DSR'].apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+
+    st.dataframe(ranking, use_container_width=True)
+
+# --- GRÁFICO DE BARRAS (embaixo) ---
+st.divider()
+col_bar = st.container()
+with col_bar:
+    graf_funcao = df_filtrado['Função'].value_counts().reset_index()
+    graf_funcao.columns = ['Função', 'Qtd']
+    fig_bar = px.bar(graf_funcao, x='Função', y='Qtd', title='Efetivo por Função', text='Qtd',
+                     color='Qtd', color_continuous_scale='Blues')
+    fig_bar.update_layout(xaxis_tickangle=-45)
+    st.plotly_chart(fig_bar, use_container_width=True)
+
+# --- GRÁFICO DE DISPERSÃO ---
+st.divider()
+st.markdown("### 🔍 Correlação: Produção vs. Hora Extra Total")
+fig_disp = px.scatter(df_filtrado,
+                      x="Total Extra",
+                      y="PRODUÇÃO",
+                      color="Tipo",
+                      hover_data=["Funcionário", "Função", "Obra"],
+                      trendline="ols",
+                      labels={"Total Extra": "Hora Extra Total", "PRODUÇÃO": "Produção"},
+                      title="Dispersão: Hora Extra Total vs Produção")
+st.plotly_chart(fig_disp, use_container_width=True)
 
 # ---------- Dashboard de Produtividade ----------
 def dashboard_produtividade():

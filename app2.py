@@ -78,28 +78,29 @@ def carregar_dados_efetivo():
         if col in df.columns:
             df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
 
-    # Coluna Tipo: Direto ou Indireto
     df['Tipo'] = df['DIRETO / INDIRETO'].astype(str).str.upper().str.strip()
     df['Total Extra'] = df['Hora Extra 70% - Sabado'] + df['Hora Extra 70% - Semana']
 
-    # Lê a aba dos terceiros
+    # Lê a aba "TERCEIROS"
     try:
-        df_terceiros = pd.read_excel("efetivo_abril.xlsx", sheet_name="Terceiros", engine="openpyxl")
+        df_terceiros = pd.read_excel("efetivo_abril.xlsx", sheet_name="TERCEIROS", engine="openpyxl")
         df_terceiros.columns = df_terceiros.columns.str.strip()
 
-        # Renomeia colunas (ajuste conforme necessário)
         df_terceiros = df_terceiros.rename(columns={
-            df_terceiros.columns[0]: 'Obra',       # Nome da obra
-            df_terceiros.columns[1]: 'Empresa',    # Nome da empresa
-            df_terceiros.columns[2]: 'Qtd'         # Quantidade de funcionários
+            df_terceiros.columns[0]: 'Obra',
+            df_terceiros.columns[1]: 'Empresa',
+            df_terceiros.columns[2]: 'Qtd'
         })
 
         df_terceiros['Qtd'] = pd.to_numeric(df_terceiros['Qtd'], errors='coerce').fillna(0)
         df_terceiros['Obra'] = df_terceiros['Obra'].astype(str).str.strip()
+        df_terceiros['Empresa'] = df_terceiros['Empresa'].astype(str).str.strip()
+
     except Exception as e:
         df_terceiros = pd.DataFrame(columns=['Obra', 'Empresa', 'Qtd'])
 
     return df, df_terceiros
+
 
 
 def dashboard_efetivo():

@@ -78,14 +78,16 @@ def carregar_dados_efetivo():
         if col in df.columns:
             df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
 
+    # Coluna Tipo: Direto ou Indireto
     df['Tipo'] = df['DIRETO / INDIRETO'].astype(str).str.upper().str.strip()
     df['Total Extra'] = df['Hora Extra 70% - Sabado'] + df['Hora Extra 70% - Semana']
 
-    # Lê a aba "TERCEIROS"
+    # Lê a aba dos terceiros corretamente
     try:
         df_terceiros = pd.read_excel("efetivo_abril.xlsx", sheet_name="TERCEIROS", engine="openpyxl")
         df_terceiros.columns = df_terceiros.columns.str.strip()
 
+        # Assume estrutura: Obra | Empresa | Qtd
         df_terceiros = df_terceiros.rename(columns={
             df_terceiros.columns[0]: 'Obra',
             df_terceiros.columns[1]: 'Empresa',
@@ -94,13 +96,11 @@ def carregar_dados_efetivo():
 
         df_terceiros['Qtd'] = pd.to_numeric(df_terceiros['Qtd'], errors='coerce').fillna(0)
         df_terceiros['Obra'] = df_terceiros['Obra'].astype(str).str.strip()
-        df_terceiros['Empresa'] = df_terceiros['Empresa'].astype(str).str.strip()
 
     except Exception as e:
         df_terceiros = pd.DataFrame(columns=['Obra', 'Empresa', 'Qtd'])
 
     return df, df_terceiros
-
 
 
 def dashboard_efetivo():
@@ -130,9 +130,18 @@ def dashboard_efetivo():
     fig_pizza = px.pie(pizza, names='Tipo', values='count', title='Distribuição por Tipo de Efetivo')
     st.plotly_chart(fig_pizza, use_container_width=True)
 
-    # (Opcional) Mostrar tabela de terceiros
+    # Gráfico de barras (Exemplo adicional, se quiser manter outro)
+    fig_barra = px.bar(
+        df_filtrado.groupby('Função').size().reset_index(name='Qtd'),
+        x='Função', y='Qtd',
+        title='Quantidade por Função'
+    )
+    st.plotly_chart(fig_barra, use_container_width=True)
+
+    # Mostrar tabela de terceiros
     with st.expander("🔎 Ver empresas terceirizadas"):
         st.dataframe(df_terceiros_filtrado[['Obra', 'Empresa', 'Qtd']], hide_index=True)
+
 
 # ---------- Dashboard de Produtividade ----------
 def dashboard_produtividade():

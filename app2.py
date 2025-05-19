@@ -157,6 +157,31 @@ def dashboard_efetivo():
         st.dataframe(df_terceiros_filtrado[['Obra', 'Empresa', 'Qtd']], hide_index=True)
 
 
+    # Gráfico 2: Dispersão Produção x Hora Extra
+    st.subheader("📈 Produção x Hora Extra")
+    fig_disp = px.scatter(
+        df_filtrado,
+        x='PRODUÇÃO', y='Total Extra',
+        hover_data=['Nome', 'Função'],
+        title='Relação entre Produção e Hora Extra',
+        labels={'PRODUÇÃO': 'Produção (m² ou un)', 'Total Extra': 'Horas Extras Totais'}
+    )
+    st.plotly_chart(fig_disp, use_container_width=True)
+
+    # Gráfico 3: Pizza por tipo
+    st.subheader("🧩 Distribuição por Tipo")
+    pizza = df_filtrado['Tipo'].value_counts().reset_index()
+    pizza.columns = ['Tipo', 'count']
+    pizza = pd.concat([pizza, pd.DataFrame([{'Tipo': 'TERCEIROS', 'count': total_terceiros}])], ignore_index=True)
+
+    fig_pizza = px.pie(pizza, names='Tipo', values='count', title='Distribuição por Tipo de Efetivo')
+    st.plotly_chart(fig_pizza, use_container_width=True)
+
+    # Tabela de Terceiros
+    with st.expander("🔎 Ver empresas terceirizadas"):
+        st.dataframe(df_terceiros_filtrado[['Obra', 'Empresa', 'Qtd']], hide_index=True)
+
+
 # ---------- Dashboard de Produtividade ----------
 def dashboard_produtividade():
     def carregar_dados():

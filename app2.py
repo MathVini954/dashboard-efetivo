@@ -100,6 +100,41 @@ def carregar_dados_efetivo():
         df_terceiros = pd.DataFrame(columns=['Obra', 'Empresa', 'Qtd'])
 
     return df, df_terceiros
+# ---------- Dashboard de Efetivo ----------
+@st.cache_data
+def carregar_dados_efetivo():
+    df = pd.read_excel("efetivo_abril.xlsx", sheet_name="Efetivo", engine="openpyxl")
+    df.columns = df.columns.str.strip()
+    df = df.fillna(0)
+
+    # Corrige colunas de hora extra
+    for col in ['Hora Extra 70% - Sabado', 'Hora Extra 70% - Semana', 'PRODUÇÃO']:
+        if col in df.columns:
+            df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
+
+    # Coluna Tipo: Direto ou Indireto
+    df['Tipo'] = df['DIRETO / INDIRETO'].astype(str).str.upper().str.strip()
+    df['Total Extra'] = df['Hora Extra 70% - Sabado'] + df['Hora Extra 70% - Semana']
+
+    # Lê a aba dos terceiros
+    try:
+        df_terceiros = pd.read_excel("efetivo_abril.xlsx", sheet_name="Terceiros", engine="openpyxl")
+        df_terceiros.columns = df_terceiros.columns.str.strip()
+
+        # Renomeia colunas (ajuste conforme necessário)
+        df_terceiros = df_terceiros.rename(columns={
+            df_terceiros.columns[0]: 'Obra',       # Nome da obra
+            df_terceiros.columns[1]: 'Empresa',    # Nome da empresa
+            df_terceiros.columns[2]: 'Qtd'         # Quantidade de funcionários
+        })
+
+        df_terceiros['Qtd'] = pd.to_numeric(df_terceiros['Qtd'], errors='coerce').fillna(0)
+        df_terceiros['Obra'] = df_terceiros['Obra'].astype(str).str.strip()
+    except Exception as e:
+        df_terceiros = pd.DataFrame(columns=['Obra', 'Empresa', 'Qtd'])
+
+    return df, df_terceiros
+
 
 def dashboard_efetivo():
     st.header("📊 Efetivo da Obra")
@@ -128,35 +163,9 @@ def dashboard_efetivo():
     fig_pizza = px.pie(pizza, names='Tipo', values='count', title='Distribuição por Tipo de Efetivo')
     st.plotly_chart(fig_pizza, use_container_width=True)
 
-    # Gráfico de Coluna por Função
-    st.subheader("🔧 Quantidade por Função")
-    qtd_funcao = df_filtrado.groupby('Função').size().reset_index(name='Qtd')
-    fig_coluna = px.bar(
-        qtd_funcao,
-        x='Função',
-        y='Qtd',
-        title='Quantidade por Função',
-        color='Qtd',
-        labels={'Qtd': 'Quantidade'}
-    )
-    st.plotly_chart(fig_coluna, use_container_width=True)
-
-    # Gráfico de Dispersão: Produção × Hora Extra
-    st.subheader("📈 Produção x Hora Extra")
-    fig_disp = px.scatter(
-        df_filtrado,
-        x='PRODUÇÃO',
-        y='Total Extra',
-        title='Relação entre Produção e Hora Extra',
-        labels={'PRODUÇÃO': 'Produção (m² ou un)', 'Total Extra': 'Horas Extras Totais'},
-        hover_data=['Nome', 'Função']
-    )
-    st.plotly_chart(fig_disp, use_container_width=True)
-
-    # Tabela de Terceiros
+    # (Opcional) Mostrar tabela de terceiros
     with st.expander("🔎 Ver empresas terceirizadas"):
         st.dataframe(df_terceiros_filtrado[['Obra', 'Empresa', 'Qtd']], hide_index=True)
-
 
 # ---------- Dashboard de Produtividade ----------
 def dashboard_produtividade():

@@ -3,6 +3,63 @@ import pandas as pd
 import plotly.express as px
 import hashlib
 import os
+import streamlit.components.v1 as components
+
+# ---------- Sidebar Interativa Visual ----------
+def sidebar_interativa():
+    components.html("""
+    <style>
+    #custom-sidebar {
+        position: fixed;
+        top: 0;
+        left: -240px;
+        width: 240px;
+        height: 100%;
+        background-color: #111;
+        color: white;
+        padding: 20px;
+        transition: left 0.3s;
+        z-index: 9999;
+    }
+    #custom-sidebar:hover {
+        left: 0;
+    }
+    #custom-sidebar.fixed {
+        left: 0 !important;
+    }
+    #fix-btn {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background-color: #444;
+        color: white;
+        border: none;
+        padding: 5px 10px;
+        cursor: pointer;
+    }
+    </style>
+    <div id="custom-sidebar">
+        <button id="fix-btn">\ud83d\udccc</button>
+        <h3 style="color:white;">\ud83d\udd0d Filtros</h3>
+        <p style="font-size: 14px;">(Filtros reais ao lado na barra lateral)</p>
+    </div>
+    <script>
+    const sidebar = document.getElementById("custom-sidebar");
+    const fixBtn = document.getElementById("fix-btn");
+    let fixed = false;
+
+    fixBtn.addEventListener("click", () => {
+        fixed = !fixed;
+        if (fixed) {
+            sidebar.classList.add("fixed");
+            fixBtn.innerText = "\u274c";
+        } else {
+            sidebar.classList.remove("fixed");
+            fixBtn.innerText = "\ud83d\udccc";
+        }
+    });
+    </script>
+    """, height=0)
 
 # ---------- Funções de autenticação ----------
 
@@ -165,9 +222,11 @@ def carregar_dados_efetivo():
     return df
 
 # ---------- Execução Principal ----------
-
 def main():
     st.set_page_config(page_title="Dashboards de Obra", layout="wide")
+
+    # Sidebar visual interativa
+    sidebar_interativa()
 
     col1, col2 = st.columns([1, 4])
 
@@ -188,10 +247,10 @@ def main():
     if not st.session_state['logado']:
         tela_login()
     else:
-        sidebar_flutuante()  # Adiciona a sidebar flutuante
-        st.sidebar.title(f"👋 Bem-vindo, {st.session_state['usuario']}")
+        with st.sidebar:
+            st.title(f"\ud83d\udc4b Bem-vindo, {st.session_state['usuario']}")
 
-        aba1, aba2, aba3 = st.tabs(["📊 Efetivo", "📈 Produtividade", "🏗️ Análise Custo e Planejamento"])
+        aba1, aba2, aba3 = st.tabs(["\ud83d\udcca Efetivo", "\ud83d\udcc8 Produtividade", "\ud83c\udfd7\ufe0f An\u00e1lise Custo e Planejamento"])
 
         with aba1:
             dashboard_efetivo()
@@ -200,12 +259,12 @@ def main():
             dashboard_produtividade()
 
         with aba3:
-            st.title("🏗️ ANÁLISE CUSTO E PLANEJAMENTO")
+            st.title("\ud83c\udfd7\ufe0f AN\u00c1LISE CUSTO E PLANEJAMENTO")
             st.markdown(
                 """
                 <div style="text-align: center; margin-top: 100px;">
                     <h2>ESTAMOS EM DESENVOLVIMENTO</h2>
-                    <div style="font-size: 50px; color: grey;">👷‍♂️🚧</div>
+                    <div style="font-size: 50px; color: grey;">\ud83d\udc77\u200d\u2642\ufe0f\ud83d\udea7</div>
                 </div>
                 """, unsafe_allow_html=True
             )

@@ -5,7 +5,6 @@ import hashlib
 import os
 import streamlit.components.v1 as components
 
-# ---------- Sidebar Interativa Visual ----------
 def sidebar_interativa():
     components.html("""
     <style>
@@ -39,9 +38,9 @@ def sidebar_interativa():
     }
     </style>
     <div id="custom-sidebar">
-        <button id="fix-btn">\ud83d\udccc</button>
-        <h3 style="color:white;">\ud83d\udd0d Filtros</h3>
-        <p style="font-size: 14px;">(Filtros reais ao lado na barra lateral)</p>
+        <button id="fix-btn">Fixar</button>
+        <h3 style="color:white;">Filtros</h3>
+        <p style="font-size: 14px;">(Coloque seus filtros aqui com Streamlit)</p>
     </div>
     <script>
     const sidebar = document.getElementById("custom-sidebar");
@@ -52,15 +51,14 @@ def sidebar_interativa():
         fixed = !fixed;
         if (fixed) {
             sidebar.classList.add("fixed");
-            fixBtn.innerText = "\u274c";
+            fixBtn.innerText = "Desafixar";
         } else {
             sidebar.classList.remove("fixed");
-            fixBtn.innerText = "\ud83d\udccc";
+            fixBtn.innerText = "Fixar";
         }
     });
     </script>
-    """, height=0)
-
+    """, height=600)
 # ---------- Funções de autenticação ----------
 
 def hash_senha(senha):

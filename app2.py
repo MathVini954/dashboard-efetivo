@@ -66,21 +66,45 @@ def tela_login():
                     salvar_usuario(novo_usuario, hash_senha(nova_senha))
                     st.success("✅ Usuário cadastrado com sucesso! Faça login.")
 
-# ---------- Dashboard de Efetivo ----------
 @st.cache_data
 def carregar_dados_efetivo():
-    df = pd.read_excel("efetivo_abril.xlsx", engine="openpyxl")
-    df.columns = df.columns.str.strip()
-    df = df.fillna(0)
-    for col in ['Hora Extra 70% - Sabado', 'Hora Extra 70% - Semana', 'PRODUÇÃO']:
-        if col in df.columns:
-            df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
-    if 'DIRETO / INDIRETO' in df.columns:
-        df['Tipo'] = df['DIRETO / INDIRETO'].astype(str).str.upper().str.strip()
+    # Lê a aba principal com funcionários diretos/indiretos
+    df_principal = pd.read_excel("efetivo_abril.xlsx", sheet_name=0, engine="openpyxl")
+
+    if 'DIRETO / INDIRETO' in df_principal.columns:
+        df_principal['Tipo'] = df_principal['DIRETO / INDIRETO'].astype(str).str.upper().str.strip()
     else:
-        df['Tipo'] = 'INDEFINIDO'
-    df['Total Extra'] = df['Hora Extra 70% - Sabado'] + df['Hora Extra 70% - Semana']
-    return df
+        df_principal['Tipo'] = 'INDEFINIDO'
+
+    # Lê a aba 'TERCEIROS'
+    try:
+        df_terceiros = pd.read_excel("efetivo_abril.xlsx", sheet_name='TERCEIROS', engine='openpyxl')
+        df_terceiros = df_terceiros[['Obra', 'Empresa', 'Quantidade']].copy()
+        df_terceiros['Tipo'] = 'TERCEIRO'
+    except Exception as e:
+        st.warning("Erro ao carregar a aba 'TERCEIROS': " + str(e))
+        df_terceiros = pd.DataFrame(columns=['Obra', 'Empresa', 'Quantidade', 'Tipo'])
+
+    # Padronizar colunas para união
+    df_terceiros.rename(columns={'Obra': 'OBRA', 'Quantidade': 'QTDE'}, inplace=True)
+
+    # Ajustar para ter mesmas colunas do df_principal
+    df_terceiros['NOME'] = df_terceiros['Empresa']
+    df_terceiros = df_terceiros[['OBRA', 'NOME', 'QTDE', 'Tipo']]
+
+    # Ajustar df_principal para ter as mesmas colunas
+    if 'NOME' not in df_principal.columns:
+        df_principal['NOME'] = 'Funcionario'  # caso não tenha nome
+
+    if 'QTDE' not in df_principal.columns:
+        df_principal['QTDE'] = 1  # cada linha é um funcionário
+
+    df_principal = df_principal[['OBRA', 'NOME', 'QTDE', 'Tipo']]
+
+    # Junta os dois DataFrames
+    df_completo = pd.concat([df_principal, df_terceiros], ignore_index=True)
+
+    return df_completo
 
 def dashboard_efetivo():
     st.title("📊 Análise de Efetivo - Abril 2025")

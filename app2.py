@@ -163,7 +163,7 @@ def dashboard_efetivo():
     st.divider()
     st.markdown("### 🏢 Terceirizadas por Obra")
     df_empresas = df_terceiros_raw[df_terceiros_raw['Obra'].isin(obras_selecionadas)]
-    df_empresas = df_empresas.groupby('Empresa').agg({'Qtd': 'sum'}).reset_index()
+    df_empresas = df_empresas.groupby('Empresa').agg({'QUANTIDADE': 'sum'}).reset_index()
     fig_empresas = px.bar(df_empresas, x='Empresa', y='Qtd', title='Total de Terceirizados por Empresa', text='Qtd', color='Qtd', color_continuous_scale='viridis')
     fig_empresas.update_layout(xaxis_tickangle=-45)
     st.plotly_chart(fig_empresas, use_container_width=True)

@@ -191,7 +191,6 @@ def dashboard_efetivo():
         )
 
         st.plotly_chart(fig_quadrantes, use_container_width=True)
-
     # Se filtro for Terceiro, mostra tabela e gráfico detalhado dos terceiros
     if tipo_selecionado == 'TERCEIRO':
         st.divider()
@@ -208,6 +207,12 @@ def dashboard_efetivo():
         )
         fig_terceiros.update_layout(xaxis_tickangle=-45)
         st.plotly_chart(fig_terceiros, use_container_width=True)
+
+        # Tabela resumo por empresa com quantidade total
+        st.markdown("### 🧾 Resumo por Empresa - Total de Funcionários Terceirizados")
+        tabela_empresa = df_terceiros_filtrado.groupby('EMPRESA')['QUANTIDADE'].sum().reset_index()
+        tabela_empresa = tabela_empresa.sort_values(by='QUANTIDADE', ascending=False)
+        st.dataframe(tabela_empresa, use_container_width=True)
 
 # ---------- Dashboard de Produtividade ----------
 def dashboard_produtividade():

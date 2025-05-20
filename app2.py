@@ -199,17 +199,7 @@ def dashboard_efetivo():
         tabela_terceiros = df_terceiros_filtrado.groupby(['Obra', 'EMPRESA'])['QUANTIDADE'].sum().reset_index()
         st.dataframe(tabela_terceiros, use_container_width=True)
 
-        fig_terceiros = px.bar(
-            tabela_terceiros.groupby('EMPRESA')['QUANTIDADE'].sum().reset_index(),
-            x='EMPRESA',
-            y='QUANTIDADE',
-            title="Quantidade de Funcionários Terceirizados por Empresa",
-            labels={'QUANTIDADE': 'Quantidade', 'EMPRESA': 'Empresa'}
-        )
-        fig_terceiros.update_layout(xaxis_tickangle=-45)
-        st.plotly_chart(fig_terceiros, use_container_width=True)
-
-# ---------- Dashboard de Produtividade ----------
+        
 def dashboard_produtividade():
     def carregar_dados():
         df = pd.read_excel("produtividade.xlsx")

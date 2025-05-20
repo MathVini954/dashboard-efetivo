@@ -66,7 +66,6 @@ def tela_login():
                     salvar_usuario(novo_usuario, hash_senha(nova_senha))
                     st.success("✅ Usuário cadastrado com sucesso! Faça login.")
 
-# ---------- Dashboard de Efetivo ----------
 @st.cache_data
 def carregar_dados_efetivo():
     df = pd.read_excel("efetivo_abril.xlsx", engine="openpyxl")
@@ -76,7 +75,12 @@ def carregar_dados_efetivo():
         if col in df.columns:
             df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
     if 'DIRETO / INDIRETO' in df.columns:
+        # Ajustar aqui para reconhecer TERCEIRO também
         df['Tipo'] = df['DIRETO / INDIRETO'].astype(str).str.upper().str.strip()
+        # Se tiver terceiros identificados por outro campo, faça o ajuste aqui:
+        # Exemplo: se tiver coluna "Categoria" que indica "TERCEIRO", mesclar:
+        if 'Categoria' in df.columns:
+            df.loc[df['Categoria'].str.upper() == 'TERCEIRO', 'Tipo'] = 'TERCEIRO'
     else:
         df['Tipo'] = 'INDEFINIDO'
     df['Total Extra'] = df['Hora Extra 70% - Sabado'] + df['Hora Extra 70% - Semana']
@@ -98,13 +102,15 @@ def dashboard_efetivo():
     if tipo_selecionado != 'Todos':
         df_filtrado = df_filtrado[df_filtrado['Tipo'] == tipo_selecionado]
 
+    # Atualizar métricas para mostrar os 3 tipos
     col1, col2, col3, col4 = st.columns(4)
-    col1.metric("👷 Direto", len(df_filtrado[df_filtrado['Tipo'] == 'DIRETO']))
-    col2.metric("👷‍♂️ Indireto", len(df_filtrado[df_filtrado['Tipo'] == 'INDIRETO']))
-    col3.metric("🏗️ Terceiro", len(df_filtrado[df_filtrado['Tipo'] == 'TERCEIRO']))
+    col1.metric("👷 Direto", len(df[df['Tipo'] == 'DIRETO']))
+    col2.metric("👷‍♂️ Indireto", len(df[df['Tipo'] == 'INDIRETO']))
+    col3.metric("🏗️ Terceiro", len(df[df['Tipo'] == 'TERCEIRO']))
     col4.metric("👥 Total", len(df_filtrado))
     st.divider()
 
+    # Gráfico de pizza com os tipos, incluindo terceiros
     col_g1, col_g2 = st.columns([1, 2])
     with col_g1:
         df_pizza = df[df['Obra'].isin(obras_selecionadas)]

@@ -69,22 +69,50 @@ def tela_login():
 # ---------- Dashboard de Efetivo ----------
 @st.cache_data
 def carregar_dados_efetivo():
-    df = pd.read_excel("efetivo_abril.xlsx", engine="openpyxl")
+    # Dados de efetivo (Direto e Indireto)
+    df = pd.read_excel("efetivo_abril.xlsx", sheet_name="EFETIVO", engine="openpyxl")
     df.columns = df.columns.str.strip()
     df = df.fillna(0)
+
     for col in ['Hora Extra 70% - Sabado', 'Hora Extra 70% - Semana', 'PRODUÇÃO']:
         if col in df.columns:
             df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
-    if 'DIRETO / INDIRETO' in df.columns:
-        df['Tipo'] = df['DIRETO / INDIRETO'].astype(str).str.upper().str.strip()
-    else:
-        df['Tipo'] = 'INDEFINIDO'
+
+    df['Tipo'] = df['DIRETO / INDIRETO'].astype(str).str.upper().str.strip()
     df['Total Extra'] = df['Hora Extra 70% - Sabado'] + df['Hora Extra 70% - Semana']
-    return df
+
+    # Dados de Terceiros
+    df_terceiros = pd.read_excel("efetivo_abril.xlsx", sheet_name="TERCEIROS", engine="openpyxl")
+    df_terceiros.columns = df_terceiros.columns.str.strip()
+    df_terceiros = df_terceiros.rename(columns={
+        df_terceiros.columns[0]: 'Obra',
+        df_terceiros.columns[1]: 'Empresa',
+        df_terceiros.columns[2]: 'Qtd'
+    })
+
+    # Criar estrutura similar à dos demais funcionários
+    terceiros_expandidos = []
+    for _, row in df_terceiros.iterrows():
+        for _ in range(int(row['Qtd'])):
+            terceiros_expandidos.append({
+                'Obra': row['Obra'],
+                'Função': 'TERCEIRO',
+                'Funcionário': row['Empresa'],
+                'Tipo': 'TERCEIRO',
+                'Hora Extra 70% - Sabado': 0,
+                'Hora Extra 70% - Semana': 0,
+                'PRODUÇÃO': 0,
+                'Total Extra': 0
+            })
+    df_terceiros_final = pd.DataFrame(terceiros_expandidos)
+
+    # Combinar tudo
+    df_final = pd.concat([df, df_terceiros_final], ignore_index=True)
+    return df_final, df_terceiros
 
 def dashboard_efetivo():
     st.title("📊 Análise de Efetivo - Abril 2025")
-    df = carregar_dados_efetivo()
+    df, df_terceiros_raw = carregar_dados_efetivo()
 
     with st.sidebar:
         st.header("🔍 Filtros - Efetivo")
@@ -107,8 +135,7 @@ def dashboard_efetivo():
 
     col_g1, col_g2 = st.columns([1, 2])
     with col_g1:
-        df_pizza = df[df['Obra'].isin(obras_selecionadas)]
-        pizza = df_pizza['Tipo'].value_counts().reset_index()
+        pizza = df_filtrado['Tipo'].value_counts().reset_index()
         pizza.columns = ['Tipo', 'count']
         fig_pizza = px.pie(pizza, names='Tipo', values='count', title='Distribuição por Tipo de Efetivo')
         st.plotly_chart(fig_pizza, use_container_width=True)
@@ -120,50 +147,35 @@ def dashboard_efetivo():
             'Hora Extra Sábado': 'Hora Extra 70% - Sabado'
         }[tipo_analise]
 
-        if tipo_analise == 'Produção' and 'REFLEXO S PRODUÇÃO' in df.columns:
-            df_filtrado['DSR'] = df_filtrado['REFLEXO S PRODUÇÃO']
-            ranking = df_filtrado[['Funcionário', 'Função', 'Obra', 'Tipo', 'PRODUÇÃO', 'DSR']].sort_values(by='PRODUÇÃO', ascending=False)
-        else:
-            ranking = df_filtrado[['Funcionário', 'Função', 'Obra', 'Tipo', coluna_valor]].sort_values(by=coluna_valor, ascending=False)
-
+        ranking = df_filtrado[['Funcionário', 'Função', 'Obra', 'Tipo', coluna_valor]].copy()
         valor_total = df_filtrado[coluna_valor].sum()
         st.markdown(f"### 📋 Top Funcionários por **{tipo_analise}**")
         st.markdown(f"**Total em {tipo_analise}:** R$ {valor_total:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
 
         if qtd_linhas != 'Todos':
-            ranking = ranking.head(int(qtd_linhas))
+            ranking = ranking.sort_values(by=coluna_valor, ascending=False).head(int(qtd_linhas))
 
         ranking[coluna_valor] = ranking[coluna_valor].apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
-        if 'DSR' in ranking.columns:
-            ranking['DSR'] = ranking['DSR'].apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
-
         st.dataframe(ranking, use_container_width=True)
 
     st.divider()
     graf_funcao = df_filtrado['Função'].value_counts().reset_index()
     graf_funcao.columns = ['Função', 'Qtd']
-
-    fig_bar = px.bar(
-        graf_funcao,
-        x='Função',
-        y='Qtd',
-        color='Qtd',
-        color_continuous_scale='Blues',
-        title='Efetivo por Função',
-        text='Qtd'
-    )
+    fig_bar = px.bar(graf_funcao, x='Função', y='Qtd', color='Qtd', color_continuous_scale='Blues', title='Efetivo por Função', text='Qtd')
     fig_bar.update_layout(xaxis_tickangle=-45)
     st.plotly_chart(fig_bar, use_container_width=True)
 
     st.divider()
+    st.markdown("### 🏢 Terceirizadas por Obra")
+    df_empresas = df_terceiros_raw[df_terceiros_raw['Obra'].isin(obras_selecionadas)]
+    df_empresas = df_empresas.groupby('Empresa').agg({'Qtd': 'sum'}).reset_index()
+    fig_empresas = px.bar(df_empresas, x='Empresa', y='Qtd', title='Total de Terceirizados por Empresa', text='Qtd', color='Qtd', color_continuous_scale='viridis')
+    fig_empresas.update_layout(xaxis_tickangle=-45)
+    st.plotly_chart(fig_empresas, use_container_width=True)
+
+    st.divider()
     st.markdown("### 🎯 Quadrantes de Eficiência (Produção vs Hora Extra)")
-
-    fig_quadrantes = px.scatter(
-        df_filtrado, x='Total Extra', y='PRODUÇÃO', color='Tipo',
-        hover_data=['Funcionário', 'Função', 'Obra'],
-        title="Quadrantes de Eficiência - Produção vs Hora Extra"
-    )
-
+    fig_quadrantes = px.scatter(df_filtrado, x='Total Extra', y='PRODUÇÃO', color='Tipo', hover_data=['Funcionário', 'Função', 'Obra'], title="Quadrantes de Eficiência - Produção vs Hora Extra")
     st.plotly_chart(fig_quadrantes, use_container_width=True)
 
 # ---------- Dashboard de Produtividade ----------

@@ -66,49 +66,44 @@ def tela_login():
                     salvar_usuario(novo_usuario, hash_senha(nova_senha))
                     st.success("✅ Usuário cadastrado com sucesso! Faça login.")
 
-# ---------- Dashboard de Efetivo ----------
-@st.cache_data
 def carregar_dados_efetivo():
-    # Dados de efetivo (Direto e Indireto)
+    # Ler efetivo
     df = pd.read_excel("efetivo_abril.xlsx", sheet_name="EFETIVO", engine="openpyxl")
     df.columns = df.columns.str.strip()
     df = df.fillna(0)
-
     for col in ['Hora Extra 70% - Sabado', 'Hora Extra 70% - Semana', 'PRODUÇÃO']:
         if col in df.columns:
             df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
-
-    df['Tipo'] = df['DIRETO / INDIRETO'].astype(str).str.upper().str.strip()
+    if 'DIRETO / INDIRETO' in df.columns:
+        df['Tipo'] = df['DIRETO / INDIRETO'].astype(str).str.upper().str.strip()
+    else:
+        df['Tipo'] = 'INDEFINIDO'
     df['Total Extra'] = df['Hora Extra 70% - Sabado'] + df['Hora Extra 70% - Semana']
 
-    # Dados de Terceiros
-    df_terceiros = pd.read_excel("efetivo_abril.xlsx", sheet_name="TERCEIROS", engine="openpyxl")
-    df_terceiros.columns = df_terceiros.columns.str.strip()
-    df_terceiros = df_terceiros.rename(columns={
-        df_terceiros.columns[0]: 'Obra',
-        df_terceiros.columns[1]: 'Empresa',
-        df_terceiros.columns[2]: 'Qtd'
-    })
+    # Ler terceiros com os nomes corretos das colunas
+    df_terceiros_raw = pd.read_excel("efetivo_abril.xlsx", sheet_name="TERCEIROS", engine="openpyxl")
+    df_terceiros_raw.columns = df_terceiros_raw.columns.str.strip()  # tira espaços extras
 
-    # Criar estrutura similar à dos demais funcionários
-    terceiros_expandidos = []
-    for _, row in df_terceiros.iterrows():
-        for _ in range(int(row['Qtd'])):
-            terceiros_expandidos.append({
-                'Obra': row['Obra'],
-                'Função': 'TERCEIRO',
-                'Funcionário': row['Empresa'],
-                'Tipo': 'TERCEIRO',
-                'Hora Extra 70% - Sabado': 0,
-                'Hora Extra 70% - Semana': 0,
-                'PRODUÇÃO': 0,
-                'Total Extra': 0
+    # Ajustar o nome da coluna QUANTIDADE, tirar espaços extras
+    df_terceiros_raw.rename(columns=lambda x: x.strip().upper(), inplace=True)
+
+    # Converter QUANTIDADE para numérico
+    df_terceiros_raw['QUANTIDADE'] = pd.to_numeric(df_terceiros_raw['QUANTIDADE'], errors='coerce').fillna(0).astype(int)
+
+    # Expandir os terceiros para linhas individuais
+    registros_terceiros = []
+    for _, row in df_terceiros_raw.iterrows():
+        for _ in range(row['QUANTIDADE']):
+            registros_terceiros.append({
+                'Obra': row['OBRA'],
+                'Empresa': row['EMPRESA'],
+                'Tipo': 'TERCEIRO'
             })
-    df_terceiros_final = pd.DataFrame(terceiros_expandidos)
 
-    # Combinar tudo
-    df_final = pd.concat([df, df_terceiros_final], ignore_index=True)
-    return df_final, df_terceiros
+    df_terceiros = pd.DataFrame(registros_terceiros)
+
+    return df, df_terceiros
+
 
 def dashboard_efetivo():
     st.title("📊 Análise de Efetivo - Abril 2025")

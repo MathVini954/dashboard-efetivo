@@ -114,8 +114,7 @@ def dashboard_efetivo():
 
     # Métricas
     col1, col2, col3, col4 = st.columns(4)
-    direto_count = len(df_filtrado[df_filtrado['Tipo'] == 'DIRETO'])
-indireto_count = len(df_filtrado[df_filtrado['Tipo'] == 'INDIRETO'])
+    
 col1.metric("👷 Direto", direto_count)
 col2.metric("👷‍♂️ Indireto", indireto_count)
 

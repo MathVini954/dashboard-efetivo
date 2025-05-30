@@ -140,6 +140,7 @@ def dashboard_efetivo():
     st.markdown("### 🏗️ Funcionários Terceirizados por Empresa e Obra")
     tabela_terceiros = df_terceiros_filtrado.groupby(['Obra', 'EMPRESA'])['QUANTIDADE'].sum().reset_index()
     st.dataframe(tabela_terceiros, use_container_width=True)
+
 # Dicionário para mapear meses em inglês para abreviações em português
 MES_POR_PT = {
     'Jan': 'Jan',
@@ -156,12 +157,25 @@ MES_POR_PT = {
     'Dec': 'Dez'
 }
 
+# Mapeamento mês português para número do mês
+MES_PT_PARA_NUM = {
+    'Jan': 1, 'Fev': 2, 'Mar': 3, 'Abr': 4, 'Mai': 5, 'Jun': 6,
+    'Jul': 7, 'Ago': 8, 'Set': 9, 'Out': 10, 'Nov': 11, 'Dez': 12
+}
+
 def mes_ano_pt(dt):
     # Retorna string formatada em português tipo 'Abr/24'
     mes_eng = dt.strftime('%b')  # abreviação em inglês
     mes_pt = MES_POR_PT.get(mes_eng, mes_eng)
     ano = dt.strftime('%y')
     return f"{mes_pt}/{ano}"
+
+def data_pt_para_datetime(mes_ano_pt_str):
+    # Recebe string tipo "Abr/24" e converte para pd.Timestamp(ano, mes, dia=1)
+    mes_pt, ano_str = mes_ano_pt_str.split('/')
+    mes = MES_PT_PARA_NUM[mes_pt]
+    ano = 2000 + int(ano_str)  # exemplo: '24' vira 2024
+    return pd.Timestamp(year=ano, month=mes, day=1)
 
 def dashboard_produtividade():
     def carregar_dados():
@@ -175,7 +189,7 @@ def dashboard_produtividade():
         if servico:
             df = df[df['SERVIÇO'] == servico]
         if datas_selecionadas:
-            datas_dt = [pd.to_datetime(d, format='%b/%y') for d in datas_selecionadas]
+            datas_dt = [data_pt_para_datetime(d) for d in datas_selecionadas]
             df = df[df['DATA'].dt.to_period('M').isin(pd.to_datetime(datas_dt).to_period('M'))]
         return df
 
@@ -230,6 +244,7 @@ def dashboard_produtividade():
     st.title("📈 Dashboard de Produtividade")
     st.plotly_chart(fig_produtividade)
     st.plotly_chart(fig_barras)
+    
 # ---------- Execução Principal ----------
 def main():
     st.set_page_config(page_title="Dashboards de Obra", layout="wide")

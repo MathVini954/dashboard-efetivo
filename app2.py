@@ -140,6 +140,28 @@ def dashboard_efetivo():
     st.markdown("### 🏗️ Funcionários Terceirizados por Empresa e Obra")
     tabela_terceiros = df_terceiros_filtrado.groupby(['Obra', 'EMPRESA'])['QUANTIDADE'].sum().reset_index()
     st.dataframe(tabela_terceiros, use_container_width=True)
+# Dicionário para mapear meses em inglês para abreviações em português
+MES_POR_PT = {
+    'Jan': 'Jan',
+    'Feb': 'Fev',
+    'Mar': 'Mar',
+    'Apr': 'Abr',
+    'May': 'Mai',
+    'Jun': 'Jun',
+    'Jul': 'Jul',
+    'Aug': 'Ago',
+    'Sep': 'Set',
+    'Oct': 'Out',
+    'Nov': 'Nov',
+    'Dec': 'Dez'
+}
+
+def mes_ano_pt(dt):
+    # Retorna string formatada em português tipo 'Abr/24'
+    mes_eng = dt.strftime('%b')  # abreviação em inglês
+    mes_pt = MES_POR_PT.get(mes_eng, mes_eng)
+    ano = dt.strftime('%y')
+    return f"{mes_pt}/{ano}"
 
 def dashboard_produtividade():
     def carregar_dados():
@@ -153,7 +175,6 @@ def dashboard_produtividade():
         if servico:
             df = df[df['SERVIÇO'] == servico]
         if datas_selecionadas:
-            # Converter datas selecionadas de string para datetime para filtrar corretamente
             datas_dt = [pd.to_datetime(d, format='%b/%y') for d in datas_selecionadas]
             df = df[df['DATA'].dt.to_period('M').isin(pd.to_datetime(datas_dt).to_period('M'))]
         return df
@@ -164,7 +185,7 @@ def dashboard_produtividade():
             'PRODUTIVIDADE_ORCADA_DIAM2': 'mean'
         }).reset_index()
 
-        df_mensal['DATA_FORMATADA'] = df_mensal['DATA'].dt.strftime('%b/%y')
+        df_mensal['DATA_FORMATADA_PT'] = df_mensal['DATA'].apply(mes_ano_pt)
 
         fig = px.line(df_mensal, x='DATA', y=['PRODUTIVIDADE_PROF_DIAM2', 'PRODUTIVIDADE_ORCADA_DIAM2'],
                       labels={'value': 'Produtividade', 'DATA': 'Mês/Ano'},
@@ -175,7 +196,7 @@ def dashboard_produtividade():
             tickformat="%b/%y",
             tickmode='array',
             tickvals=df_mensal['DATA'],
-            ticktext=df_mensal['DATA_FORMATADA']
+            ticktext=df_mensal['DATA_FORMATADA_PT']
         )
 
         return fig
@@ -197,9 +218,8 @@ def dashboard_produtividade():
         servicos_opcoes = df['SERVIÇO'].unique().tolist()
         servico = st.selectbox('Selecione o Serviço', servicos_opcoes)
 
-        # Criar lista ordenada de meses formatados para o filtro
         meses_unicos = df['DATA'].dt.to_period('M').drop_duplicates().sort_values()
-        mes_ano_opcoes = [pd.Timestamp(m.start_time).strftime('%b/%y') for m in meses_unicos]
+        mes_ano_opcoes = [mes_ano_pt(pd.Timestamp(m.start_time)) for m in meses_unicos]
 
         datas_selecionadas = st.multiselect('Selecione o(s) Mês/Ano', mes_ano_opcoes, default=mes_ano_opcoes)
 
@@ -210,7 +230,6 @@ def dashboard_produtividade():
     st.title("📈 Dashboard de Produtividade")
     st.plotly_chart(fig_produtividade)
     st.plotly_chart(fig_barras)
-
 # ---------- Execução Principal ----------
 def main():
     st.set_page_config(page_title="Dashboards de Obra", layout="wide")

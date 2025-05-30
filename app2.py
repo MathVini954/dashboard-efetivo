@@ -1,76 +1,14 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-import hashlib
-import os
 
-# ---------- Funções de autenticação ----------
-def hash_senha(senha):
-    return hashlib.sha256(senha.encode()).hexdigest()
-
-def verificar_senha(senha, hash_s):
-    return hash_senha(senha) == hash_s
-
-def carregar_usuarios():
-    if os.path.exists("usuarios.csv"):
-        return pd.read_csv("usuarios.csv")
-    else:
-        return pd.DataFrame(columns=["usuario", "senha_hash"])
-
-def salvar_usuario(usuario, senha_hash):
-    df = carregar_usuarios()
-    novo_usuario = pd.DataFrame([[usuario, senha_hash]], columns=["usuario", "senha_hash"])
-    df = pd.concat([df, novo_usuario], ignore_index=True)
-    df.to_csv("usuarios.csv", index=False)
-
-# ---------- Tela de login/cadastro ----------
-def tela_login():
-    st.title("🔐 Login")
-
-    menu = st.radio("Escolha uma opção:", ["Login", "Cadastrar"])
-
-    if menu == "Login":
-        usuario = st.text_input("Usuário")
-        senha = st.text_input("Senha", type="password")
-
-        if st.button("Entrar"):
-            df_usuarios = carregar_usuarios()
-            if usuario in df_usuarios['usuario'].values:
-                senha_hash = df_usuarios[df_usuarios['usuario'] == usuario]['senha_hash'].values[0]
-                if verificar_senha(senha, senha_hash):
-                    st.session_state['logado'] = True
-                    st.session_state['usuario'] = usuario
-                    st.success("✅ Login realizado com sucesso!")
-                    st.stop()
-                else:
-                    st.error("❌ Senha incorreta.")
-            else:
-                st.error("❌ Usuário não encontrado.")
-
-    else:
-        st.subheader("📋 Cadastro de Novo Usuário")
-        novo_usuario = st.text_input("Novo usuário")
-        nova_senha = st.text_input("Nova senha", type="password")
-        confirmar_senha = st.text_input("Confirme a senha", type="password")
-
-        if st.button("Cadastrar"):
-            if nova_senha != confirmar_senha:
-                st.warning("⚠️ As senhas não coincidem.")
-            elif novo_usuario.strip() == "":
-                st.warning("⚠️ O nome de usuário não pode estar vazio.")
-            else:
-                df = carregar_usuarios()
-                if novo_usuario in df['usuario'].values:
-                    st.warning("⚠️ Usuário já existe.")
-                else:
-                    salvar_usuario(novo_usuario, hash_senha(nova_senha))
-                    st.success("✅ Usuário cadastrado com sucesso! Faça login.")
 @st.cache_data
 def carregar_terceiros():
     df_terceiros = pd.read_excel("efetivo_abril.xlsx", sheet_name="TERCEIROS", engine="openpyxl")
     df_terceiros.columns = df_terceiros.columns.str.strip()
     df_terceiros['QUANTIDADE'] = pd.to_numeric(df_terceiros['QUANTIDADE'], errors='coerce').fillna(0).astype(int)
     return df_terceiros
+
 @st.cache_data
 def carregar_dados_efetivo():
     df = pd.read_excel("efetivo_abril.xlsx", engine="openpyxl")
@@ -80,16 +18,14 @@ def carregar_dados_efetivo():
         if col in df.columns:
             df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
     if 'DIRETO / INDIRETO' in df.columns:
-        # Ajustar aqui para reconhecer TERCEIRO também
         df['Tipo'] = df['DIRETO / INDIRETO'].astype(str).str.upper().str.strip()
-        # Se tiver terceiros identificados por outro campo, faça o ajuste aqui:
-        # Exemplo: se tiver coluna "Categoria" que indica "TERCEIRO", mesclar:
         if 'Categoria' in df.columns:
             df.loc[df['Categoria'].str.upper() == 'TERCEIRO', 'Tipo'] = 'TERCEIRO'
     else:
         df['Tipo'] = 'INDEFINIDO'
     df['Total Extra'] = df['Hora Extra 70% - Sabado'] + df['Hora Extra 70% - Semana']
     return df
+
 def dashboard_efetivo():
     st.title("📊 Análise de Efetivo - Abril 2025")
 
@@ -104,18 +40,15 @@ def dashboard_efetivo():
         tipo_analise = st.radio("Tipo de Análise da Tabela:", ['Produção', 'Hora Extra Semana', 'Hora Extra Sábado'])
         qtd_linhas = st.radio("Qtd. de Funcionários na Tabela:", ['5', '10', '20', 'Todos'], horizontal=True)
 
-    # Filtra dados por obra
     df_filtrado = df[df['Obra'].isin(obras_selecionadas)]
     df_terceiros_filtrado = df_terceiros[df_terceiros['Obra'].isin(obras_selecionadas)]
 
-    # Filtro por tipo
     if tipo_selecionado != 'Todos':
         if tipo_selecionado in ['DIRETO', 'INDIRETO']:
             df_filtrado = df_filtrado[df_filtrado['Tipo'] == tipo_selecionado]
         elif tipo_selecionado == 'TERCEIRO':
-            df_filtrado = df_filtrado[0:0]  # zera dataframe de diretos/indiretos
+            df_filtrado = df_filtrado[0:0]
 
-    # Métricas
     direto_count = len(df[df['Obra'].isin(obras_selecionadas) & (df['Tipo'] == 'DIRETO')])
     indireto_count = len(df[df['Obra'].isin(obras_selecionadas) & (df['Tipo'] == 'INDIRETO')])
     total_terceiros = df_terceiros_filtrado['QUANTIDADE'].sum()
@@ -129,7 +62,6 @@ def dashboard_efetivo():
 
     st.divider()
 
-    # Gráfico pizza corrigido
     pizza_base = df[df['Obra'].isin(obras_selecionadas)]
     pizza_diretos_indiretos = pizza_base['Tipo'].value_counts().reset_index()
     pizza_diretos_indiretos.columns = ['Tipo', 'count']
@@ -140,15 +72,13 @@ def dashboard_efetivo():
     fig_pizza = px.pie(pizza, names='Tipo', values='count', title='Distribuição por Tipo de Efetivo')
     st.plotly_chart(fig_pizza, use_container_width=True)
 
-    # Se tipo for terceiro, mostra apenas tabela de terceiros
     if tipo_selecionado == 'TERCEIRO':
         st.divider()
         st.markdown("### 🏗️ Funcionários Terceirizados por Empresa e Obra")
         tabela_terceiros = df_terceiros_filtrado.groupby(['Obra', 'EMPRESA'])['QUANTIDADE'].sum().reset_index()
         st.dataframe(tabela_terceiros, use_container_width=True)
-        return  # Não mostra análises de produção/hora extra para terceiros
+        return
 
-    # Ranking e gráficos só para Direto e Indireto
     coluna_valor = {
         'Produção': 'PRODUÇÃO',
         'Hora Extra Semana': 'Hora Extra 70% - Semana',
@@ -211,8 +141,6 @@ def dashboard_efetivo():
     tabela_terceiros = df_terceiros_filtrado.groupby(['Obra', 'EMPRESA'])['QUANTIDADE'].sum().reset_index()
     st.dataframe(tabela_terceiros, use_container_width=True)
 
-
-        
 def dashboard_produtividade():
     def carregar_dados():
         df = pd.read_excel("produtividade.xlsx")
@@ -282,34 +210,26 @@ def main():
             unsafe_allow_html=True,
         )
 
-    if "logado" not in st.session_state:
-        st.session_state['logado'] = False
-    if "usuario" not in st.session_state:
-        st.session_state['usuario'] = ""
+    st.sidebar.title("👋 Bem-vindo")
 
-    if not st.session_state['logado']:
-        tela_login()
-    else:
-        st.sidebar.title(f"👋 Bem-vindo, {st.session_state['usuario']}")
+    aba1, aba2, aba3 = st.tabs(["📊 Efetivo", "📈 Produtividade", "🏗️ Análise Custo e Planejamento"])
 
-        aba1, aba2, aba3 = st.tabs(["📊 Efetivo", "📈 Produtividade", "🏗️ Análise Custo e Planejamento"])
+    with aba1:
+        dashboard_efetivo()
 
-        with aba1:
-            dashboard_efetivo()
+    with aba2:
+        dashboard_produtividade()
 
-        with aba2:
-            dashboard_produtividade()
-
-        with aba3:
-            st.title("🏗️ ANÁLISE CUSTO E PLANEJAMENTO")
-            st.markdown(
-                """
-                <div style="text-align: center; margin-top: 100px;">
-                    <h2>ESTAMOS EM DESENVOLVIMENTO</h2>
-                    <div style="font-size: 50px; color: grey;">👷‍♂️🚧</div>
-                </div>
-                """, unsafe_allow_html=True
-            )
+    with aba3:
+        st.title("🏗️ ANÁLISE CUSTO E PLANEJAMENTO")
+        st.markdown(
+            """
+            <div style="text-align: center; margin-top: 100px;">
+                <h2>ESTAMOS EM DESENVOLVIMENTO</h2>
+                <div style="font-size: 50px; color: grey;">👷‍♂️🚧</div>
+            </div>
+            """, unsafe_allow_html=True
+        )
 
 if __name__ == "__main__":
     main()

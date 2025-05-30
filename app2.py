@@ -145,7 +145,6 @@ def dashboard_produtividade():
     def carregar_dados():
         df = pd.read_excel("produtividade.xlsx")
         df['DATA'] = pd.to_datetime(df['DATA'], format='%d/%m/%Y')
-        df['DATA_FORMATADA'] = df['DATA'].dt.strftime('%b/%y')
         return df
 
     def filtrar_dados(df, tipo_obra, servico, datas_selecionadas):
@@ -154,18 +153,31 @@ def dashboard_produtividade():
         if servico:
             df = df[df['SERVIÇO'] == servico]
         if datas_selecionadas:
-            df = df[df['DATA_FORMATADA'].isin(datas_selecionadas)]
+            # Converter datas selecionadas de string para datetime para filtrar corretamente
+            datas_dt = [pd.to_datetime(d, format='%b/%y') for d in datas_selecionadas]
+            df = df[df['DATA'].dt.to_period('M').isin(pd.to_datetime(datas_dt).to_period('M'))]
         return df
 
     def criar_grafico_produtividade(df):
-        df_mensal = df.groupby('DATA_FORMATADA').agg({
+        df_mensal = df.groupby(pd.Grouper(key='DATA', freq='M')).agg({
             'PRODUTIVIDADE_PROF_DIAM2': 'mean',
             'PRODUTIVIDADE_ORCADA_DIAM2': 'mean'
         }).reset_index()
-        fig = px.line(df_mensal, x='DATA_FORMATADA', y=['PRODUTIVIDADE_PROF_DIAM2', 'PRODUTIVIDADE_ORCADA_DIAM2'],
-                      labels={'value': 'Produtividade', 'DATA_FORMATADA': 'Mês/Ano'},
+
+        df_mensal['DATA_FORMATADA'] = df_mensal['DATA'].dt.strftime('%b/%y')
+
+        fig = px.line(df_mensal, x='DATA', y=['PRODUTIVIDADE_PROF_DIAM2', 'PRODUTIVIDADE_ORCADA_DIAM2'],
+                      labels={'value': 'Produtividade', 'DATA': 'Mês/Ano'},
                       title="Produtividade Profissional por M² (Real x Orçado)",
                       line_shape='linear', markers=True)
+
+        fig.update_xaxes(
+            tickformat="%b/%y",
+            tickmode='array',
+            tickvals=df_mensal['DATA'],
+            ticktext=df_mensal['DATA_FORMATADA']
+        )
+
         return fig
 
     def criar_grafico_barras(df):
@@ -184,7 +196,11 @@ def dashboard_produtividade():
         tipo_obra = st.selectbox('Selecione o Tipo de Obra', tipo_obra_opcoes)
         servicos_opcoes = df['SERVIÇO'].unique().tolist()
         servico = st.selectbox('Selecione o Serviço', servicos_opcoes)
-        mes_ano_opcoes = df['DATA_FORMATADA'].unique().tolist()
+
+        # Criar lista ordenada de meses formatados para o filtro
+        meses_unicos = df['DATA'].dt.to_period('M').drop_duplicates().sort_values()
+        mes_ano_opcoes = [pd.Timestamp(m.start_time).strftime('%b/%y') for m in meses_unicos]
+
         datas_selecionadas = st.multiselect('Selecione o(s) Mês/Ano', mes_ano_opcoes, default=mes_ano_opcoes)
 
     df_filtrado = filtrar_dados(df, tipo_obra, servico, datas_selecionadas)

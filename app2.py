@@ -4,12 +4,26 @@ import plotly.express as px
 import hashlib
 import os
 
-from autenticacao_gsheets import carregar_usuarios, salvar_usuario, hash_senha, verificar_senha
+# ---------- Funções de autenticação ----------
+def hash_senha(senha):
+    return hashlib.sha256(senha.encode()).hexdigest()
+
+def verificar_senha(senha, hash_s):
+    return hash_senha(senha) == hash_s
+
+def carregar_usuarios():
+    if os.path.exists("usuarios.csv"):
+        return pd.read_csv("usuarios.csv")
+    else:
+        return pd.DataFrame(columns=["usuario", "senha_hash"])
+
+def salvar_usuario(usuario, senha_hash):
+    df = carregar_usuarios()
+    novo_usuario = pd.DataFrame([[usuario, senha_hash]], columns=["usuario", "senha_hash"])
+    df = pd.concat([df, novo_usuario], ignore_index=True)
+    df.to_csv("usuarios.csv", index=False)
 
 # ---------- Tela de login/cadastro ----------
-import streamlit as st
-from autenticacao_gsheets import carregar_usuarios, salvar_usuario, hash_senha, verificar_senha
-
 def tela_login():
     st.title("🔐 Login")
 
@@ -49,9 +63,8 @@ def tela_login():
                 if novo_usuario in df['usuario'].values:
                     st.warning("⚠️ Usuário já existe.")
                 else:
-                    salvar_usuario(novo_usuario.strip(), hash_senha(nova_senha))
+                    salvar_usuario(novo_usuario, hash_senha(nova_senha))
                     st.success("✅ Usuário cadastrado com sucesso! Faça login.")
-
 @st.cache_data
 def carregar_terceiros():
     df_terceiros = pd.read_excel("efetivo_abril.xlsx", sheet_name="TERCEIROS", engine="openpyxl")

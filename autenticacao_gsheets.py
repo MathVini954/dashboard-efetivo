@@ -6,7 +6,7 @@ import pandas as pd
 # Conectar ao Google Sheets
 def conectar_sheets():
     escopos = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-    credenciais = ServiceAccountCredentials.from_json_keyfile_name("streamlit-autenticacao-bae6036e18dc.json", escopos)
+    credenciais = ServiceAccountCredentials.from_json_keyfile_name("streamlit-autenticacao-5efa97e974aa.json", escopos)
     cliente = gspread.authorize(credenciais)
     planilha = cliente.open("usuarios_streamlit")
     folha = planilha.sheet1

@@ -103,33 +103,11 @@ def dashboard_efetivo():
     if qtd_linhas != 'Todos':
         ranking = ranking.head(int(qtd_linhas))
 
-    ranking_exibicao = ranking.copy()
-    if coluna_valor in ranking_exibicao.columns:
-        ranking_exibicao[coluna_valor] = ranking_exibicao[coluna_valor].apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
-    if 'DSR' in ranking_exibicao.columns:
-        ranking_exibicao['DSR'] = ranking_exibicao['DSR'].apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+    ranking[coluna_valor] = ranking[coluna_valor].apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+    if 'DSR' in ranking.columns:
+        ranking['DSR'] = ranking['DSR'].apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
 
-    st.dataframe(ranking_exibicao, use_container_width=True)
-
-    # ---- Botão de download do Excel ----
-    from io import BytesIO
-
-    ranking_export = ranking.copy()
-    if qtd_linhas != 'Todos':
-        ranking_export = ranking_export.head(int(qtd_linhas))
-
-    buffer = BytesIO()
-    with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
-        ranking_export.to_excel(writer, index=False, sheet_name='Ranking')
-        writer.close()
-        buffer.seek(0)
-
-    st.download_button(
-        label="📥 Baixar Ranking em Excel",
-        data=buffer,
-        file_name="ranking_producao.xlsx",
-        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    )
+    st.dataframe(ranking, use_container_width=True)
 
     st.divider()
     graf_funcao = df_ranking['Função'].value_counts().reset_index()
@@ -162,7 +140,6 @@ def dashboard_efetivo():
     st.markdown("### 🏗️ Funcionários Terceirizados por Empresa e Obra")
     tabela_terceiros = df_terceiros_filtrado.groupby(['Obra', 'EMPRESA'])['QUANTIDADE'].sum().reset_index()
     st.dataframe(tabela_terceiros, use_container_width=True)
-
 
 # Dicionário para mapear meses em inglês para abreviações em português
 MES_POR_PT = {
@@ -310,4 +287,4 @@ def main():
         )
 
 if __name__ == "__main__":
-    main()
+    main() 

@@ -237,9 +237,14 @@ def dashboard_produtividade():
 
         datas_selecionadas = st.multiselect('Selecione o(s) Mês/Ano', mes_ano_opcoes, default=mes_ano_opcoes)
 
+    # Aplica todos os filtros (tipo_obra, serviço, datas) para o gráfico principal
     df_filtrado = filtrar_dados(df, tipo_obra, servico, datas_selecionadas)
+
+    # Aplica só o filtro de serviço e datas para o gráfico de barras, ignorando tipo_obra
+    df_filtrado_barras = filtrar_dados(df, "Todos", servico, datas_selecionadas)
+
     fig_produtividade = criar_grafico_produtividade(df_filtrado)
-    fig_barras = criar_grafico_barras(df_filtrado)
+    fig_barras = criar_grafico_barras(df_filtrado_barras)
 
     st.title("📈 Dashboard de Produtividade")
     st.plotly_chart(fig_produtividade)

@@ -109,6 +109,36 @@ def dashboard_efetivo():
 
     st.dataframe(ranking, use_container_width=True)
 
+from io import BytesIO
+
+# Cria uma cópia da tabela original para exportação sem formatação monetária
+ranking_export = df_ranking[['Funcionário', 'Função', 'Obra', 'Tipo']].copy()
+
+if tipo_analise == 'Produção' and 'DSR' in df_ranking.columns:
+    ranking_export['PRODUÇÃO'] = df_ranking['PRODUÇÃO']
+    ranking_export['DSR'] = df_ranking['REFLEXO S PRODUÇÃO']
+else:
+    ranking_export[coluna_valor] = df_ranking[coluna_valor]
+
+# Se o número de linhas foi limitado na interface, aplica também à exportação
+if qtd_linhas != 'Todos':
+    ranking_export = ranking_export.head(int(qtd_linhas))
+
+# Gera o Excel em memória
+buffer = BytesIO()
+with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
+    ranking_export.to_excel(writer, index=False, sheet_name='Ranking')
+    writer.close()
+    buffer.seek(0)
+
+# Botão de download
+st.download_button(
+    label="📥 Baixar Ranking em Excel",
+    data=buffer,
+    file_name="ranking_producao.xlsx",
+    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+)
+
     st.divider()
     graf_funcao = df_ranking['Função'].value_counts().reset_index()
     graf_funcao.columns = ['Função', 'Qtd']

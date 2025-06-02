@@ -152,12 +152,14 @@ def dashboard_efetivo():
 
     st.divider()
 
-  todas_obras = sorted(df['Obra'].astype(str).unique())
+ # Nível zero (sem indentação)
+todas_obras = sorted(df['Obra'].astype(str).unique())
 
 peso_lista = []
 for obra in todas_obras:
     df_obra = df[df['Obra'] == obra]
 
+    # restante do código aqui, com 4 espaços de indentação para cada bloco dentro do for
     df_direto = df_obra[df_obra['Tipo'] == 'DIRETO']
     prod_numerador = df_direto['PRODUÇÃO'].sum() + df_direto['REFLEXO S PRODUÇÃO'].sum()
     prod_denominador = df_direto['Remuneração Líquida Folha'].sum() + df_direto['Adiantamento'].sum()
@@ -173,6 +175,9 @@ for obra in todas_obras:
         peso = ((total_extra + reposo_remunerado) / hor_extra_denominador) if hor_extra_denominador > 0 else 0
 
     peso_lista.append({'Obra': obra, 'Peso Financeiro': peso})
+
+# e assim por diante, mantendo sempre a indentação correta
+
 
 df_peso = pd.DataFrame(peso_lista)
 df_peso = df_peso.sort_values(by='Peso Financeiro', ascending=False)

@@ -139,21 +139,19 @@ def dashboard_efetivo():
 
     st.divider()
 
-    # Gráfico de Peso Financeiro
-    # Cria base para cálculo do peso financeiro de cada obra filtrada
-    obras_peso = obras_selecionadas.copy()
+        # Gráfico de Peso Financeiro
+    # Sempre considerar todas as obras para o gráfico
+    todas_obras = sorted(df['Obra'].unique())
 
+    # Peso financeiro para todas as obras
     peso_lista = []
-    for obra in obras_peso:
-        # Base da obra
+    for obra in todas_obras:
         df_obra = df[df['Obra'] == obra]
 
-        # Produção: só DIRETO
         df_direto = df_obra[df_obra['Tipo'] == 'DIRETO']
         prod_numerador = df_direto['PRODUÇÃO'].sum() + df_direto['REFLEXO S PRODUÇÃO'].sum()
         prod_denominador = df_direto['Remuneração Líquida Folha'].sum() + df_direto['Adiantamento'].sum()
 
-        # Hora Extra: DIRETO + INDIRETO
         df_dir_ind = df_obra[df_obra['Tipo'].isin(['DIRETO', 'INDIRETO'])]
         total_extra = df_dir_ind['Total Extra'].sum()
         reposo_remunerado = df_dir_ind['Repouso Remunerado'].sum()
@@ -169,18 +167,43 @@ def dashboard_efetivo():
     df_peso = pd.DataFrame(peso_lista)
     df_peso = df_peso.sort_values(by='Peso Financeiro', ascending=False)
 
+    # Cor: todas azul claro, selecionadas com degradê azul escuro proporcional ao peso
+    import numpy as np
+
+    def cor_barra(row):
+        if row['Obra'] in obras_selecionadas:
+            # Normaliza peso para degradê
+            max_peso = df_peso['Peso Financeiro'].max()
+            norm_peso = row['Peso Financeiro'] / max_peso if max_peso > 0 else 0
+            # Gradiente do azul: mais escuro para maior peso
+            # Usando escala de azul claro (#add8e6) a azul escuro (#00008b)
+            from matplotlib.colors import to_rgb, to_hex
+
+            claro = np.array(to_rgb('#add8e6'))
+            escuro = np.array(to_rgb('#00008b'))
+            cor = claro + (escuro - claro) * norm_peso
+            cor = np.clip(cor, 0, 1)
+            return to_hex(cor)
+        else:
+            return '#add8e6'  # azul claro
+
+    cores = df_peso.apply(cor_barra, axis=1)
+
     fig_peso = px.bar(
         df_peso,
         x='Obra',
         y='Peso Financeiro',
         title=f'Peso Financeiro por Obra ({tipo_peso})',
         labels={'Peso Financeiro': 'Índice', 'Obra': 'Obra'},
-        text=df_peso['Peso Financeiro'].apply(lambda x: f"{x:.2%}")
+        text=df_peso['Peso Financeiro'].apply(lambda x: f"{x:.2%}"),
+        color=df_peso['Obra'],
+        color_discrete_sequence=cores
     )
-    fig_peso.update_traces(marker_color='darkblue', textposition='outside')
-    fig_peso.update_layout(yaxis_tickformat='.0%')
+    fig_peso.update_traces(textposition='outside', marker_line_width=0)
+    fig_peso.update_layout(showlegend=False, yaxis_tickformat='.0%')
 
     st.plotly_chart(fig_peso, use_container_width=True)
+
 
 # Dicionário para mapear meses em inglês para abreviações em português
 MES_POR_PT = {

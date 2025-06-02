@@ -203,6 +203,7 @@ def dashboard_efetivo():
 
     st.plotly_chart(fig_peso, use_container_width=True)
     # ---- FIM da parte corrigida ----
+
 # Dicionário para mapear meses em inglês para abreviações em português
 MES_POR_PT = {
     'Jan': 'Jan',

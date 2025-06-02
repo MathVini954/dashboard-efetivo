@@ -66,17 +66,14 @@ def dashboard_efetivo():
 
     st.divider()
 
-    # Pizza - Distribuição por tipo
+   # Pizza - Distribuição por tipo
     pizza_base = df[df['Obra'].isin(obras_selecionadas)]
     pizza_diretos_indiretos = pizza_base['Tipo'].value_counts().reset_index()
     pizza_diretos_indiretos.columns = ['Tipo', 'count']
     pizza_terceiros = pd.DataFrame({'Tipo': ['TERCEIRO'], 'count': [total_terceiros]})
     pizza = pd.concat([pizza_diretos_indiretos, pizza_terceiros], ignore_index=True)
 
-    fig_pizza = px.pie(pizza, names='Tipo', values='count', title='Distribuição por Tipo de Efetivo',
-                       labels={'count':'Quantidade', 'Tipo':'Tipo'},
-                       hole=0.3)
-    fig_pizza.update_traces(textposition='inside', textinfo='percent+label')
+    fig_pizza = px.pie(pizza, names='Tipo', values='count', title='Distribuição por Tipo de Efetivo')
     st.plotly_chart(fig_pizza, use_container_width=True)
 
     if tipo_selecionado == 'TERCEIRO':
@@ -96,6 +93,7 @@ def dashboard_efetivo():
         df_ranking = df_filtrado[df_filtrado['Tipo'].isin(['DIRETO', 'INDIRETO'])]
     else:
         df_ranking = df_filtrado
+
 
     nome_col_funcao = 'Função' if 'Função' in df_ranking.columns else 'Funçao' if 'Funçao' in df_ranking.columns else None
 

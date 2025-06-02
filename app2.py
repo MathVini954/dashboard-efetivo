@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import numpy as np
-from matplotlib.colors import to_rgb, to_hex
+
 
 @st.cache_data
 def carregar_dados_efetivo():

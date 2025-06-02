@@ -108,31 +108,41 @@ def dashboard_efetivo():
     else:
         df_ranking = df_filtrado
 
-    # Detecta nome correto da coluna Função
+      # Detecta nome correto da coluna Função
     nome_col_funcao = None
     if 'Função' in df_ranking.columns:
         nome_col_funcao = 'Função'
     elif 'Funçao' in df_ranking.columns:
         nome_col_funcao = 'Funçao'
 
-    # Ranking e colunas para exibir
+    # Define colunas a exibir e calcula DSR se necessário
     if tipo_analise == 'Produção' and 'REFLEXO S PRODUÇÃO' in df_ranking.columns:
         df_ranking['DSR'] = df_ranking['REFLEXO S PRODUÇÃO']
         cols_rank = ['Nome do Funcionário', nome_col_funcao, 'Obra', 'Tipo', 'PRODUÇÃO', 'DSR']
-        cols_rank = [c for c in cols_rank if c is not None]
-        ranking = df_ranking[cols_rank].sort_values(by='PRODUÇÃO', ascending=False)
     else:
         cols_rank = ['Nome do Funcionário', nome_col_funcao, 'Obra', 'Tipo', coluna_valor]
-        cols_rank = [c for c in cols_rank if c is not None]
-        ranking = df_ranking[cols_rank].sort_values(by=coluna_valor, ascending=False)
 
+    # Garante que as colunas existem
+    cols_rank = [c for c in cols_rank if c is not None and c in df_ranking.columns]
+
+    # Remove funcionários com valor nulo ou zero
+    df_ranking = df_ranking[cols_rank].copy()
+    df_ranking = df_ranking[pd.to_numeric(df_ranking[coluna_valor], errors='coerce').notna()]
+    df_ranking = df_ranking[df_ranking[coluna_valor] > 0]
+
+    # Ordena
+    ranking = df_ranking.sort_values(by=coluna_valor, ascending=False)
+
+    # Mostra total
     valor_total = df_ranking[coluna_valor].sum()
     st.markdown(f"### 📋 Top Funcionários por **{tipo_analise}**")
     st.markdown(f"**Total em {tipo_analise}:** R$ {valor_total:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
 
+    # Filtra quantidade
     if qtd_linhas != 'Todos':
         ranking = ranking.head(int(qtd_linhas))
 
+    # Formata valores
     def formatar_valor(x):
         return f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
 
@@ -141,6 +151,7 @@ def dashboard_efetivo():
         ranking['DSR'] = ranking['DSR'].apply(formatar_valor)
 
     st.dataframe(ranking, use_container_width=True)
+
 
     st.divider()
 

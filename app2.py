@@ -97,29 +97,44 @@ def dashboard_efetivo():
 
     nome_col_funcao = 'Função' if 'Função' in df_ranking.columns else 'Funçao' if 'Funçao' in df_ranking.columns else None
 
+   # Define colunas a exibir e calcula DSR se necessário
     if tipo_analise == 'Produção' and 'REFLEXO S PRODUÇÃO' in df_ranking.columns:
         df_ranking['DSR'] = df_ranking['REFLEXO S PRODUÇÃO']
         cols_rank = ['Nome do Funcionário', nome_col_funcao, 'Obra', 'Tipo', 'PRODUÇÃO', 'DSR']
-        cols_rank = [c for c in cols_rank if c is not None]
-        ranking = df_ranking[cols_rank].sort_values(by='PRODUÇÃO', ascending=False)
+        valor_coluna = 'PRODUÇÃO'
     else:
         cols_rank = ['Nome do Funcionário', nome_col_funcao, 'Obra', 'Tipo', coluna_valor]
-        cols_rank = [c for c in cols_rank if c is not None]
-        ranking = df_ranking[cols_rank].sort_values(by=coluna_valor, ascending=False)
+        valor_coluna = coluna_valor
 
-    valor_total = df_ranking[coluna_valor].sum()
+    # Garante que as colunas existem
+    cols_rank = [c for c in cols_rank if c is not None and c in df_ranking.columns]
+
+    # 🔹 CÓPIA segura do df_ranking só para o ranking
+    df_ranking_limp = df_ranking[cols_rank].copy()
+    df_ranking_limp = df_ranking_limp[pd.to_numeric(df_ranking_limp[valor_coluna], errors='coerce').notna()]
+    df_ranking_limp = df_ranking_limp[df_ranking_limp[valor_coluna] > 0]
+
+    # Ordena
+    ranking = df_ranking_limp.sort_values(by=valor_coluna, ascending=False)
+
+    # Mostra total
+    valor_total = df_ranking_limp[valor_coluna].sum()
     st.markdown(f"### 📋 Top Funcionários por **{tipo_analise}**")
     st.markdown(f"**Total em {tipo_analise}:** R$ {valor_total:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
 
+    # Filtra quantidade
     if qtd_linhas != 'Todos':
         ranking = ranking.head(int(qtd_linhas))
 
-    ranking[coluna_valor] = ranking[coluna_valor].apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+    # Formata valores
+    def formatar_valor(x):
+        return f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+
+    ranking[valor_coluna] = ranking[valor_coluna].apply(formatar_valor)
     if 'DSR' in ranking.columns:
-        ranking['DSR'] = ranking['DSR'].apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+        ranking['DSR'] = ranking['DSR'].apply(formatar_valor)
 
     st.dataframe(ranking, use_container_width=True)
-
     st.divider()
     graf_funcao = df_ranking[nome_col_funcao].value_counts().reset_index()
     graf_funcao.columns = [nome_col_funcao, 'Qtd']

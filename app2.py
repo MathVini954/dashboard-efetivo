@@ -188,13 +188,19 @@ def dashboard_efetivo():
     colors = df_peso['Selecionada'].map({True: 'darkblue', False: 'lightblue'})
 
     fig_peso = px.bar(
-        df_peso,
-        x='Obra',
-        y='Peso Financeiro',
-        title=f'Peso Financeiro por Obra ({tipo_peso})',
-        labels={'Peso Financeiro': 'Índice', 'Obra': 'Obra'},
-        text=df_peso['Peso Financeiro'].apply(lambda x: f"{x:.2%}"),
-        color=colors,  # essa cor será usada para as barras
+    df_peso,
+    x='Obra',
+    y='Peso Financeiro',
+    title=f'Peso Financeiro por Obra ({tipo_peso})',
+    labels={'Peso Financeiro': 'Índice', 'Obra': 'Obra'},
+    text=df_peso['Peso Financeiro'].apply(lambda x: f"{x:.2%}"),
+)
+
+fig_peso.update_traces(textposition='outside')
+fig_peso.update_layout(yaxis_tickformat='.0%')
+
+st.plotly_chart(fig_peso, use_container_width=True)
+
     )
 
     # Como px.bar não reconhece diretamente a série de cores, usamos update_traces para forçar cores

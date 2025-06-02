@@ -157,24 +157,29 @@ def dashboard_efetivo():
 
     st.divider()
 
-    # Gráfico quantidade por função
-    if nome_col_funcao:
-        graf_funcao = df_ranking[nome_col_funcao].value_counts().reset_index()
-        graf_funcao.columns = [nome_col_funcao, 'Qtd']
+   # Gráfico quantidade por função
+if nome_col_funcao:
+    graf_funcao = df_ranking[nome_col_funcao].value_counts().reset_index()
+    graf_funcao.columns = [nome_col_funcao, 'Qtd']
 
-        fig_bar = px.bar(
-            graf_funcao,
-            x=nome_col_funcao,
-            y='Qtd',
-            color='Qtd',
-            text='Qtd'
-            color_continuous_scale='Blues',
-            title='Quantidade por Função',
-            labels={'Qtd': 'Quantidade', nome_col_funcao: 'Função'}
-        )
-        st.plotly_chart(fig_bar, use_container_width=True)
+    fig_bar = px.bar(
+        graf_funcao,
+        x=nome_col_funcao,
+        y='Qtd',
+        color='Qtd',
+        text='Qtd',  # Adiciona rótulo de dados
+        color_continuous_scale='Blues',
+        title='Quantidade por Função',
+        labels={'Qtd': 'Quantidade', nome_col_funcao: 'Função'}
+    )
 
-        st.divider()
+    # Atualiza os rótulos para aparecerem fora das barras
+    fig_bar.update_traces(textposition='outside')
+    fig_bar.update_layout(uniformtext_minsize=8, uniformtext_mode='hide')
+
+    st.plotly_chart(fig_bar, use_container_width=True)
+    st.divider()
+
 
     # Gráfico de Peso Financeiro por Obra
     peso_lista = []

@@ -119,22 +119,24 @@ def dashboard_efetivo():
     if tipo_analise == 'Produção' and 'REFLEXO S PRODUÇÃO' in df_ranking.columns:
         df_ranking['DSR'] = df_ranking['REFLEXO S PRODUÇÃO']
         cols_rank = ['Nome do Funcionário', nome_col_funcao, 'Obra', 'Tipo', 'PRODUÇÃO', 'DSR']
+        valor_coluna = 'PRODUÇÃO'
     else:
         cols_rank = ['Nome do Funcionário', nome_col_funcao, 'Obra', 'Tipo', coluna_valor]
+        valor_coluna = coluna_valor
 
     # Garante que as colunas existem
     cols_rank = [c for c in cols_rank if c is not None and c in df_ranking.columns]
 
-    # Remove funcionários com valor nulo ou zero
-    df_ranking = df_ranking[cols_rank].copy()
-    df_ranking = df_ranking[pd.to_numeric(df_ranking[coluna_valor], errors='coerce').notna()]
-    df_ranking = df_ranking[df_ranking[coluna_valor] > 0]
+    # 🔹 CÓPIA segura do df_ranking só para o ranking
+    df_ranking_limp = df_ranking[cols_rank].copy()
+    df_ranking_limp = df_ranking_limp[pd.to_numeric(df_ranking_limp[valor_coluna], errors='coerce').notna()]
+    df_ranking_limp = df_ranking_limp[df_ranking_limp[valor_coluna] > 0]
 
     # Ordena
-    ranking = df_ranking.sort_values(by=coluna_valor, ascending=False)
+    ranking = df_ranking_limp.sort_values(by=valor_coluna, ascending=False)
 
     # Mostra total
-    valor_total = df_ranking[coluna_valor].sum()
+    valor_total = df_ranking_limp[valor_coluna].sum()
     st.markdown(f"### 📋 Top Funcionários por **{tipo_analise}**")
     st.markdown(f"**Total em {tipo_analise}:** R$ {valor_total:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
 
@@ -146,7 +148,7 @@ def dashboard_efetivo():
     def formatar_valor(x):
         return f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
 
-    ranking[coluna_valor] = ranking[coluna_valor].apply(formatar_valor)
+    ranking[valor_coluna] = ranking[valor_coluna].apply(formatar_valor)
     if 'DSR' in ranking.columns:
         ranking['DSR'] = ranking['DSR'].apply(formatar_valor)
 

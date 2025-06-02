@@ -70,32 +70,31 @@ def dashboard_efetivo():
 
     st.divider()
 
-    # Pizza - Distribuição por tipo
-    pizza_base = df[df['Obra'].astype(str).isin(obras_selecionadas)]
-    pizza_diretos_indiretos = pizza_base['Tipo'].value_counts().reset_index()
-    pizza_diretos_indiretos.columns = ['Tipo', 'count']
-    pizza_terceiros = pd.DataFrame({'Tipo': ['TERCEIRO'], 'count': [total_terceiros]})
+  
 
-    # Se houver terceiro para exibir, junta
-    if total_terceiros > 0:
-        pizza = pd.concat([pizza_diretos_indiretos, pizza_terceiros], ignore_index=True)
-    else:
-        pizza = pizza_diretos_indiretos
+# Pizza - Distribuição por tipo
+pizza_base = df[df['Obra'].astype(str).isin(obras_selecionadas)]
+pizza_diretos_indiretos = pizza_base['Tipo'].value_counts().reset_index()
+pizza_diretos_indiretos.columns = ['Tipo', 'count']
+pizza_terceiros = pd.DataFrame({'Tipo': ['TERCEIRO'], 'count': [total_terceiros]})
 
-    fig_pizza = px.pie(
-        pizza, values='count', title='Distribuição por Tipo de Efetivo',
-        labels={'count': 'Quantidade', 'Tipo': 'Tipo'},
-        hole=0.3
-    )
-    fig_pizza.update_traces(textposition='inside', textinfo='percent+label')
-    st.plotly_chart(fig_pizza, use_container_width=True)
+# Junta diretos/indiretos com terceiros se houver
+if total_terceiros > 0:
+    pizza = pd.concat([pizza_diretos_indiretos, pizza_terceiros], ignore_index=True)
+else:
+    pizza = pizza_diretos_indiretos
 
-    if tipo_selecionado == 'TERCEIRO':
-        st.divider()
-        st.markdown("### 🏗️ Funcionários Terceirizados por Empresa e Obra")
-        tabela_terceiros = df_terceiros_filtrado.groupby(['Obra', 'EMPRESA'])['QUANTIDADE'].sum().reset_index()
-        st.dataframe(tabela_terceiros, use_container_width=True)
-        return
+fig_pizza = px.pie(
+    pizza,
+    values='count',
+    names='Tipo',
+    title='Distribuição por Tipo de Efetivo',
+    labels={'count': 'Quantidade', 'Tipo': 'Tipo'},
+    hole=0.3
+)
+fig_pizza.update_traces(textposition='inside', textinfo='percent+label')
+st.plotly_chart(fig_pizza, use_container_width=True)
+
 
     coluna_valor = {
         'Produção': 'PRODUÇÃO',

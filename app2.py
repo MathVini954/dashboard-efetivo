@@ -168,15 +168,16 @@ def dashboard_efetivo():
         lambda x: 'Obra Selecionada' if x in obras_selecionadas else 'Outras Obras'
     )
 
-    fig_peso = px.bar(
-        media_por_obra,
-        x='Obra',
-        y='Índice',
-        color='Cor',
-        title=titulo_peso,
-        text=media_por_obra['Índice'].apply(lambda x: f"{x:.2f}")
-    )
-    fig_peso.update_layout(xaxis_tickangle=-45)
+  fig_peso = px.bar(
+    media_por_obra,
+    x='Obra',
+    y='Índice',
+    color='Cor',
+    title=titulo_peso,
+    text=media_por_obra['Índice'].apply(lambda x: f"{x*100:.2f}%")  # Multiplica por 100 e formata com %
+)
+fig_peso.update_layout(xaxis_tickangle=-45, yaxis_tickformat=".2%")  # Formata eixo Y como porcentagem
+
     st.plotly_chart(fig_peso, use_container_width=True)
 
     st.divider()

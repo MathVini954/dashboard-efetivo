@@ -188,7 +188,17 @@ def dashboard_efetivo():
 
         peso_lista.append({'Obra': obra, 'Peso Financeiro': peso})
 
-    df_peso = pd.DataFrame(peso_lista).sort_values(by='Peso Financeiro', ascending=False)
+   if peso_lista:
+    df_peso = pd.DataFrame(peso_lista)
+    if 'Peso Financeiro' in df_peso.columns:
+        df_peso = df_peso.sort_values(by='Peso Financeiro', ascending=False)
+        st.markdown("### 💰 Peso Financeiro por Obra")
+        st.dataframe(df_peso, use_container_width=True)
+    else:
+        st.warning("Coluna 'Peso Financeiro' não encontrada nos dados.")
+else:
+    st.info("Nenhum dado para calcular o Peso Financeiro.")
+
 
     fig_peso = px.bar(
         df_peso,

@@ -1,3 +1,7 @@
+import streamlit as st
+import pandas as pd
+import plotly.express as px
+
 @st.cache_data
 def carregar_dados_efetivo():
     df = pd.read_excel("efetivo_abril.xlsx", sheet_name="EFETIVO", engine="openpyxl")

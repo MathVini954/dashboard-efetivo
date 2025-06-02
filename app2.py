@@ -156,7 +156,7 @@ def dashboard_efetivo():
         # Hora Extra: DIRETO + INDIRETO
         df_dir_ind = df_obra[df_obra['Tipo'].isin(['DIRETO', 'INDIRETO'])]
         total_extra = df_dir_ind['Total Extra'].sum()
-        reposo_remunerado = df_dir_ind['REPOUSO REMUNERADO'].sum()
+        reposo_remunerado = df_dir_ind['Repouso Remunerado'].sum()
         hor_extra_denominador = df_dir_ind['Remuneração Líquida Folha'].sum() + df_dir_ind['Adiantamento'].sum()
 
         if tipo_peso == 'Peso sobre Produção':

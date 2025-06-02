@@ -3,6 +3,16 @@ import pandas as pd
 import plotly.express as px
 
 @st.cache_data
+def carregar_dados_efetivo():
+    df = pd.read_excel("efetivo_abril.xlsx", sheet_name="EFETIVO", engine="openpyxl")
+    df.columns = df.columns.str.strip()
+    # Garantir que colunas numéricas estejam no formato correto
+    df['Hora Extra 70% - Semana'] = pd.to_numeric(df['Hora Extra 70% - Semana'], errors='coerce').fillna(0)
+    df['Hora Extra 70% - Sabado'] = pd.to_numeric(df['Hora Extra 70% - Sabado'], errors='coerce').fillna(0)
+    # Adapte conforme suas colunas para evitar erros
+    return df
+
+@st.cache_data
 def carregar_terceiros():
     df_terceiros = pd.read_excel("efetivo_abril.xlsx", sheet_name="TERCEIROS", engine="openpyxl")
     df_terceiros.columns = df_terceiros.columns.str.strip()
@@ -34,7 +44,7 @@ def dashboard_efetivo():
         if tipo_selecionado in ['DIRETO', 'INDIRETO']:
             df_filtrado = df_filtrado[df_filtrado['Tipo'] == tipo_selecionado]
         elif tipo_selecionado == 'TERCEIRO':
-            df_filtrado = df_filtrado[0:0]
+            df_filtrado = df_filtrado[0:0]  # vazio, pois terceiros estão em outro DF
 
     direto_count = len(df[df['Obra'].isin(obras_selecionadas) & (df['Tipo'] == 'DIRETO')])
     indireto_count = len(df[df['Obra'].isin(obras_selecionadas) & (df['Tipo'] == 'INDIRETO')])
@@ -49,7 +59,7 @@ def dashboard_efetivo():
 
     st.divider()
 
-    # Pizza
+    # Pizza - Distribuição por tipo
     pizza_base = df[df['Obra'].isin(obras_selecionadas)]
     pizza_diretos_indiretos = pizza_base['Tipo'].value_counts().reset_index()
     pizza_diretos_indiretos.columns = ['Tipo', 'count']
@@ -77,11 +87,24 @@ def dashboard_efetivo():
     else:
         df_ranking = df_filtrado
 
-    if tipo_analise == 'Produção' and 'REFLEXO S PRODUÇÃO' in df.columns:
-        df_ranking['DSR'] = df_ranking['REFLEXO S PRODUÇÃO']
-        ranking = df_ranking[['Nome do Funcionário', 'Funçao', 'Obra', 'Tipo', 'PRODUÇÃO', 'DSR']].sort_values(by='PRODUÇÃO', ascending=False)
+    # Ajustar nome da coluna Função
+    if 'Função' in df_ranking.columns:
+        nome_col_funcao = 'Função'
+    elif 'Funçao' in df_ranking.columns:
+        nome_col_funcao = 'Funçao'
     else:
-        ranking = df_ranking[['Nome do Funcionário', 'Funçao', 'Obra', 'Tipo', coluna_valor]].sort_values(by=coluna_valor, ascending=False)
+        nome_col_funcao = None  # se não existir
+
+    # Ranking com ou sem DSR
+    if tipo_analise == 'Produção' and 'REFLEXO S PRODUÇÃO' in df_ranking.columns:
+        df_ranking['DSR'] = df_ranking['REFLEXO S PRODUÇÃO']
+        cols_rank = ['Nome do Funcionário', nome_col_funcao, 'Obra', 'Tipo', 'PRODUÇÃO', 'DSR']
+        cols_rank = [c for c in cols_rank if c is not None]
+        ranking = df_ranking[cols_rank].sort_values(by='PRODUÇÃO', ascending=False)
+    else:
+        cols_rank = ['Nome do Funcionário', nome_col_funcao, 'Obra', 'Tipo', coluna_valor]
+        cols_rank = [c for c in cols_rank if c is not None]
+        ranking = df_ranking[cols_rank].sort_values(by=coluna_valor, ascending=False)
 
     valor_total = df_ranking[coluna_valor].sum()
     st.markdown(f"### 📋 Top Funcionários por **{tipo_analise}**")
@@ -97,12 +120,12 @@ def dashboard_efetivo():
     st.dataframe(ranking, use_container_width=True)
 
     st.divider()
-    graf_funcao = df_ranking['Funçao'].value_counts().reset_index()
-    graf_funcao.columns = ['Funçao', 'Qtd']
+    graf_funcao = df_ranking[nome_col_funcao].value_counts().reset_index()
+    graf_funcao.columns = [nome_col_funcao, 'Qtd']
 
     fig_bar = px.bar(
         graf_funcao,
-        x='Funçao',
+        x=nome_col_funcao,
         y='Qtd',
         color='Qtd',
         color_continuous_scale='Blues',
@@ -117,7 +140,7 @@ def dashboard_efetivo():
 
     fig_quadrantes = px.scatter(
         df_ranking, x='Total Extra', y='PRODUÇÃO', color='Tipo',
-        hover_data=['Nome do Funcionário', 'Funçao', 'Obra'],
+        hover_data=['Nome do Funcionário', nome_col_funcao, 'Obra'],
         title="Quadrantes de Eficiência - Produção vs Hora Extra"
     )
     st.plotly_chart(fig_quadrantes, use_container_width=True)

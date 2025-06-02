@@ -2,7 +2,7 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-import plotly.graph_objects as go  # IMPORTAÇÃO ADICIONADA
+import plotly.graph_objects as go
 
 @st.cache_data
 def carregar_dados_efetivo():
@@ -39,7 +39,7 @@ def dashboard_efetivo():
         tipo_peso = st.radio("Peso a Exibir:", ['Peso sobre Produção', 'Peso sobre Hora Extra'], horizontal=True)
 
     # Filtrar dados para obras selecionadas e tipo
-    df_filtrado = df[df['Obra'].isin(obras_selecionadas)].copy()  # Cópia para evitar warning
+    df_filtrado = df[df['Obra'].isin(obras_selecionadas)].copy()
     df_terceiros_filtrado = df_terceiros[df_terceiros['Obra'].isin(obras_selecionadas)]
 
     if tipo_selecionado != 'Todos':
@@ -52,11 +52,10 @@ def dashboard_efetivo():
     if 'Total Extra' not in df_filtrado.columns:
         df_filtrado['Total Extra'] = df_filtrado['Hora Extra 70% - Semana'] + df_filtrado['Hora Extra 70% - Sabado']
 
-    # Calcular Remuneração Líquida Total
-    df_filtrado['Remuneração Líquida Total'] = (
-        pd.to_numeric(df_filtrado['Remuneração Líquida Folha'], errors='coerce').fillna(0) +
-        pd.to_numeric(df_filtrado['Adiantamento'], errors='coerce').fillna(0)
-    )
+    # Garantir soma correta do Adiantamento com valores negativos
+    df_filtrado['Remuneração Líquida Folha'] = pd.to_numeric(df_filtrado['Remuneração Líquida Folha'], errors='coerce').fillna(0)
+    df_filtrado['Adiantamento'] = pd.to_numeric(df_filtrado['Adiantamento'], errors='coerce').fillna(0)
+    df_filtrado['Remuneração Líquida Total'] = df_filtrado['Remuneração Líquida Folha'] + df_filtrado['Adiantamento']
 
     # Agrupar soma por obra
     grouped = df_filtrado.groupby('Obra').agg({
@@ -70,8 +69,16 @@ def dashboard_efetivo():
     grouped['Peso Produção'] = (grouped['PRODUÇÃO'] + grouped['REFLEXO S PRODUÇÃO']) / grouped['Remuneração Líquida Total'].replace(0, 1)
     grouped['Peso Hora Extra'] = (grouped['Total Extra'] + grouped['Repouso Remunerado']) / grouped['Remuneração Líquida Total'].replace(0, 1)
 
-    # Preparar cores para destaque (destacar todas obras selecionadas)
-    cores = ['crimson' if obra in obras_selecionadas else 'lightgrey' for obra in grouped['Obra']]
+    # Cores para gráfico: azul escuro para todas as obras, laranja para obras selecionadas (destaque)
+    cor_padrao = '#003366'  # Azul escuro
+    cor_destaque = '#FFA500'  # Laranja
+
+    cores = []
+    for obra in grouped['Obra']:
+        if obra in obras_selecionadas:
+            cores.append(cor_destaque)
+        else:
+            cores.append(cor_padrao)
 
     if tipo_peso == 'Peso sobre Produção':
         y = grouped['Peso Produção']
@@ -99,7 +106,7 @@ def dashboard_efetivo():
     )
     st.plotly_chart(fig, use_container_width=True)
 
-    # Contagens para métricas
+    # Métricas resumo
     direto_count = len(df[df['Obra'].isin(obras_selecionadas) & (df['Tipo'] == 'DIRETO')])
     indireto_count = len(df[df['Obra'].isin(obras_selecionadas) & (df['Tipo'] == 'INDIRETO')])
     total_terceiros = df_terceiros_filtrado['QUANTIDADE'].sum()
@@ -113,7 +120,14 @@ def dashboard_efetivo():
 
     st.divider()
 
-    # Gráfico de pizza
+    # Se for tipo terceiro, mostrar somente tabela de terceiros e sair
+    if tipo_selecionado == 'TERCEIRO':
+        st.markdown("### 🏗️ Funcionários Terceirizados por Empresa e Obra")
+        tabela_terceiros = df_terceiros_filtrado.groupby(['Obra', 'EMPRESA'])['QUANTIDADE'].sum().reset_index()
+        st.dataframe(tabela_terceiros, use_container_width=True)
+        return
+
+    # Gráfico de pizza após o gráfico de pesos e antes da tabela de terceiros
     pizza_base = df[df['Obra'].isin(obras_selecionadas)]
     pizza_diretos_indiretos = pizza_base['Tipo'].value_counts().reset_index()
     pizza_diretos_indiretos.columns = ['Tipo', 'count']
@@ -130,76 +144,12 @@ def dashboard_efetivo():
     fig_pizza.update_traces(textinfo='percent+label')
     st.plotly_chart(fig_pizza, use_container_width=True)
 
-    if tipo_selecionado == 'TERCEIRO':
-        st.divider()
-        st.markdown("### 🏗️ Funcionários Terceirizados por Empresa e Obra")
-        tabela_terceiros = df_terceiros_filtrado.groupby(['Obra', 'EMPRESA'])['QUANTIDADE'].sum().reset_index()
-        st.dataframe(tabela_terceiros, use_container_width=True)
-        return
-
-    coluna_valor = {
-        'Produção': 'PRODUÇÃO',
-        'Hora Extra Semana': 'Hora Extra 70% - Semana',
-        'Hora Extra Sábado': 'Hora Extra 70% - Sabado'
-    }[tipo_analise]
-
-    df_ranking = df_filtrado if tipo_selecionado != 'Todos' else df_filtrado[df_filtrado['Tipo'].isin(['DIRETO', 'INDIRETO'])]
-
-    if tipo_analise == 'Produção' and 'REFLEXO S PRODUÇÃO' in df.columns:
-        df_ranking = df_ranking.copy()
-        df_ranking['DSR'] = df_ranking['REFLEXO S PRODUÇÃO']
-        ranking = df_ranking[['Nome do Funcionário', 'Função', 'Obra', 'Tipo', 'PRODUÇÃO', 'DSR']].sort_values(by='PRODUÇÃO', ascending=False)
-    else:
-        ranking = df_ranking[['Nome do Funcionário', 'Função', 'Obra', 'Tipo', coluna_valor]].sort_values(by=coluna_valor, ascending=False)
-
-    valor_total = df_ranking[coluna_valor].sum()
-    st.markdown(f"### 📋 Top Funcionários por **{tipo_analise}**")
-    st.markdown(f"**Total em {tipo_analise}:** R$ {valor_total:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
-
-    if qtd_linhas != 'Todos':
-        ranking = ranking.head(int(qtd_linhas))
-
-    ranking[coluna_valor] = ranking[coluna_valor].apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
-    if 'DSR' in ranking.columns:
-        ranking['DSR'] = ranking['DSR'].apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
-
-    st.dataframe(ranking, use_container_width=True)
-
-    st.divider()
-    graf_funcao = df_ranking['Função'].value_counts().reset_index()
-    graf_funcao.columns = ['Função', 'Qtd']
-
-    fig_bar = px.bar(
-        graf_funcao,
-        x='Função',
-        y='Qtd',
-        color='Qtd',
-        color_continuous_scale='Blues',
-        title='Efetivo por Função',
-        text='Qtd'
-    )
-    fig_bar.update_layout(xaxis_tickangle=-45)
-    st.plotly_chart(fig_bar, use_container_width=True)
-
-    st.divider()
-    st.markdown("### 🎯 Quadrantes de Eficiência (Produção vs Hora Extra)")
-
-    if 'Total Extra' not in df_ranking.columns:
-        df_ranking['Total Extra'] = (
-            df_ranking.get('Hora Extra 70% - Semana', 0) + df_ranking.get('Hora Extra 70% - Sabado', 0)
-        )
-
-    fig_quadrantes = px.scatter(
-        df_ranking, x='Total Extra', y='PRODUÇÃO', color='Tipo',
-        hover_data=['Nome do Funcionário', 'Função', 'Obra'],
-        title="Quadrantes de Eficiência - Produção vs Hora Extra"
-    )
-    st.plotly_chart(fig_quadrantes, use_container_width=True)
-
     st.divider()
     st.markdown("### 🏗️ Funcionários Terceirizados por Empresa e Obra")
     tabela_terceiros = df_terceiros_filtrado.groupby(['Obra', 'EMPRESA'])['QUANTIDADE'].sum().reset_index()
     st.dataframe(tabela_terceiros, use_container_width=True)
+
+    # ... resto do código continua normalmente
 
 # Dicionário para mapear meses em inglês para abreviações em português
 MES_POR_PT = {

@@ -34,7 +34,7 @@ def dashboard_efetivo():
 
     with st.sidebar:
         st.header("🔍 Filtros - Efetivo")
-        lista_obras = sorted(df['Obra'].astype(str).unique())
+         todas_obras = sorted(df['Obra'].astype(str).unique())
         obras_selecionadas = st.multiselect("Obras:", lista_obras, default=lista_obras)
         tipo_selecionado = st.radio("Tipo:", ['Todos', 'DIRETO', 'INDIRETO', 'TERCEIRO'], horizontal=True)
         tipo_analise = st.radio("Tipo de Análise da Tabela:", ['Produção', 'Hora Extra Semana', 'Hora Extra Sábado'])

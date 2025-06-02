@@ -34,7 +34,7 @@ def dashboard_efetivo():
 
     with st.sidebar:
         st.header("🔍 Filtros - Efetivo")
-         todas_obras = sorted(df['Obra'].astype(str).unique())
+        lista_obras = sorted(df['Obra'].astype(str).unique())
         obras_selecionadas = st.multiselect("Obras:", lista_obras, default=lista_obras)
         tipo_selecionado = st.radio("Tipo:", ['Todos', 'DIRETO', 'INDIRETO', 'TERCEIRO'], horizontal=True)
         tipo_analise = st.radio("Tipo de Análise da Tabela:", ['Produção', 'Hora Extra Semana', 'Hora Extra Sábado'])
@@ -152,7 +152,10 @@ def dashboard_efetivo():
 
     st.divider()
 
-todas_obras = sorted(df['Obra'].astype(str).unique())  # dentro da função
+    # Gráfico de Peso Financeiro
+    # Cria base para cálculo do peso financeiro de cada obra filtrada
+    obras_peso = obras_selecionadas.copy()
+todas_obras = sorted(df['Obra'].astype(str).unique())
 
 peso_lista = []
 for obra in todas_obras:
@@ -180,7 +183,12 @@ for obra in todas_obras:
 df_peso = pd.DataFrame(peso_lista)
 df_peso = df_peso.sort_values(by='Peso Financeiro', ascending=False)
 
-# Gráfico sem cor diferenciada, todas barras padrão
+# Coluna para controlar cor: True se obra está selecionada no filtro, False se não
+df_peso['Selecionada'] = df_peso['Obra'].apply(lambda x: x in obras_selecionadas)
+
+# Define cores: azul escuro para selecionadas, azul claro para não selecionadas
+colors = df_peso['Selecionada'].map({True: 'darkblue', False: 'lightblue'})
+
 fig_peso = px.bar(
     df_peso,
     x='Obra',
@@ -188,9 +196,11 @@ fig_peso = px.bar(
     title=f'Peso Financeiro por Obra ({tipo_peso})',
     labels={'Peso Financeiro': 'Índice', 'Obra': 'Obra'},
     text=df_peso['Peso Financeiro'].apply(lambda x: f"{x:.2%}"),
+    color=colors,  # essa cor será usada para as barras
 )
 
-fig_peso.update_traces(textposition='outside')
+# Como px.bar não reconhece diretamente a série de cores, usamos update_traces para forçar cores
+fig_peso.update_traces(marker_color=colors, textposition='outside')
 fig_peso.update_layout(yaxis_tickformat='.0%')
 
 st.plotly_chart(fig_peso, use_container_width=True)

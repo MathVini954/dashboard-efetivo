@@ -8,10 +8,14 @@ def carregar_dados_efetivo():
     df.columns = df.columns.str.strip()
     df['Hora Extra 70% - Semana'] = pd.to_numeric(df['Hora Extra 70% - Semana'], errors='coerce').fillna(0)
     df['Hora Extra 70% - Sabado'] = pd.to_numeric(df['Hora Extra 70% - Sabado'], errors='coerce').fillna(0)
-    df['REPOUSO REMUNERADO'] = pd.to_numeric(df.get('REPOUSO REMUNERADO', 0), errors='coerce').fillna(0)
+    if 'Repouso Remunerado' not in df.columns:
+        df['Repouso Remunerado'] = 0
+    else:
+        df['Repouso Remunerado'] = pd.to_numeric(df['Repouso Remunerado'], errors='coerce').fillna(0)
     df['Remuneração Líquida Folha'] = pd.to_numeric(df['Remuneração Líquida Folha'], errors='coerce').fillna(0)
     df['Adiantamento'] = pd.to_numeric(df['Adiantamento'], errors='coerce').fillna(0)
     return df
+
 
 @st.cache_data
 def carregar_terceiros():

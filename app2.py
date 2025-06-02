@@ -196,7 +196,6 @@ def data_pt_para_datetime(mes_ano_pt_str):
     mes = MES_PT_PARA_NUM[mes_pt]
     ano = 2000 + int(ano_str)  # exemplo: '24' vira 2024
     return pd.Timestamp(year=ano, month=mes, day=1)
-
 def dashboard_produtividade():
     def carregar_dados():
         df = pd.read_excel("produtividade.xlsx")
@@ -243,7 +242,7 @@ def dashboard_produtividade():
                             title="Produtividade Profissional Média por Tipo de Obra")
         return fig_barras
 
-   df = carregar_dados()
+    df = carregar_dados()
 
     with st.sidebar:
         st.header("🔍 Filtros - Produtividade")
@@ -269,6 +268,7 @@ def dashboard_produtividade():
     st.title("📈 Dashboard de Produtividade")
     st.plotly_chart(fig_produtividade)
     st.plotly_chart(fig_barras)
+
 # ---------- Execução Principal ----------
 def main():
     st.set_page_config(page_title="Dashboards de Obra", layout="wide")

@@ -1,8 +1,24 @@
-import streamlit as st
-import pandas as pd
-import plotly.express as px
+@st.cache_data
+def carregar_dados_efetivo():
+    df = pd.read_excel("efetivo_abril.xlsx", sheet_name="EFETIVO", engine="openpyxl")
+    df.columns = df.columns.str.strip()
+    df['Hora Extra 70% - Semana'] = pd.to_numeric(df['Hora Extra 70% - Semana'], errors='coerce').fillna(0)
+    df['Hora Extra 70% - Sabado'] = pd.to_numeric(df['Hora Extra 70% - Sabado'], errors='coerce').fillna(0)
+    if 'Repouso Remunerado' not in df.columns:
+        df['Repouso Remunerado'] = 0
+    else:
+        df['Repouso Remunerado'] = pd.to_numeric(df['Repouso Remunerado'], errors='coerce').fillna(0)
+    df['Remuneração Líquida Folha'] = pd.to_numeric(df['Remuneração Líquida Folha'], errors='coerce').fillna(0)
+    df['Adiantamento'] = pd.to_numeric(df['Adiantamento'], errors='coerce').fillna(0)
+    return df
 
 
+@st.cache_data
+def carregar_terceiros():
+    df_terceiros = pd.read_excel("efetivo_abril.xlsx", sheet_name="TERCEIROS", engine="openpyxl")
+    df_terceiros.columns = df_terceiros.columns.str.strip()
+    df_terceiros['QUANTIDADE'] = pd.to_numeric(df_terceiros['QUANTIDADE'], errors='coerce').fillna(0).astype(int)
+    return df_terceiros
 
 def dashboard_efetivo():
     st.title("📊 Análise de Efetivo - Abril 2025")
@@ -10,7 +26,6 @@ def dashboard_efetivo():
     df = carregar_dados_efetivo()
     df_terceiros = carregar_terceiros()
 
-    # Cálculo da coluna Total Extra
     df['Total Extra'] = df['Hora Extra 70% - Semana'] + df['Hora Extra 70% - Sabado']
 
     with st.sidebar:
@@ -75,52 +90,31 @@ def dashboard_efetivo():
     else:
         df_ranking = df_filtrado
 
-    # Detecta nome correto da coluna Função
-    nome_col_funcao = None
-    if 'Função' in df_ranking.columns:
-        nome_col_funcao = 'Função'
-    elif 'Funçao' in df_ranking.columns:
-        nome_col_funcao = 'Funçao'
 
-    # Define colunas a exibir e calcula DSR se necessário
+    nome_col_funcao = 'Função' if 'Função' in df_ranking.columns else 'Funçao' if 'Funçao' in df_ranking.columns else None
+
     if tipo_analise == 'Produção' and 'REFLEXO S PRODUÇÃO' in df_ranking.columns:
         df_ranking['DSR'] = df_ranking['REFLEXO S PRODUÇÃO']
         cols_rank = ['Nome do Funcionário', nome_col_funcao, 'Obra', 'Tipo', 'PRODUÇÃO', 'DSR']
-        valor_coluna = 'PRODUÇÃO'
+        cols_rank = [c for c in cols_rank if c is not None]
+        ranking = df_ranking[cols_rank].sort_values(by='PRODUÇÃO', ascending=False)
     else:
         cols_rank = ['Nome do Funcionário', nome_col_funcao, 'Obra', 'Tipo', coluna_valor]
-        valor_coluna = coluna_valor
+        cols_rank = [c for c in cols_rank if c is not None]
+        ranking = df_ranking[cols_rank].sort_values(by=coluna_valor, ascending=False)
 
-    # Garante que as colunas existem
-    cols_rank = [c for c in cols_rank if c is not None and c in df_ranking.columns]
-
-    # 🔹 CÓPIA segura do df_ranking só para o ranking
-    df_ranking_limp = df_ranking[cols_rank].copy()
-    df_ranking_limp = df_ranking_limp[pd.to_numeric(df_ranking_limp[valor_coluna], errors='coerce').notna()]
-    df_ranking_limp = df_ranking_limp[df_ranking_limp[valor_coluna] > 0]
-
-    # Ordena
-    ranking = df_ranking_limp.sort_values(by=valor_coluna, ascending=False)
-
-    # Mostra total
-    valor_total = df_ranking_limp[valor_coluna].sum()
+    valor_total = df_ranking[coluna_valor].sum()
     st.markdown(f"### 📋 Top Funcionários por **{tipo_analise}**")
     st.markdown(f"**Total em {tipo_analise}:** R$ {valor_total:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
 
-    # Filtra quantidade
     if qtd_linhas != 'Todos':
         ranking = ranking.head(int(qtd_linhas))
 
-    # Formata valores
-    def formatar_valor(x):
-        return f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
-
-    ranking[valor_coluna] = ranking[valor_coluna].apply(formatar_valor)
+    ranking[coluna_valor] = ranking[coluna_valor].apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
     if 'DSR' in ranking.columns:
-        ranking['DSR'] = ranking['DSR'].apply(formatar_valor)
+        ranking['DSR'] = ranking['DSR'].apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
 
     st.dataframe(ranking, use_container_width=True)
-
 
     st.divider()
     graf_funcao = df_ranking[nome_col_funcao].value_counts().reset_index()
@@ -327,4 +321,4 @@ def main():
         )
 
 if __name__ == "__main__":
-    main()
+    main() 

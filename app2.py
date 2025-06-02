@@ -156,7 +156,9 @@ def dashboard_efetivo():
     todas_obras = sorted(df['Obra'].astype(str).unique())  # <-- dentro da função!
 
     peso_lista = []
-  
+    for obra in todas_obras:
+        # Base da obra
+        df_obra = df[df['Obra'] == obra]
 
         # Produção: só DIRETO
         df_direto = df_obra[df_obra['Tipo'] == 'DIRETO']

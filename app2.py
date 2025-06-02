@@ -69,32 +69,22 @@ def dashboard_efetivo():
     col4.metric("👥 Total", total_geral)
 
     st.divider()
-
-  
-
-# Pizza - Distribuição por tipo
-pizza_base = df[df['Obra'].astype(str).isin(obras_selecionadas)]
-pizza_diretos_indiretos = pizza_base['Tipo'].value_counts().reset_index()
-pizza_diretos_indiretos.columns = ['Tipo', 'count']
-pizza_terceiros = pd.DataFrame({'Tipo': ['TERCEIRO'], 'count': [total_terceiros]})
-
-# Junta diretos/indiretos com terceiros se houver
-if total_terceiros > 0:
+      # Pizza - Distribuição por tipo
+    pizza_base = df[df['Obra'].isin(obras_selecionadas)]
+    pizza_diretos_indiretos = pizza_base['Tipo'].value_counts().reset_index()
+    pizza_diretos_indiretos.columns = ['Tipo', 'count']
+    pizza_terceiros = pd.DataFrame({'Tipo': ['TERCEIRO'], 'count': [total_terceiros]})
     pizza = pd.concat([pizza_diretos_indiretos, pizza_terceiros], ignore_index=True)
-else:
-    pizza = pizza_diretos_indiretos
 
-fig_pizza = px.pie(
-    pizza,
-    values='count',
-    names='Tipo',
-    title='Distribuição por Tipo de Efetivo',
-    labels={'count': 'Quantidade', 'Tipo': 'Tipo'},
-    hole=0.3
-)
-fig_pizza.update_traces(textposition='inside', textinfo='percent+label')
-st.plotly_chart(fig_pizza, use_container_width=True)
+    fig_pizza = px.pie(pizza, names='Tipo', values='count', title='Distribuição por Tipo de Efetivo')
+    st.plotly_chart(fig_pizza, use_container_width=True)
 
+    if tipo_selecionado == 'TERCEIRO':
+        st.divider()
+        st.markdown("### 🏗️ Funcionários Terceirizados por Empresa e Obra")
+        tabela_terceiros = df_terceiros_filtrado.groupby(['Obra', 'EMPRESA'])['QUANTIDADE'].sum().reset_index()
+        st.dataframe(tabela_terceiros, use_container_width=True)
+        return
 
     coluna_valor = {
         'Produção': 'PRODUÇÃO',
@@ -106,6 +96,7 @@ st.plotly_chart(fig_pizza, use_container_width=True)
         df_ranking = df_filtrado[df_filtrado['Tipo'].isin(['DIRETO', 'INDIRETO'])]
     else:
         df_ranking = df_filtrado
+
 
       # Detecta nome correto da coluna Função
     nome_col_funcao = None

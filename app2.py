@@ -1,15 +1,11 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-import numpy as np
-
 
 @st.cache_data
 def carregar_dados_efetivo():
     df = pd.read_excel("efetivo_abril.xlsx", sheet_name="EFETIVO", engine="openpyxl")
     df.columns = df.columns.str.strip()
-    if 'Obra' in df.columns:
-        df['Obra'] = df['Obra'].astype(str).str.strip()
     df['Hora Extra 70% - Semana'] = pd.to_numeric(df['Hora Extra 70% - Semana'], errors='coerce').fillna(0)
     df['Hora Extra 70% - Sabado'] = pd.to_numeric(df['Hora Extra 70% - Sabado'], errors='coerce').fillna(0)
     if 'Repouso Remunerado' not in df.columns:
@@ -20,12 +16,11 @@ def carregar_dados_efetivo():
     df['Adiantamento'] = pd.to_numeric(df['Adiantamento'], errors='coerce').fillna(0)
     return df
 
+
 @st.cache_data
 def carregar_terceiros():
     df_terceiros = pd.read_excel("efetivo_abril.xlsx", sheet_name="TERCEIROS", engine="openpyxl")
     df_terceiros.columns = df_terceiros.columns.str.strip()
-    if 'Obra' in df_terceiros.columns:
-        df_terceiros['Obra'] = df_terceiros['Obra'].astype(str).str.strip()
     df_terceiros['QUANTIDADE'] = pd.to_numeric(df_terceiros['QUANTIDADE'], errors='coerce').fillna(0).astype(int)
     return df_terceiros
 
@@ -34,9 +29,6 @@ def dashboard_efetivo():
 
     df = carregar_dados_efetivo()
     df_terceiros = carregar_terceiros()
-
-    df = df[df['Obra'] != '0']
-    df_terceiros = df_terceiros[df_terceiros['Obra'] != '0']
 
     df['Total Extra'] = df['Hora Extra 70% - Semana'] + df['Hora Extra 70% - Sabado']
 
@@ -49,15 +41,18 @@ def dashboard_efetivo():
         qtd_linhas = st.radio("Qtd. de Funcionários na Tabela:", ['5', '10', '20', 'Todos'], horizontal=True)
         tipo_peso = st.radio("Tipo de Peso (Gráficos Novos):", ['Peso sobre Produção', 'Peso sobre Hora Extra'])
 
+    # Filtra obras selecionadas para efetivo e terceiros
     df_filtrado = df[df['Obra'].isin(obras_selecionadas)]
     df_terceiros_filtrado = df_terceiros[df_terceiros['Obra'].isin(obras_selecionadas)]
 
+    # Filtra por tipo
     if tipo_selecionado != 'Todos':
         if tipo_selecionado in ['DIRETO', 'INDIRETO']:
             df_filtrado = df_filtrado[df_filtrado['Tipo'] == tipo_selecionado]
         elif tipo_selecionado == 'TERCEIRO':
-            df_filtrado = df_filtrado[0:0]
+            df_filtrado = df_filtrado[0:0]  # vazio, terceiros estão em outro DF
 
+    # Métricas principais
     direto_count = len(df[df['Obra'].isin(obras_selecionadas) & (df['Tipo'] == 'DIRETO')])
     indireto_count = len(df[df['Obra'].isin(obras_selecionadas) & (df['Tipo'] == 'INDIRETO')])
     total_terceiros = df_terceiros_filtrado['QUANTIDADE'].sum()
@@ -71,6 +66,7 @@ def dashboard_efetivo():
 
     st.divider()
 
+    # Pizza - Distribuição por tipo
     pizza_base = df[df['Obra'].isin(obras_selecionadas)]
     pizza_diretos_indiretos = pizza_base['Tipo'].value_counts().reset_index()
     pizza_diretos_indiretos.columns = ['Tipo', 'count']
@@ -101,15 +97,17 @@ def dashboard_efetivo():
     else:
         df_ranking = df_filtrado
 
-    nome_col_funcao = 'Função' if 'Função' in df_ranking.columns else 'Funçao'
+    nome_col_funcao = 'Função' if 'Função' in df_ranking.columns else 'Funçao' if 'Funçao' in df_ranking.columns else None
 
     if tipo_analise == 'Produção' and 'REFLEXO S PRODUÇÃO' in df_ranking.columns:
         df_ranking['DSR'] = df_ranking['REFLEXO S PRODUÇÃO']
         cols_rank = ['Nome do Funcionário', nome_col_funcao, 'Obra', 'Tipo', 'PRODUÇÃO', 'DSR']
+        cols_rank = [c for c in cols_rank if c is not None]
+        ranking = df_ranking[cols_rank].sort_values(by='PRODUÇÃO', ascending=False)
     else:
         cols_rank = ['Nome do Funcionário', nome_col_funcao, 'Obra', 'Tipo', coluna_valor]
-
-    ranking = df_ranking[cols_rank].sort_values(by=coluna_valor, ascending=False)
+        cols_rank = [c for c in cols_rank if c is not None]
+        ranking = df_ranking[cols_rank].sort_values(by=coluna_valor, ascending=False)
 
     valor_total = df_ranking[coluna_valor].sum()
     st.markdown(f"### 📋 Top Funcionários por **{tipo_analise}**")
@@ -125,9 +123,9 @@ def dashboard_efetivo():
     st.dataframe(ranking, use_container_width=True)
 
     st.divider()
-
     graf_funcao = df_ranking[nome_col_funcao].value_counts().reset_index()
     graf_funcao.columns = [nome_col_funcao, 'Qtd']
+
     fig_bar = px.bar(
         graf_funcao,
         x=nome_col_funcao,
@@ -141,41 +139,48 @@ def dashboard_efetivo():
 
     st.divider()
 
-    todas_obras = sorted(df['Obra'].unique())
+    # Gráfico de Peso Financeiro
+    # Cria base para cálculo do peso financeiro de cada obra filtrada
+    obras_peso = obras_selecionadas.copy()
 
     peso_lista = []
-    for obra in todas_obras:
+    for obra in obras_peso:
+        # Base da obra
         df_obra = df[df['Obra'] == obra]
+
+        # Produção: só DIRETO
         df_direto = df_obra[df_obra['Tipo'] == 'DIRETO']
-
-        prod_numerador = df_direto['PRODUÇÃO'].sum()
-        if 'REFLEXO S PRODUÇÃO' in df_direto.columns:
-            prod_numerador += df_direto['REFLEXO S PRODUÇÃO'].sum()
-
+        prod_numerador = df_direto['PRODUÇÃO'].sum() + df_direto['REFLEXO S PRODUÇÃO'].sum()
         prod_denominador = df_direto['Remuneração Líquida Folha'].sum() + df_direto['Adiantamento'].sum()
 
+        # Hora Extra: DIRETO + INDIRETO
         df_dir_ind = df_obra[df_obra['Tipo'].isin(['DIRETO', 'INDIRETO'])]
-        hora_extra = df_dir_ind['Hora Extra 70% - Semana'].sum() + df_dir_ind['Hora Extra 70% - Sabado'].sum()
+        total_extra = df_dir_ind['Total Extra'].sum()
+        reposo_remunerado = df_dir_ind['Repouso Remunerado'].sum()
+        hor_extra_denominador = df_dir_ind['Remuneração Líquida Folha'].sum() + df_dir_ind['Adiantamento'].sum()
 
-        peso_lista.append({
-            'Obra': obra,
-            'Peso sobre Produção': prod_numerador / prod_denominador if prod_denominador > 0 else 0,
-            'Peso sobre Hora Extra': hora_extra / prod_denominador if prod_denominador > 0 else 0
-        })
+        if tipo_peso == 'Peso sobre Produção':
+            peso = (prod_numerador / prod_denominador) if prod_denominador > 0 else 0
+        else:
+            peso = ((total_extra + reposo_remunerado) / hor_extra_denominador) if hor_extra_denominador > 0 else 0
+
+        peso_lista.append({'Obra': obra, 'Peso Financeiro': peso})
 
     df_peso = pd.DataFrame(peso_lista)
+    df_peso = df_peso.sort_values(by='Peso Financeiro', ascending=False)
 
     fig_peso = px.bar(
         df_peso,
         x='Obra',
-        y=tipo_peso,
-        color=tipo_peso,
-        color_continuous_scale='viridis',
-        title=f'{tipo_peso} por Obra',
-        labels={'Obra': 'Obra', tipo_peso: tipo_peso}
+        y='Peso Financeiro',
+        title=f'Peso Financeiro por Obra ({tipo_peso})',
+        labels={'Peso Financeiro': 'Índice', 'Obra': 'Obra'},
+        text=df_peso['Peso Financeiro'].apply(lambda x: f"{x:.2%}")
     )
-    st.plotly_chart(fig_peso, use_container_width=True)
+    fig_peso.update_traces(marker_color='darkblue', textposition='outside')
+    fig_peso.update_layout(yaxis_tickformat='.0%')
 
+    st.plotly_chart(fig_peso, use_container_width=True)
 
 # Dicionário para mapear meses em inglês para abreviações em português
 MES_POR_PT = {

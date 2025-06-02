@@ -189,6 +189,47 @@ if peso_lista:
 else:
     st.info("Nenhum dado para calcular o Peso Financeiro.")
 
+# Gráfico de Peso Financeiro por Obra
+peso_lista = []
+
+for obra in obras_selecionadas:
+    df_obra = df[df['Obra'] == obra]
+
+    # Produção: só DIRETO
+    df_direto = df_obra[df_obra['Tipo'] == 'DIRETO']
+    prod_numerador = df_direto['PRODUÇÃO'].sum(skipna=True) + df_direto['REFLEXO S PRODUÇÃO'].sum(skipna=True)
+    prod_denominador = df_direto['Remuneração Líquida Folha'].sum(skipna=True) + df_direto['Adiantamento'].sum(skipna=True)
+
+    # Hora Extra: DIRETO + INDIRETO
+    df_dir_ind = df_obra[df_obra['Tipo'].isin(['DIRETO', 'INDIRETO'])]
+    total_extra = df_dir_ind['Total Extra'].sum(skipna=True)
+    reposo_remunerado = df_dir_ind['Repouso Remunerado'].sum(skipna=True)
+    hor_extra_denominador = df_dir_ind['Remuneração Líquida Folha'].sum(skipna=True) + df_dir_ind['Adiantamento'].sum(skipna=True)
+
+    if tipo_peso == 'Peso sobre Produção':
+        peso = (prod_numerador / prod_denominador) if prod_denominador > 0 else 0
+    else:
+        peso = ((total_extra + reposo_remunerado) / hor_extra_denominador) if hor_extra_denominador > 0 else 0
+
+    peso_lista.append({'Obra': obra, 'Peso Financeiro': peso})
+
+if peso_lista:
+    df_peso = pd.DataFrame(peso_lista).sort_values(by='Peso Financeiro', ascending=False)
+
+    fig_peso = px.bar(
+        df_peso,
+        x='Obra',
+        y='Peso Financeiro',
+        title=f'Peso Financeiro por Obra ({tipo_peso})',
+        labels={'Peso Financeiro': 'Índice', 'Obra': 'Obra'},
+        text=df_peso['Peso Financeiro'].apply(lambda x: f"{x:.2%}")
+    )
+    fig_peso.update_traces(marker_color='darkblue', textposition='outside')
+    fig_peso.update_layout(yaxis_tickformat='.0%')
+
+    st.plotly_chart(fig_peso, use_container_width=True)
+else:
+    st.info("Nenhum dado para calcular o Peso Financeiro.")
 
 
 

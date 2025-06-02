@@ -25,7 +25,10 @@ def dashboard_efetivo():
     df = carregar_dados_efetivo()
     df_terceiros = carregar_terceiros()
 
-    # Cálculo da coluna Total Extra
+    # Remover obra com nome '0'
+    df = df[df['Obra'].astype(str) != '0']
+    df_terceiros = df_terceiros[df_terceiros['Obra'].astype(str) != '0']
+
     df['Total Extra'] = df['Hora Extra 70% - Semana'] + df['Hora Extra 70% - Sabado']
 
     with st.sidebar:
@@ -44,7 +47,7 @@ def dashboard_efetivo():
         if tipo_selecionado in ['DIRETO', 'INDIRETO']:
             df_filtrado = df_filtrado[df_filtrado['Tipo'] == tipo_selecionado]
         elif tipo_selecionado == 'TERCEIRO':
-            df_filtrado = df_filtrado[0:0]  # vazio, pois terceiros estão em outro DF
+            df_filtrado = df_filtrado[0:0]
 
     direto_count = len(df[df['Obra'].isin(obras_selecionadas) & (df['Tipo'] == 'DIRETO')])
     indireto_count = len(df[df['Obra'].isin(obras_selecionadas) & (df['Tipo'] == 'INDIRETO')])
@@ -59,14 +62,17 @@ def dashboard_efetivo():
 
     st.divider()
 
-    # Pizza - Distribuição por tipo
+    # Gráfico de pizza com percentuais
     pizza_base = df[df['Obra'].isin(obras_selecionadas)]
     pizza_diretos_indiretos = pizza_base['Tipo'].value_counts().reset_index()
     pizza_diretos_indiretos.columns = ['Tipo', 'count']
     pizza_terceiros = pd.DataFrame({'Tipo': ['TERCEIRO'], 'count': [total_terceiros]})
     pizza = pd.concat([pizza_diretos_indiretos, pizza_terceiros], ignore_index=True)
 
-    fig_pizza = px.pie(pizza, names='Tipo', values='count', title='Distribuição por Tipo de Efetivo')
+    fig_pizza = px.pie(pizza, names='Tipo', values='count', title='Distribuição por Tipo de Efetivo',
+                       color_discrete_sequence=px.colors.qualitative.Set3,
+                       hole=0.3)
+    fig_pizza.update_traces(textinfo='percent+label')
     st.plotly_chart(fig_pizza, use_container_width=True)
 
     if tipo_selecionado == 'TERCEIRO':
@@ -87,24 +93,16 @@ def dashboard_efetivo():
     else:
         df_ranking = df_filtrado
 
-    # Ajustar nome da coluna Função
-    if 'Função' in df_ranking.columns:
-        nome_col_funcao = 'Função'
-    elif 'Funçao' in df_ranking.columns:
-        nome_col_funcao = 'Funçao'
-    else:
-        nome_col_funcao = None  # se não existir
+    nome_col_funcao = 'Função' if 'Função' in df_ranking.columns else 'Funçao' if 'Funçao' in df_ranking.columns else None
 
-    # Ranking com ou sem DSR
     if tipo_analise == 'Produção' and 'REFLEXO S PRODUÇÃO' in df_ranking.columns:
         df_ranking['DSR'] = df_ranking['REFLEXO S PRODUÇÃO']
         cols_rank = ['Nome do Funcionário', nome_col_funcao, 'Obra', 'Tipo', 'PRODUÇÃO', 'DSR']
-        cols_rank = [c for c in cols_rank if c is not None]
-        ranking = df_ranking[cols_rank].sort_values(by='PRODUÇÃO', ascending=False)
     else:
         cols_rank = ['Nome do Funcionário', nome_col_funcao, 'Obra', 'Tipo', coluna_valor]
-        cols_rank = [c for c in cols_rank if c is not None]
-        ranking = df_ranking[cols_rank].sort_values(by=coluna_valor, ascending=False)
+
+    cols_rank = [c for c in cols_rank if c]
+    ranking = df_ranking[cols_rank].sort_values(by=coluna_valor, ascending=False)
 
     valor_total = df_ranking[coluna_valor].sum()
     st.markdown(f"### 📋 Top Funcionários por **{tipo_analise}**")
@@ -148,7 +146,6 @@ def dashboard_efetivo():
     st.divider()
     st.markdown("### 📈 Peso Financeiro por Obra")
 
-    # Cálculos para gráficos novos
     df_peso = df[df['Tipo'].isin(['DIRETO', 'INDIRETO'])].copy()
     df_peso['Total Extra'] = df_peso['Hora Extra 70% - Semana'] + df_peso['Hora Extra 70% - Sabado']
     df_peso['Base Remuneração'] = df_peso['Remuneração Líquida Folha'] + df_peso['Adiantamento']
@@ -163,21 +160,19 @@ def dashboard_efetivo():
     df_peso = df_peso[df_peso['Base Remuneração'] > 0]
     media_por_obra = df_peso.groupby('Obra')['Índice'].mean().reset_index()
 
-    # Destaque da obra selecionada
     media_por_obra['Cor'] = media_por_obra['Obra'].apply(
         lambda x: 'Obra Selecionada' if x in obras_selecionadas else 'Outras Obras'
     )
 
-  fig_peso = px.bar(
-    media_por_obra,
-    x='Obra',
-    y='Índice',
-    color='Cor',
-    title=titulo_peso,
-    text=media_por_obra['Índice'].apply(lambda x: f"{x*100:.2f}%")  # Multiplica por 100 e formata com %
-)
-fig_peso.update_layout(xaxis_tickangle=-45, yaxis_tickformat=".2%")  # Formata eixo Y como porcentagem
-
+    fig_peso = px.bar(
+        media_por_obra,
+        x='Obra',
+        y='Índice',
+        color='Cor',
+        title=titulo_peso,
+        text=media_por_obra['Índice'].apply(lambda x: f"{x*100:.2f}%")
+    )
+    fig_peso.update_layout(xaxis_tickangle=-45, yaxis_tickformat=".2%")
     st.plotly_chart(fig_peso, use_container_width=True)
 
     st.divider()

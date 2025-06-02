@@ -69,7 +69,7 @@ def dashboard_efetivo():
     col4.metric("👥 Total", total_geral)
 
     st.divider()
-      # Pizza - Distribuição por tipo
+  # Pizza - Distribuição por tipo
     pizza_base = df[df['Obra'].isin(obras_selecionadas)]
     pizza_diretos_indiretos = pizza_base['Tipo'].value_counts().reset_index()
     pizza_diretos_indiretos.columns = ['Tipo', 'count']
@@ -147,73 +147,53 @@ def dashboard_efetivo():
 
     st.divider()
 
-  # Gráfico quantidade por função
-    if nome_col_funcao:
-        graf_funcao = df_ranking[nome_col_funcao].value_counts().reset_index()
-        graf_funcao.columns = [nome_col_funcao, 'Qtd']
+   # Gráfico quantidade por função
+if nome_col_funcao:
+    graf_funcao = df_ranking[nome_col_funcao].value_counts().reset_index()
+    graf_funcao.columns = [nome_col_funcao, 'Qtd']
 
-        fig_bar = px.bar(
-            graf_funcao,
-            x=nome_col_funcao,
-            y='Qtd',
-            color='Qtd',
-            color_continuous_scale='Blues',
-            title='Quantidade por Função',
-            labels={'Qtd': 'Quantidade', nome_col_funcao: 'Função'}
-        )
-        st.plotly_chart(fig_bar, use_container_width=True)
+    fig_bar = px.bar(
+        graf_funcao,
+        x=nome_col_funcao,
+        y='Qtd',
+        color='Qtd',
+        text='Qtd',  # Adiciona rótulo de dados
+        color_continuous_scale='Blues',
+        title='Quantidade por Função',
+        labels={'Qtd': 'Quantidade', nome_col_funcao: 'Função'}
+    )
 
-        st.divider()
-if peso_lista:
-    df_peso = pd.DataFrame(peso_lista)
-    if 'Peso Financeiro' in df_peso.columns:
-        df_peso = df_peso.sort_values(by='Peso Financeiro', ascending=False)
-        st.markdown("### 💰 Peso Financeiro por Obra")
-        st.dataframe(df_peso, use_container_width=True)
+    # Atualiza os rótulos para aparecerem fora das barras
+    fig_bar.update_traces(textposition='outside')
+    fig_bar.update_layout(uniformtext_minsize=8, uniformtext_mode='hide')
 
-        fig_peso = px.bar(
-            df_peso,
-            x='Obra',
-            y='Peso Financeiro',
-            title=f'Peso Financeiro por Obra ({tipo_peso})',
-            labels={'Peso Financeiro': 'Índice', 'Obra': 'Obra'},
-            text=df_peso['Peso Financeiro'].apply(lambda x: f"{x:.2%}")
-        )
-        fig_peso.update_traces(marker_color='darkblue', textposition='outside')
-        fig_peso.update_layout(yaxis_tickformat='.0%')
+    st.plotly_chart(fig_bar, use_container_width=True)
+    st.divider()
 
-        st.plotly_chart(fig_peso, use_container_width=True)
 
-    else:
-        st.warning("Coluna 'Peso Financeiro' não encontrada nos dados.")
-else:
-    st.info("Nenhum dado para calcular o Peso Financeiro.")
+    # Gráfico de Peso Financeiro por Obra
+    peso_lista = []
+    for obra in obras_selecionadas:
+        df_obra = df[df['Obra'] == obra]
 
-# Gráfico de Peso Financeiro por Obra
-peso_lista = []
+        # Produção: só DIRETO
+        df_direto = df_obra[df_obra['Tipo'] == 'DIRETO']
+        prod_numerador = df_direto['PRODUÇÃO'].sum() + df_direto['REFLEXO S PRODUÇÃO'].sum()
+        prod_denominador = df_direto['Remuneração Líquida Folha'].sum() + df_direto['Adiantamento'].sum()
 
-for obra in obras_selecionadas:
-    df_obra = df[df['Obra'] == obra]
+        # Hora Extra: DIRETO + INDIRETO
+        df_dir_ind = df_obra[df_obra['Tipo'].isin(['DIRETO', 'INDIRETO'])]
+        total_extra = df_dir_ind['Total Extra'].sum()
+        reposo_remunerado = df_dir_ind['Repouso Remunerado'].sum()
+        hor_extra_denominador = df_dir_ind['Remuneração Líquida Folha'].sum() + df_dir_ind['Adiantamento'].sum()
 
-    # Produção: só DIRETO
-    df_direto = df_obra[df_obra['Tipo'] == 'DIRETO']
-    prod_numerador = df_direto['PRODUÇÃO'].sum(skipna=True) + df_direto['REFLEXO S PRODUÇÃO'].sum(skipna=True)
-    prod_denominador = df_direto['Remuneração Líquida Folha'].sum(skipna=True) + df_direto['Adiantamento'].sum(skipna=True)
+        if tipo_peso == 'Peso sobre Produção':
+            peso = (prod_numerador / prod_denominador) if prod_denominador > 0 else 0
+        else:
+            peso = ((total_extra + reposo_remunerado) / hor_extra_denominador) if hor_extra_denominador > 0 else 0
 
-    # Hora Extra: DIRETO + INDIRETO
-    df_dir_ind = df_obra[df_obra['Tipo'].isin(['DIRETO', 'INDIRETO'])]
-    total_extra = df_dir_ind['Total Extra'].sum(skipna=True)
-    reposo_remunerado = df_dir_ind['Repouso Remunerado'].sum(skipna=True)
-    hor_extra_denominador = df_dir_ind['Remuneração Líquida Folha'].sum(skipna=True) + df_dir_ind['Adiantamento'].sum(skipna=True)
+        peso_lista.append({'Obra': obra, 'Peso Financeiro': peso})
 
-    if tipo_peso == 'Peso sobre Produção':
-        peso = (prod_numerador / prod_denominador) if prod_denominador > 0 else 0
-    else:
-        peso = ((total_extra + reposo_remunerado) / hor_extra_denominador) if hor_extra_denominador > 0 else 0
-
-    peso_lista.append({'Obra': obra, 'Peso Financeiro': peso})
-
-if peso_lista:
     df_peso = pd.DataFrame(peso_lista).sort_values(by='Peso Financeiro', ascending=False)
 
     fig_peso = px.bar(
@@ -228,10 +208,6 @@ if peso_lista:
     fig_peso.update_layout(yaxis_tickformat='.0%')
 
     st.plotly_chart(fig_peso, use_container_width=True)
-else:
-    st.info("Nenhum dado para calcular o Peso Financeiro.")
-
-
 
 # Dicionário para mapear meses em inglês para abreviações em português
 MES_POR_PT = {

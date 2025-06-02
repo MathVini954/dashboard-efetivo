@@ -9,11 +9,6 @@ def carregar_dados_efetivo():
     df.columns = df.columns.str.strip()
     df['Hora Extra 70% - Semana'] = pd.to_numeric(df['Hora Extra 70% - Semana'], errors='coerce').fillna(0)
     df['Hora Extra 70% - Sabado'] = pd.to_numeric(df['Hora Extra 70% - Sabado'], errors='coerce').fillna(0)
-    # Garantir que Remuneração Líquida Folha e Adiantamento são numéricos
-    df['Remuneração Líquida Folha'] = pd.to_numeric(df['Remuneração Líquida Folha'], errors='coerce').fillna(0)
-    df['Adiantamento'] = pd.to_numeric(df['Adiantamento'], errors='coerce').fillna(0)
-    # Remover obra '0'
-    df = df[df['Obra'].astype(str) != "0"]
     return df
 
 @st.cache_data
@@ -21,7 +16,6 @@ def carregar_terceiros():
     df_terceiros = pd.read_excel("efetivo_abril.xlsx", sheet_name="TERCEIROS", engine="openpyxl")
     df_terceiros.columns = df_terceiros.columns.str.strip()
     df_terceiros['QUANTIDADE'] = pd.to_numeric(df_terceiros['QUANTIDADE'], errors='coerce').fillna(0).astype(int)
-    df_terceiros = df_terceiros[df_terceiros['Obra'].astype(str) != "0"]
     return df_terceiros
 
 def dashboard_efetivo():
@@ -30,6 +24,10 @@ def dashboard_efetivo():
     df = carregar_dados_efetivo()
     df_terceiros = carregar_terceiros()
 
+    # Remover obra '0'
+    df = df[df['Obra'].astype(str) != "0"]
+    df_terceiros = df_terceiros[df_terceiros['Obra'].astype(str) != "0"]
+
     with st.sidebar:
         st.header("🔍 Filtros - Efetivo")
         lista_obras = sorted(df['Obra'].astype(str).unique())
@@ -37,30 +35,30 @@ def dashboard_efetivo():
         tipo_selecionado = st.radio("Tipo:", ['Todos', 'DIRETO', 'INDIRETO', 'TERCEIRO'], horizontal=True)
         tipo_analise = st.radio("Tipo de Análise da Tabela:", ['Produção', 'Hora Extra Semana', 'Hora Extra Sábado'])
         qtd_linhas = st.radio("Qtd. de Funcionários na Tabela:", ['5', '10', '20', 'Todos'], horizontal=True)
+
         tipo_peso = st.radio("Peso a Exibir:", ['Peso sobre Produção', 'Peso sobre Hora Extra'], horizontal=True)
 
-    # Aplicar filtro no dataframe principal
-    if tipo_selecionado != 'Todos':
-        if tipo_selecionado in ['DIRETO', 'INDIRETO']:
-            df_filtrado = df[df['Tipo'] == tipo_selecionado]
-        elif tipo_selecionado == 'TERCEIRO':
-            df_filtrado = df.iloc[0:0]  # DataFrame vazio
-    else:
-        df_filtrado = df.copy()
-
-    df_filtrado = df_filtrado[df_filtrado['Obra'].isin(obras_selecionadas)]
-
+    # Filtrar obras e tipo
+    df_filtrado = df[df['Obra'].isin(obras_selecionadas)]
     df_terceiros_filtrado = df_terceiros[df_terceiros['Obra'].isin(obras_selecionadas)]
 
-    # Calcular Total Extra se não existir
+    if tipo_selecionado != 'Todos':
+        if tipo_selecionado in ['DIRETO', 'INDIRETO']:
+            df_filtrado = df_filtrado[df_filtrado['Tipo'] == tipo_selecionado]
+        elif tipo_selecionado == 'TERCEIRO':
+            df_filtrado = df_filtrado[0:0]  # vazio, só terceiros
+
+    # Calcular Total Extra
     if 'Total Extra' not in df_filtrado.columns:
         df_filtrado['Total Extra'] = df_filtrado['Hora Extra 70% - Semana'] + df_filtrado['Hora Extra 70% - Sabado']
 
-    # Calcular Remuneração Líquida Total (somando valores negativos também)
+    # Corrigir soma do adiantamento incluindo negativos (usar .sum direto)
+    df_filtrado['Remuneração Líquida Folha'] = pd.to_numeric(df_filtrado['Remuneração Líquida Folha'], errors='coerce').fillna(0)
+    df_filtrado['Adiantamento'] = pd.to_numeric(df_filtrado['Adiantamento'], errors='coerce').fillna(0)
     df_filtrado['Remuneração Líquida Total'] = df_filtrado['Remuneração Líquida Folha'] + df_filtrado['Adiantamento']
 
-    # Para o gráfico de pesos, AGRUPAR POR TODAS AS OBRAS, SEM FILTRAR POR OBRAS SELECIONADAS
-    grouped = df.groupby('Obra').agg({
+    # Agrupar para gráfico de peso - aqui usamos TODAS as obras sempre
+    grouped_all = df.groupby('Obra').agg({
         'PRODUÇÃO': 'sum',
         'REFLEXO S PRODUÇÃO': 'sum',
         'Hora Extra 70% - Semana': 'sum',
@@ -70,35 +68,40 @@ def dashboard_efetivo():
         'Adiantamento': 'sum'
     }).reset_index()
 
-    grouped['Total Extra'] = grouped['Hora Extra 70% - Semana'] + grouped['Hora Extra 70% - Sabado']
+    grouped_all['Total Extra'] = grouped_all['Hora Extra 70% - Semana'] + grouped_all['Hora Extra 70% - Sabado']
+    grouped_all['Remuneração Líquida Total'] = grouped_all['Remuneração Líquida Folha'] + grouped_all['Adiantamento']
 
-    grouped['Remuneração Líquida Total'] = grouped['Remuneração Líquida Folha'] + grouped['Adiantamento']
+    grouped_all['Peso Produção'] = (grouped_all['PRODUÇÃO'] + grouped_all['REFLEXO S PRODUÇÃO']) / grouped_all['Remuneração Líquida Total'].replace(0, 1)
+    grouped_all['Peso Hora Extra'] = (grouped_all['Total Extra'] + grouped_all['Repouso Remunerado']) / grouped_all['Remuneração Líquida Total'].replace(0, 1)
 
-    # Calcular pesos
-    grouped['Peso Produção'] = (grouped['PRODUÇÃO'] + grouped['REFLEXO S PRODUÇÃO']) / grouped['Remuneração Líquida Total'].replace(0, 1)
-    grouped['Peso Hora Extra'] = (grouped['Total Extra'] + grouped['Repouso Remunerado']) / grouped['Remuneração Líquida Total'].replace(0, 1)
+    # Preparar cores
+    cor_padrao = 'darkblue'
+    cor_destaque = 'orange'
 
-    # Criar cores: azul escuro para todos, destaque em vermelho para obras selecionadas
-    cor_azul = 'darkblue'
-    cor_destaque = 'crimson'
-    cores = [cor_destaque if str(obra) in obras_selecionadas else cor_azul for obra in grouped['Obra']]
+    cores = []
+    for obra in grouped_all['Obra']:
+        if str(obra) in obras_selecionadas:
+            cores.append(cor_destaque)
+        else:
+            cores.append(cor_padrao)
 
-    # Escolher peso a mostrar
+    # Escolher peso e título
     if tipo_peso == 'Peso sobre Produção':
-        y = grouped['Peso Produção']
-        titulo = 'Peso sobre Produção ( (PRODUÇÃO + DSR) / Remuneração Líquida Total )'
+        y = grouped_all['Peso Produção']
+        titulo = 'Peso sobre Produção ((PRODUÇÃO + DSR) / Remuneração Líquida Total)'
     else:
-        y = grouped['Peso Hora Extra']
-        titulo = 'Peso sobre Hora Extra ( (Total Extra + Repouso Remunerado) / Remuneração Líquida Total )'
+        y = grouped_all['Peso Hora Extra']
+        titulo = 'Peso sobre Hora Extra ((Total Extra + Repouso Remunerado) / Remuneração Líquida Total)'
 
-    fig = go.Figure(data=[go.Bar(
-        x=grouped['Obra'],
+    # Gráfico de barras pesos
+    fig_peso = go.Figure(data=[go.Bar(
+        x=grouped_all['Obra'],
         y=y,
         marker_color=cores,
         text=[f"{v:.2%}" for v in y],
         textposition='auto'
     )])
-    fig.update_layout(
+    fig_peso.update_layout(
         title=titulo,
         xaxis_title='Obra',
         yaxis_title='Peso (proporção)',
@@ -108,11 +111,11 @@ def dashboard_efetivo():
         uniformtext_mode='hide',
         template='plotly_white'
     )
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig_peso, use_container_width=True)
 
-    # Métricas de efetivo
-    direto_count = len(df[(df['Obra'].isin(obras_selecionadas)) & (df['Tipo'] == 'DIRETO')])
-    indireto_count = len(df[(df['Obra'].isin(obras_selecionadas)) & (df['Tipo'] == 'INDIRETO')])
+    # Métricas de efetivo (direto, indireto, terceiros)
+    direto_count = len(df[df['Obra'].isin(obras_selecionadas) & (df['Tipo'] == 'DIRETO')])
+    indireto_count = len(df[df['Obra'].isin(obras_selecionadas) & (df['Tipo'] == 'INDIRETO')])
     total_terceiros = df_terceiros_filtrado['QUANTIDADE'].sum()
     total_geral = direto_count + indireto_count + total_terceiros
 
@@ -124,7 +127,7 @@ def dashboard_efetivo():
 
     st.divider()
 
-    # Gráfico de pizza com diretos, indiretos e terceiros
+    # Gráfico pizza
     pizza_base = df[df['Obra'].isin(obras_selecionadas)]
     pizza_diretos_indiretos = pizza_base['Tipo'].value_counts().reset_index()
     pizza_diretos_indiretos.columns = ['Tipo', 'count']
@@ -141,38 +144,45 @@ def dashboard_efetivo():
     fig_pizza.update_traces(textinfo='percent+label')
     st.plotly_chart(fig_pizza, use_container_width=True)
 
-    st.divider()
-
-    # Se só terceiros, mostrar tabela terceirizados e encerrar
+    # Se só terceiros, mostrar tabela e sair
     if tipo_selecionado == 'TERCEIRO':
+        st.divider()
         st.markdown("### 🏗️ Funcionários Terceirizados por Empresa e Obra")
         tabela_terceiros = df_terceiros_filtrado.groupby(['Obra', 'EMPRESA'])['QUANTIDADE'].sum().reset_index()
         st.dataframe(tabela_terceiros, use_container_width=True)
         return
 
-    # Ranking de funcionários por Produção ou Hora Extra
-    st.markdown(f"### 🏅 Ranking de Funcionários - Ordenado por {tipo_analise}")
+    # Ranking (produçao ou horas extras)
+    coluna_valor = {
+        'Produção': 'PRODUÇÃO',
+        'Hora Extra Semana': 'Hora Extra 70% - Semana',
+        'Hora Extra Sábado': 'Hora Extra 70% - Sabado'
+    }[tipo_analise]
 
-    df_filtrado_func = df_filtrado[df_filtrado['Tipo'].isin(['DIRETO', 'INDIRETO'])].copy()
-    df_filtrado_func['Total Extra'] = df_filtrado_func['Hora Extra 70% - Semana'] + df_filtrado_func['Hora Extra 70% - Sabado']
-
-    if tipo_analise == 'Produção':
-        coluna_ordenar = 'PRODUÇÃO'
+    if tipo_selecionado == 'Todos':
+        df_ranking = df_filtrado[df_filtrado['Tipo'].isin(['DIRETO', 'INDIRETO'])].copy()
     else:
-        coluna_ordenar = 'Total Extra'
+        df_ranking = df_filtrado.copy()
+
+    if tipo_analise == 'Produção' and 'REFLEXO S PRODUÇÃO' in df_ranking.columns:
+        df_ranking['DSR'] = df_ranking['REFLEXO S PRODUÇÃO']
+        ranking = df_ranking[['Nome do Funcionário', 'Função', 'Obra', 'Tipo', 'PRODUÇÃO', 'DSR']].sort_values(by='PRODUÇÃO', ascending=False)
+    else:
+        ranking = df_ranking[['Nome do Funcionário', 'Função', 'Obra', 'Tipo', coluna_valor]].sort_values(by=coluna_valor, ascending=False)
+
+    valor_total = df_ranking[coluna_valor].sum()
+    st.markdown(f"### 📋 Top Funcionários por **{tipo_analise}**")
+    st.markdown(f"**Total em {tipo_analise}:** R$ {valor_total:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
 
     if qtd_linhas != 'Todos':
-        qtd = int(qtd_linhas)
-        df_ranking = df_filtrado_func.sort_values(by=coluna_ordenar, ascending=False).head(qtd)
-    else:
-        df_ranking = df_filtrado_func.sort_values(by=coluna_ordenar, ascending=False)
+        ranking = ranking.head(int(qtd_linhas))
 
-    st.dataframe(
-        df_ranking[['Nome do Funcionário', 'Função', 'Obra', 'PRODUÇÃO', 'Hora Extra 70% - Semana', 'Hora Extra 70% - Sabado', 'Total Extra']],
-        use_container_width=True
-    )
+    ranking[coluna_valor] = ranking[coluna_valor].apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+    if 'DSR' in ranking.columns:
+        ranking['DSR'] = ranking['DSR'].apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
 
-    st.divider()
+    st.dataframe(ranking, use_container_width=True)
+
 
     # Gráfico barra por Função
     graf_funcao = df_filtrado_func['Função'].value_counts().reset_index()

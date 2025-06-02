@@ -25,6 +25,96 @@ def dashboard_efetivo():
     df = carregar_dados_efetivo()
     df_terceiros = carregar_terceiros()
 
+    # Remover obra '0'
+    df = df[df['Obra'].astype(str) != "0"]
+    df_terceiros = df_terceiros[df_terceiros['Obra'].astype(str) != "0"]
+
+    with st.sidebar:
+        st.header("🔍 Filtros - Efetivo")
+        lista_obras = sorted(df['Obra'].astype(str).unique())
+        obras_selecionadas = st.multiselect("Obras:", lista_obras, default=lista_obras)
+        tipo_selecionado = st.radio("Tipo:", ['Todos', 'DIRETO', 'INDIRETO', 'TERCEIRO'], horizontal=True)
+        tipo_analise = st.radio("Tipo de Análise da Tabela:", ['Produção', 'Hora Extra Semana', 'Hora Extra Sábado'])
+        qtd_linhas = st.radio("Qtd. de Funcionários na Tabela:", ['5', '10', '20', 'Todos'], horizontal=True)
+
+        # Novo filtro para o gráfico de peso
+        tipo_peso = st.radio("Peso a Exibir:", ['Peso sobre Produção', 'Peso sobre Hora Extra'], horizontal=True)
+
+    # Filtrar dados para obras selecionadas e tipo
+    df_filtrado = df[df['Obra'].isin(obras_selecionadas)]
+    df_terceiros_filtrado = df_terceiros[df_terceiros['Obra'].isin(obras_selecionadas)]
+
+    if tipo_selecionado != 'Todos':
+        if tipo_selecionado in ['DIRETO', 'INDIRETO']:
+            df_filtrado = df_filtrado[df_filtrado['Tipo'] == tipo_selecionado]
+        elif tipo_selecionado == 'TERCEIRO':
+            df_filtrado = df_filtrado[0:0]
+
+    # Cálculo de Total Extra (se não existir)
+    if 'Total Extra' not in df_filtrado.columns:
+        df_filtrado['Total Extra'] = (
+            df_filtrado['Hora Extra 70% - Semana'] + df_filtrado['Hora Extra 70% - Sabado']
+        )
+
+    # Agrupar por Obra para o gráfico de peso
+    # Cálculo remuneração líquida total = Remuneração Líquida Folha + Adiantamento
+    df_filtrado['Remuneração Líquida Total'] = (
+        pd.to_numeric(df_filtrado['Remuneração Líquida Folha'], errors='coerce').fillna(0) +
+        pd.to_numeric(df_filtrado['Adiantamento'], errors='coerce').fillna(0)
+    )
+
+    # Agrupar soma por obra das colunas relevantes
+    grouped = df_filtrado.groupby('Obra').agg({
+        'PRODUÇÃO': 'sum',
+        'REFLEXO S PRODUÇÃO': 'sum',
+        'Total Extra': 'sum',
+        'Repouso Remunerado': 'sum',
+        'Remuneração Líquida Total': 'sum',
+    }).reset_index()
+
+    # Criar colunas peso produção e peso hora extra
+    grouped['Peso Produção'] = (grouped['PRODUÇÃO'] + grouped['REFLEXO S PRODUÇÃO']) / grouped['Remuneração Líquida Total'].replace(0, 1)
+    grouped['Peso Hora Extra'] = (grouped['Total Extra'] + grouped['Repouso Remunerado']) / grouped['Remuneração Líquida Total'].replace(0, 1)
+
+    # Preparar cores para destaque da obra (se somente 1 obra selecionada)
+    cores = []
+    obra_destacada = None
+    if len(obras_selecionadas) == 1:
+        obra_destacada = obras_selecionadas[0]
+    for obra in grouped['Obra']:
+        if obra_destacada is not None and str(obra) == str(obra_destacada):
+            cores.append('crimson')  # cor destaque
+        else:
+            cores.append('lightgrey')
+
+    # Escolher qual peso mostrar
+    if tipo_peso == 'Peso sobre Produção':
+        y = grouped['Peso Produção']
+        titulo = 'Peso sobre Produção ( (PRODUÇÃO + DSR) / Remuneração Líquida Total )'
+    else:
+        y = grouped['Peso Hora Extra']
+        titulo = 'Peso sobre Hora Extra ( (Total Extra + Repouso Remunerado) / Remuneração Líquida Total )'
+
+    # Gráfico de colunas
+    fig = go.Figure(data=[go.Bar(
+        x=grouped['Obra'],
+        y=y,
+        marker_color=cores,
+        text=[f"{v:.2%}" for v in y],
+        textposition='auto'
+    )])
+    fig.update_layout(
+        title=titulo,
+        xaxis_title='Obra',
+        yaxis_title='Peso (proporção)',
+        yaxis_tickformat='.0%',
+        xaxis_tickangle=-45,
+        uniformtext_minsize=8,
+        uniformtext_mode='hide',
+        template='plotly_white'
+    )
+
+    st.plotly_chart(fig, use_container_width=True)
     # Remover obra com nome "0"
     df = df[df['Obra'].astype(str) != "0"]
     df_terceiros = df_terceiros[df_terceiros['Obra'].astype(str) != "0"]

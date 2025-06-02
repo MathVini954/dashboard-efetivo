@@ -167,7 +167,6 @@ def dashboard_efetivo():
             x=nome_col_funcao,
             y='Qtd',
             color='Qtd',
-            text='Qtd'
             color_continuous_scale='Blues',
             title='Quantidade por Função',
             labels={'Qtd': 'Quantidade', nome_col_funcao: 'Função'}

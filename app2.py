@@ -3,9 +3,12 @@ import pandas as pd
 import plotly.express as px
 
 @st.cache_data
+@st.cache_data
 def carregar_dados_efetivo():
     df = pd.read_excel("efetivo_abril.xlsx", sheet_name="EFETIVO", engine="openpyxl")
     df.columns = df.columns.str.strip()
+    df = df[df['Obra'] != '0']  # Excluir obra '0'
+    df = df[df['Obra'] != 'nan']  # Excluir obra '0'
     df['Hora Extra 70% - Semana'] = pd.to_numeric(df['Hora Extra 70% - Semana'], errors='coerce').fillna(0)
     df['Hora Extra 70% - Sabado'] = pd.to_numeric(df['Hora Extra 70% - Sabado'], errors='coerce').fillna(0)
     if 'Repouso Remunerado' not in df.columns:

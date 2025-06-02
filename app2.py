@@ -83,7 +83,7 @@ def dashboard_efetivo():
         pizza = pizza_diretos_indiretos
 
     fig_pizza = px.pie(
-        pizza, names='Tipo', values='count', title='Distribuição por Tipo de Efetivo',
+        pizza, values='count', title='Distribuição por Tipo de Efetivo',
         labels={'count': 'Quantidade', 'Tipo': 'Tipo'},
         hole=0.3
     )

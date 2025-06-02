@@ -2,14 +2,10 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 
-# --- Funções para carregar dados com cache ---
 @st.cache_data
 def carregar_dados_efetivo():
     df = pd.read_excel("efetivo_abril.xlsx", sheet_name="EFETIVO", engine="openpyxl")
     df.columns = df.columns.str.strip()
-    # Excluir obras '0' e valores 'nan' na coluna 'Obra'
-    df = df[(df['Obra'] != '0') & (df['Obra'] != 'nan')]
-    # Converter colunas numéricas
     df['Hora Extra 70% - Semana'] = pd.to_numeric(df['Hora Extra 70% - Semana'], errors='coerce').fillna(0)
     df['Hora Extra 70% - Sabado'] = pd.to_numeric(df['Hora Extra 70% - Sabado'], errors='coerce').fillna(0)
     if 'Repouso Remunerado' not in df.columns:
@@ -20,6 +16,7 @@ def carregar_dados_efetivo():
     df['Adiantamento'] = pd.to_numeric(df['Adiantamento'], errors='coerce').fillna(0)
     return df
 
+
 @st.cache_data
 def carregar_terceiros():
     df_terceiros = pd.read_excel("efetivo_abril.xlsx", sheet_name="TERCEIROS", engine="openpyxl")
@@ -27,7 +24,6 @@ def carregar_terceiros():
     df_terceiros['QUANTIDADE'] = pd.to_numeric(df_terceiros['QUANTIDADE'], errors='coerce').fillna(0).astype(int)
     return df_terceiros
 
-# --- Dashboard Efetivo ---
 def dashboard_efetivo():
     st.title("📊 Análise de Efetivo - Abril 2025")
 
@@ -143,15 +139,21 @@ def dashboard_efetivo():
 
     st.divider()
 
-    # Cálculo do peso financeiro por obra
-    todas_obras = sorted(df['Obra'].unique())
+    # Gráfico de Peso Financeiro
+    # Cria base para cálculo do peso financeiro de cada obra filtrada
+    obras_peso = obras_selecionadas.copy()
+
     peso_lista = []
-    for obra in todas_obras:
+    for obra in obras_peso:
+        # Base da obra
         df_obra = df[df['Obra'] == obra]
+
+        # Produção: só DIRETO
         df_direto = df_obra[df_obra['Tipo'] == 'DIRETO']
-        prod_numerador = df_direto['PRODUÇÃO'].sum() + df_direto['REFLEXO S PRODUÇÃO'].sum() if 'REFLEXO S PRODUÇÃO' in df_direto.columns else df_direto['PRODUÇÃO'].sum()
+        prod_numerador = df_direto['PRODUÇÃO'].sum() + df_direto['REFLEXO S PRODUÇÃO'].sum()
         prod_denominador = df_direto['Remuneração Líquida Folha'].sum() + df_direto['Adiantamento'].sum()
 
+        # Hora Extra: DIRETO + INDIRETO
         df_dir_ind = df_obra[df_obra['Tipo'].isin(['DIRETO', 'INDIRETO'])]
         total_extra = df_dir_ind['Total Extra'].sum()
         reposo_remunerado = df_dir_ind['Repouso Remunerado'].sum()
@@ -164,11 +166,8 @@ def dashboard_efetivo():
 
         peso_lista.append({'Obra': obra, 'Peso Financeiro': peso})
 
-    df_peso = pd.DataFrame(peso_lista).sort_values(by='Peso Financeiro', ascending=False)
-
-    cor_azul_claro = 'lightblue'
-    cor_azul_escuro = 'darkblue'
-    cores = [cor_azul_escuro if obra in obras_selecionadas else cor_azul_claro for obra in df_peso['Obra']]
+    df_peso = pd.DataFrame(peso_lista)
+    df_peso = df_peso.sort_values(by='Peso Financeiro', ascending=False)
 
     fig_peso = px.bar(
         df_peso,
@@ -178,11 +177,10 @@ def dashboard_efetivo():
         labels={'Peso Financeiro': 'Índice', 'Obra': 'Obra'},
         text=df_peso['Peso Financeiro'].apply(lambda x: f"{x:.2%}")
     )
-    fig_peso.update_traces(marker_color=cores, textposition='outside')
+    fig_peso.update_traces(marker_color='darkblue', textposition='outside')
     fig_peso.update_layout(yaxis_tickformat='.0%')
 
     st.plotly_chart(fig_peso, use_container_width=True)
-
 
 # Dicionário para mapear meses em inglês para abreviações em português
 MES_POR_PT = {

@@ -34,7 +34,7 @@ def carregar_terceiros():
 def definir_colunas_ganhos_descontos():
     """Define as colunas de ganhos e descontos"""
     ganhos = [
-        'Salário Base Estagiário', 'Salário Base Mês', 'Dias De Atestado', 'Gratificação',
+        'CALC_Salário Base Mês', 'Dias De Atestado', 'Gratificação',
         'Adicional noturno 20%', 'Ajuda De Saude', 'Auxilio Creche', 'Auxilio Educacao',
         'EQUIP. TRAB/FERRAMENTA', 'Auxilio Moradia', 'Auxilio Transporte', 'Dev.desc.indevido',
         'Salário Substituiçã', 'Reflexo S/ He Produção', 'Reembolso De Despesas',
@@ -73,7 +73,7 @@ def criar_grafico_cascata(df_filtrado, ganhos, descontos):
             total_descontos += pd.to_numeric(df_filtrado[col], errors='coerce').fillna(0).sum()
     
     # Remuneração líquida
-    remuneracao_liquida = total_ganhos - total_descontos
+    remuneracao_liquida = total_ganhos + total_descontos
     
     # Dados para o gráfico de cascata
     categorias = ['Ganhos', 'Descontos', 'Remuneração Líquida']

@@ -190,11 +190,10 @@ st.plotly_chart(fig_bar, use_container_width=True)
 
 st.divider()
 
-    # ---- INÍCIO da parte corrigida ----
-    todas_obras = sorted(df['Obra'].astype(str).unique())  # <-- dentro da função!
+todas_obras = sorted(df['Obra'].astype(str).unique())  # <-- agora corretamente alinhada
 
-    peso_lista = []
-    for obra in todas_obras:
+peso_lista = []
+for obra in todas_obras:
         # Base da obra
         df_obra = df[df['Obra'] == obra]
 

@@ -188,7 +188,7 @@ def dashboard_efetivo():
 
         peso_lista.append({'Obra': obra, 'Peso Financeiro': peso})
 
-      df_peso = pd.DataFrame(peso_lista)
+    df_peso = pd.DataFrame(peso_lista)
     df_peso = df_peso.sort_values(by='Peso Financeiro', ascending=False)
 
     # Correção aplicada aqui (indentação alinhada com o bloco da função):

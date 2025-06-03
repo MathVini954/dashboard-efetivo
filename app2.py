@@ -177,6 +177,7 @@ def dashboard_efetivo():
         color_continuous_scale='Blues',
         title='Quantidade por Função',
         labels={'Qtd': 'Quantidade', nome_col_funcao: 'Função'}
+        text_auto=True,  # 👈 Rótulos automáticos (arredondados)
     )
     st.plotly_chart(fig_bar, use_container_width=True)
 

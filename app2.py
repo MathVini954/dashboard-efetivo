@@ -193,7 +193,7 @@ def dashboard_efetivo():
 
     df = carregar_dados_efetivo()
     df_terceiros = carregar_terceiros()
-  try:
+try:
     ganhos, descontos = criar_grafico_detalhado()
 except (ValueError, TypeError) as e:
     st.error("Erro ao carregar dados do gráfico")

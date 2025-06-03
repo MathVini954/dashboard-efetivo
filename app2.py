@@ -2,11 +2,16 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 
+# ======================================
+# FUNÇÕES DE CARREGAMENTO DE DADOS
+# ======================================
+
 @st.cache_data
 def carregar_dados_efetivo():
     df = pd.read_excel("efetivo_abril.xlsx", sheet_name="EFETIVO", engine="openpyxl")
     df.columns = df.columns.str.strip()
-     df = df[df['Obra'].notna()] 
+    df = df[df['Obra'].notna()]  # NOVO: Remove linhas com 'Obra' vazia/nan
+    
     df['Hora Extra 70% - Semana'] = pd.to_numeric(df['Hora Extra 70% - Semana'], errors='coerce').fillna(0)
     df['Hora Extra 70% - Sabado'] = pd.to_numeric(df['Hora Extra 70% - Sabado'], errors='coerce').fillna(0)
     if 'Repouso Remunerado' not in df.columns:
@@ -17,14 +22,38 @@ def carregar_dados_efetivo():
     df['Adiantamento'] = pd.to_numeric(df['Adiantamento'], errors='coerce').fillna(0)
     return df
 
-
 @st.cache_data
 def carregar_terceiros():
     df_terceiros = pd.read_excel("efetivo_abril.xlsx", sheet_name="TERCEIROS", engine="openpyxl")
     df_terceiros.columns = df_terceiros.columns.str.strip()
+    df_terceiros = df_terceiros[df_terceiros['Obra'].notna()]  # NOVO: Remove linhas com 'Obra' vazia/nan
     df_terceiros['QUANTIDADE'] = pd.to_numeric(df_terceiros['QUANTIDADE'], errors='coerce').fillna(0).astype(int)
     return df_terceiros
 
+# ======================================
+# DASHBOARD DE EFETIVO
+# ======================================
+
+def dashboard_efetivo():
+    st.title("📊 Análise de Efetivo - Abril 2025")
+
+    df = carregar_dados_efetivo()
+    df_terceiros = carregar_terceiros()
+
+    df['Total Extra'] = df['Hora Extra 70% - Semana'] + df['Hora Extra 70% - Sabado']
+
+    with st.sidebar:
+        st.header("🔍 Filtros - Efetivo")
+        lista_obras = sorted(df['Obra'].astype(str).unique())
+        obras_selecionadas = st.multiselect("Obras:", lista_obras, default=lista_obras)
+        tipo_selecionado = st.radio("Tipo:", ['Todos', 'DIRETO', 'INDIRETO', 'TERCEIRO'], horizontal=True)
+        tipo_analise = st.radio("Tipo de Análise da Tabela:", ['Produção', 'Hora Extra Semana', 'Hora Extra Sábado'])
+        qtd_linhas = st.radio("Qtd. de Funcionários na Tabela:", ['5', '10', '20', 'Todos'], horizontal=True)
+        tipo_peso = st.radio("Tipo de Peso (Gráficos Novos):", ['Peso sobre Produção', 'Peso sobre Hora Extra'])
+
+    # Filtra obras selecionadas (já sem 'nan')
+    df_filtrado = df[df['Obra'].isin(obras_selecionadas)]
+    df_terceiros_filtrado = df_terceiros[df_terceiros['Obra'].isin(obras_selecionadas)]
 def dashboard_efetivo():
     st.title("📊 Análise de Efetivo - Abril 2025")
 

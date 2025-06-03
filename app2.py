@@ -3,209 +3,7 @@ import pandas as pd
 import plotly.express as px
 
 # ======================================
-# CONFIGURAÇÃO DA SIDEBAR HOVER/FIXA
-# ======================================
-
-def setup_hover_sidebar():
-    """Configura o CSS e JavaScript para a sidebar hover/fixa"""
-    
-    # Estado para controlar se a sidebar está fixa
-    if 'sidebar_fixed' not in st.session_state:
-        st.session_state.sidebar_fixed = False
-    
-    # CSS customizado com JavaScript para controlar hover
-    css = f"""
-    <style>
-        /* Container principal para controlar hover */
-        .sidebar-hover-container {{
-            position: fixed;
-            left: 0;
-            top: 0;
-            width: {'350px' if st.session_state.sidebar_fixed else '20px'};
-            height: 100vh;
-            z-index: 999;
-            transition: width 0.3s ease;
-        }}
-        
-        /* Esconder/mostrar sidebar baseado no estado */
-        .css-1d391kg {{
-            transition: transform 0.3s ease-in-out !important;
-            transform: translateX({'0px' if st.session_state.sidebar_fixed else '-100%'}) !important;
-            background: linear-gradient(180deg, #f8f9fa 0%, #e9ecef 100%) !important;
-            border-right: 2px solid #dee2e6 !important;
-            box-shadow: 2px 0 10px rgba(0,0,0,0.1) !important;
-        }}
-        
-        /* Indicador visual na borda esquerda quando não está fixa */
-        .sidebar-trigger {{
-            position: fixed;
-            left: 0;
-            top: 0;
-            width: 8px;
-            height: 100vh;
-            background: linear-gradient(45deg, #ff6b6b, #4ecdc4, #45b7d1);
-            z-index: 1000;
-            opacity: {'0' if st.session_state.sidebar_fixed else '0.7'};
-            transition: all 0.3s ease;
-            cursor: pointer;
-        }}
-        
-        .sidebar-trigger:hover {{
-            width: 12px;
-            opacity: 1;
-        }}
-        
-        /* Botão de fixar/desafixar */
-        .pin-button {{
-            position: fixed;
-            left: {'320px' if st.session_state.sidebar_fixed else '10px'};
-            top: 10px;
-            background: {'#ff4757' if st.session_state.sidebar_fixed else '#2ed573'};
-            color: white;
-            border: none;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            cursor: pointer;
-            z-index: 1001;
-            font-size: 16px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-            transition: all 0.3s ease;
-        }}
-        
-        .pin-button:hover {{
-            transform: scale(1.1);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-        }}
-        
-        /* Ajustar o conteúdo principal */
-        .main .block-container {{
-            padding-left: {'20px' if not st.session_state.sidebar_fixed else '0px'};
-            transition: padding-left 0.3s ease;
-        }}
-        
-        /* Classe para mostrar sidebar */
-        .sidebar-visible .css-1d391kg {{
-            transform: translateX(0px) !important;
-        }}
-        
-        /* Tooltip para o botão */
-        .pin-button::after {{
-            content: '{'Desafixar sidebar' if st.session_state.sidebar_fixed else 'Fixar sidebar'}';
-            position: absolute;
-            left: 50px;
-            top: 50%;
-            transform: translateY(-50%);
-            background: rgba(0,0,0,0.8);
-            color: white;
-            padding: 5px 10px;
-            border-radius: 4px;
-            font-size: 12px;
-            white-space: nowrap;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.3s ease;
-        }}
-        
-        .pin-button:hover::after {{
-            opacity: 1;
-        }}
-    </style>
-    
-    <script>
-        // Função para mostrar sidebar
-        function showSidebar() {{
-            if (!{str(st.session_state.sidebar_fixed).lower()}) {{
-                document.body.classList.add('sidebar-visible');
-            }}
-        }}
-        
-        // Função para esconder sidebar
-        function hideSidebar() {{
-            if (!{str(st.session_state.sidebar_fixed).lower()}) {{
-                document.body.classList.remove('sidebar-visible');
-            }}
-        }}
-        
-        // Função para alternar fixação
-        function toggleSidebar() {{
-            // Simula clique no botão do Streamlit
-            const event = new Event('click');
-            const button = document.querySelector('[data-testid="baseButton-secondary"]');
-            if (button) {{
-                button.click();
-            }}
-        }}
-        
-        // Adiciona eventos quando o DOM carregar
-        document.addEventListener('DOMContentLoaded', function() {{
-            const trigger = document.querySelector('.sidebar-trigger');
-            const sidebar = document.querySelector('.css-1d391kg');
-            
-            if (trigger) {{
-                trigger.addEventListener('mouseenter', showSidebar);
-            }}
-            
-            if (sidebar) {{
-                sidebar.addEventListener('mouseenter', showSidebar);
-                sidebar.addEventListener('mouseleave', hideSidebar);
-            }}
-            
-            // Observer para detectar mudanças no DOM
-            const observer = new MutationObserver(function(mutations) {{
-                const trigger = document.querySelector('.sidebar-trigger');
-                const sidebar = document.querySelector('.css-1d391kg');
-                
-                if (trigger && !trigger.hasEventListener) {{
-                    trigger.addEventListener('mouseenter', showSidebar);
-                    trigger.hasEventListener = true;
-                }}
-                
-                if (sidebar && !sidebar.hasEventListener) {{
-                    sidebar.addEventListener('mouseenter', showSidebar);
-                    sidebar.addEventListener('mouseleave', hideSidebar);
-                    sidebar.hasEventListener = true;
-                }}
-            }});
-            
-            observer.observe(document.body, {{
-                childList: true,
-                subtree: true
-            }});
-        }});
-        
-        // Adiciona eventos imediatamente também
-        setTimeout(function() {{
-            const trigger = document.querySelector('.sidebar-trigger');
-            const sidebar = document.querySelector('.css-1d391kg');
-            
-            if (trigger) {{
-                trigger.addEventListener('mouseenter', showSidebar);
-            }}
-            
-            if (sidebar) {{
-                sidebar.addEventListener('mouseenter', showSidebar);
-                sidebar.addEventListener('mouseleave', hideSidebar);
-            }}
-        }}, 100);
-    </script>
-    """
-    
-    st.markdown(css, unsafe_allow_html=True)
-    
-    # Indicador visual na borda esquerda
-    if not st.session_state.sidebar_fixed:
-        st.markdown('<div class="sidebar-trigger" onmouseenter="showSidebar()"></div>', unsafe_allow_html=True)
-    
-    # Botão de fixar/desafixar
-    st.markdown(f'''
-    <button class="pin-button" onclick="toggleSidebar()" title="{'Desafixar sidebar' if st.session_state.sidebar_fixed else 'Fixar sidebar'}">
-        {'📌' if st.session_state.sidebar_fixed else '📍'}
-    </button>
-    ''', unsafe_allow_html=True)
-
-# ======================================
-# FUNÇÕES DE CARREGAMENTO DE DADOS (sem alteração)
+# FUNÇÕES DE CARREGAMENTO DE DADOS
 # ======================================
 
 @st.cache_data
@@ -246,16 +44,6 @@ def dashboard_efetivo():
 
     with st.sidebar:
         st.header("🔍 Filtros - Efetivo")
-        
-        # Botão para alternar fixação da sidebar
-        col1, col2 = st.columns([3, 1])
-        with col2:
-            if st.button("📌" if not st.session_state.sidebar_fixed else "📍", 
-                        help="Fixar/Desafixar sidebar",
-                        key="toggle_sidebar_efetivo"):
-                st.session_state.sidebar_fixed = not st.session_state.sidebar_fixed
-                st.rerun()
-        
         lista_obras = sorted(df['Obra'].astype(str).unique())
         obras_selecionadas = st.multiselect("Obras:", lista_obras, default=lista_obras)
         tipo_selecionado = st.radio("Tipo:", ['Todos', 'DIRETO', 'INDIRETO', 'TERCEIRO'], horizontal=True)
@@ -316,6 +104,7 @@ def dashboard_efetivo():
     else:
         df_ranking = df_filtrado
 
+
     nome_col_funcao = 'Função' if 'Função' in df_ranking.columns else 'Funçao' if 'Funçao' in df_ranking.columns else None
 
    # Define colunas a exibir e calcula DSR se necessário
@@ -374,55 +163,56 @@ def dashboard_efetivo():
     st.divider()
 
     # ---- INÍCIO da parte corrigida ----
-   todas_obras = sorted(df['Obra'].astype(str).unique())
+    todas_obras = sorted(df['Obra'].astype(str).unique())  # <-- dentro da função!
+
     peso_lista = []
-    
     for obra in todas_obras:
+        # Base da obra
         df_obra = df[df['Obra'] == obra]
-        
+
         # Produção: só DIRETO
         df_direto = df_obra[df_obra['Tipo'] == 'DIRETO']
         prod_numerador = df_direto['PRODUÇÃO'].sum() + df_direto['REFLEXO S PRODUÇÃO'].sum()
         prod_denominador = df_direto['Remuneração Líquida Folha'].sum() + df_direto['Adiantamento'].sum()
-        
+
         # Hora Extra: DIRETO + INDIRETO
         df_dir_ind = df_obra[df_obra['Tipo'].isin(['DIRETO', 'INDIRETO'])]
         total_extra = df_dir_ind['Total Extra'].sum()
         reposo_remunerado = df_dir_ind['Repouso Remunerado'].sum()
         hor_extra_denominador = df_dir_ind['Remuneração Líquida Folha'].sum() + df_dir_ind['Adiantamento'].sum()
-        
+
         if tipo_peso == 'Peso sobre Produção':
             peso = (prod_numerador / prod_denominador) if prod_denominador > 0 else 0
         else:
             peso = ((total_extra + reposo_remunerado) / hor_extra_denominador) if hor_extra_denominador > 0 else 0
-        
+
         peso_lista.append({'Obra': obra, 'Peso Financeiro': peso})
-    
+
     df_peso = pd.DataFrame(peso_lista)
     df_peso = df_peso.sort_values(by='Peso Financeiro', ascending=False)
-    
-    # CORREÇÃO: Usar coluna categórica ao invés de série de cores
-    df_peso['Status'] = df_peso['Obra'].apply(
-        lambda x: 'Selecionada' if x in obras_selecionadas else 'Não Selecionada'
-    )
-    
+
+    # Coluna para controlar cor: True se obra está selecionada no filtro, False se não
+    df_peso['Selecionada'] = df_peso['Obra'].apply(lambda x: x in obras_selecionadas)
+
+    # Define cores: azul escuro para selecionadas, azul claro para não selecionadas
+    colors = df_peso['Selecionada'].map({True: 'darkblue', False: 'lightblue'})
+
     fig_peso = px.bar(
         df_peso,
         x='Obra',
         y='Peso Financeiro',
-        color='Status',  # Usar coluna categórica
         title=f'Peso Financeiro por Obra ({tipo_peso})',
         labels={'Peso Financeiro': 'Índice', 'Obra': 'Obra'},
         text=df_peso['Peso Financeiro'].apply(lambda x: f"{x:.2%}"),
-        color_discrete_map={
-            'Selecionada': 'darkblue',
-            'Não Selecionada': 'lightblue'
-        }
+        color=colors,  # essa cor será usada para as barras
     )
-    
-    fig_peso.update_traces(textposition='outside')
+
+    # Como px.bar não reconhece diretamente a série de cores, usamos update_traces para forçar cores
+    fig_peso.update_traces(marker_color=colors, textposition='outside')
     fig_peso.update_layout(yaxis_tickformat='.0%')
+
     st.plotly_chart(fig_peso, use_container_width=True)
+    # ---- FIM da parte corrigida ----
 
 # Dicionário para mapear meses em inglês para abreviações em português
 MES_POR_PT = {
@@ -459,7 +249,6 @@ def data_pt_para_datetime(mes_ano_pt_str):
     mes = MES_PT_PARA_NUM[mes_pt]
     ano = 2000 + int(ano_str)  # exemplo: '24' vira 2024
     return pd.Timestamp(year=ano, month=mes, day=1)
-
 def dashboard_produtividade():
     def carregar_dados():
         df = pd.read_excel("produtividade.xlsx")
@@ -510,16 +299,6 @@ def dashboard_produtividade():
 
     with st.sidebar:
         st.header("🔍 Filtros - Produtividade")
-        
-        # Botão para alternar fixação da sidebar
-        col1, col2 = st.columns([3, 1])
-        with col2:
-            if st.button("📌" if not st.session_state.sidebar_fixed else "📍", 
-                        help="Fixar/Desafixar sidebar",
-                        key="toggle_sidebar_produtividade"):
-                st.session_state.sidebar_fixed = not st.session_state.sidebar_fixed
-                st.rerun()
-        
         tipo_obra_opcoes = ["Todos"] + df['TIPO_OBRA'].unique().tolist()
         tipo_obra = st.selectbox('Selecione o Tipo de Obra', tipo_obra_opcoes)
         servicos_opcoes = df['SERVIÇO'].unique().tolist()
@@ -546,9 +325,6 @@ def dashboard_produtividade():
 # ---------- Execução Principal ----------
 def main():
     st.set_page_config(page_title="Dashboards de Obra", layout="wide")
-    
-    # Configura a sidebar hover/fixa
-    setup_hover_sidebar()
 
     col1, col2 = st.columns([1, 4])
 

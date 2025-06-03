@@ -162,14 +162,12 @@ def dashboard_efetivo():
 
     st.divider()
 
-    # ---- INÍCIO da parte corrigida ----
-  # ---- INÍCIO da parte corrigida ----
 # Todas as obras únicas do DataFrame
 todas_obras = sorted(df['Obra'].astype(str).unique())
 
 # Cálculo do peso financeiro (mantido igual)
 peso_lista = []
-for obra in todas_obras:
+    for obra in todas_obras:
     df_obra = df[df['Obra'] == obra]
     
     # Produção: só DIRETO
@@ -189,6 +187,7 @@ for obra in todas_obras:
         peso = ((total_extra + reposo_remunerado) / hor_extra_denominador) if hor_extra_denominador > 0 else 0
     
     peso_lista.append({'Obra': obra, 'Peso Financeiro': peso})
+pass
 
 # Cria o DataFrame e ordena
 df_peso = pd.DataFrame(peso_lista)

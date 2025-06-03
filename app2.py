@@ -29,36 +29,6 @@ def carregar_terceiros():
     df_terceiros = df_terceiros[df_terceiros['Obra'].notna()]  # NOVO: Remove linhas com 'Obra' vazia/nan
     df_terceiros['QUANTIDADE'] = pd.to_numeric(df_terceiros['QUANTIDADE'], errors='coerce').fillna(0).astype(int)
     return df_terceiros
-    
-@st.cache_data
-def calcular_totais_por_obra(df):
-    # Listas de colunas de ganhos e descontos (ajuste conforme seus dados reais)
-    colunas_ganhos = [
-        'Salário Base', 'Salário Base Estagiário', 'Salário Base Mês', 'Gratificação',
-        'Adicional noturno 20%', 'Ajuda De Saude', 'Auxilio Creche', 'Auxilio Educacao',
-        'EQUIP. TRAB/FERRAMENTA', 'Auxilio Moradia', 'Auxilio Transporte', 'Hora Extra 70% - Sabado',
-        'Hora Extra 70% - Semana', 'PRODUÇÃO', 'AJUDA DE CUSTO', 'Hora Extra 100%', 'Repouso Remunerado'
-    ]
-    
-    colunas_descontos = [
-        'Atrasos', 'Faltas em Dias', 'DESCONTO DE ALIMENTAÇÃO', 'MENSALIDADE SINDICAL',
-        'Vale Transporte', 'INSS Folha', 'IRRF Folha', 'FGTS em Folha', 'Pensão Alimentícia'
-    ]
-    
-    # Filtra colunas que existem no DataFrame
-    ganhos_validos = [col for col in colunas_ganhos if col in df.columns]
-    descontos_validos = [col for col in colunas_descontos if col in df.columns]
-    
-    # Agrupa por obra e calcula totais
-    df_por_obra = df.groupby('Obra').agg(
-        Total_Ganhos=(ganhos_validos, lambda x: x.sum().sum()),
-        Total_Descontos=(descontos_validos, lambda x: x.sum().sum())
-    ).reset_index()
-    
-    df_por_obra['Remuneracao_Liquida'] = df_por_obra['Total_Ganhos'] + df_por_obra['Total_Descontos']
-    
-    return df_por_obra
-
 
 # ======================================
 # DASHBOARD DE EFETIVO
@@ -243,59 +213,6 @@ def dashboard_efetivo():
 
     st.plotly_chart(fig_peso, use_container_width=True)
     # ---- FIM da parte corrigida ----
-
-
-  def gerar_waterfall_por_obra(df_por_obra):
-    fig = go.Figure()
-    
-    df_por_obra = df_por_obra.sort_values('Remuneracao_Liquida', ascending=False)
-    
-    for obra in df_por_obra['Obra']:
-        dados_obra = df_por_obra[df_por_obra['Obra'] == obra].iloc[0]
-        
-        fig.add_trace(go.Waterfall(
-            name=obra,
-            x=["Ganhos", "Descontos", "Líquido"],
-            textposition="outside",
-            text=[f"R$ {dados_obra['Total_Ganhos']:,.2f}", 
-                  f"R$ {dados_obra['Total_Descontos']:,.2f}", 
-                  f"R$ {dados_obra['Remuneracao_Liquida']:,.2f}"],
-            y=[dados_obra['Total_Ganhos'], 
-               dados_obra['Total_Descontos'], 
-               dados_obra['Remuneracao_Liquida']],
-            decreasing={"marker":{"color":"#FF6B6B"}},
-            increasing={"marker":{"color":"#4ECDC4"}},
-            totals={"marker":{"color":"#3A86FF"}},
-            connector={"line":{"color":"rgb(63, 63, 63)"}},
-        ))
-    
-    fig.update_layout(
-        title="💵 Composição da Remuneração por Obra",
-        yaxis_title="Valor (R$)",
-        waterfallgroupgap=0.3,
-        showlegend=True
-    )
-    
-    return fig
-
-# ---- SEÇÃO DO GRÁFICO DE CASCATA POR OBRA ----
-st.divider()
-st.markdown("### 🏗️ Composição da Remuneração por Obra")
-
-# Calcula totais por obra
-df_por_obra = calcular_totais_por_obra(df_filtrado)
-
-# Gera o gráfico
-fig_waterfall_obra = gerar_waterfall_por_obra(df_por_obra)
-st.plotly_chart(fig_waterfall_obra, use_container_width=True)
-
-# Exibe tabela resumo
-st.dataframe(df_por_obra.style.format({
-    'Total_Ganhos': 'R$ {:.2f}',
-    'Total_Descontos': 'R$ {:.2f}',
-    'Remuneracao_Liquida': 'R$ {:.2f}'
-}), use_container_width=True)
-
 
 # Dicionário para mapear meses em inglês para abreviações em português
 MES_POR_PT = {

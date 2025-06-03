@@ -43,7 +43,7 @@ def definir_colunas_ganhos_descontos():
         'Diferença INSS Férias (esocial)', 'Adicional H.e S/ Producao 70%', 'PRODUÇÃO',
         'AJUDA DE CUSTO', 'Ajuda de Custo Combustivel', 'REFLEXO S PRODUÇÃO',
         'Hora Extra 100%', 'Repouso Remunerado', 'Licença Remunerada', 'Periculosidade',
-        'Salário Família', 'CALC_Adiantamento', 'Licença Remunerada Estagio', 'Insuficiência de Saldo'
+        'Salário Família', 'Adiantamento', 'Licença Remunerada Estagio', 'Insuficiência de Saldo'
     ]
     
     descontos = [

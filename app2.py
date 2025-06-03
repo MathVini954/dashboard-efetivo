@@ -113,7 +113,7 @@ def criar_grafico_detalhado(df_filtrado, colunas, titulo, cor):
     for col in colunas:
         if col in df_filtrado.columns:
             valor = pd.to_numeric(df_filtrado[col], errors='coerce').fillna(0).sum()
-            if valor > 0:  # Só inclui se houver valor
+            if valor != 0:  # Só inclui se houver valor
                 dados_detalhados.append({'Categoria': col, 'Valor': valor})
     
     if not dados_detalhados:

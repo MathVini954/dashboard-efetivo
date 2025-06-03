@@ -127,11 +127,12 @@ def setup_hover_sidebar():
     <button class="pin-button" onclick="toggleSidebar()" title="{'Desafixar sidebar' if st.session_state.sidebar_fixed else 'Fixar sidebar'}">
         {'📌' if st.session_state.sidebar_fixed else '📍'}
     </button>
-    
+    """
     
     st.markdown(js, unsafe_allow_html=True)
+
 # ======================================
-# FUNÇÕES DE CARREGAMENTO DE DADOS
+# FUNÇÕES DE CARREGAMENTO DE DADOS (sem alteração)
 # ======================================
 
 @st.cache_data
@@ -172,6 +173,16 @@ def dashboard_efetivo():
 
     with st.sidebar:
         st.header("🔍 Filtros - Efetivo")
+        
+        # Botão para alternar fixação da sidebar
+        col1, col2 = st.columns([3, 1])
+        with col2:
+            if st.button("📌" if not st.session_state.sidebar_fixed else "📍", 
+                        help="Fixar/Desafixar sidebar",
+                        key="toggle_sidebar_efetivo"):
+                st.session_state.sidebar_fixed = not st.session_state.sidebar_fixed
+                st.rerun()
+        
         lista_obras = sorted(df['Obra'].astype(str).unique())
         obras_selecionadas = st.multiselect("Obras:", lista_obras, default=lista_obras)
         tipo_selecionado = st.radio("Tipo:", ['Todos', 'DIRETO', 'INDIRETO', 'TERCEIRO'], horizontal=True)
@@ -231,7 +242,6 @@ def dashboard_efetivo():
         df_ranking = df_filtrado[df_filtrado['Tipo'].isin(['DIRETO', 'INDIRETO'])]
     else:
         df_ranking = df_filtrado
-
 
     nome_col_funcao = 'Função' if 'Função' in df_ranking.columns else 'Funçao' if 'Funçao' in df_ranking.columns else None
 
@@ -377,6 +387,7 @@ def data_pt_para_datetime(mes_ano_pt_str):
     mes = MES_PT_PARA_NUM[mes_pt]
     ano = 2000 + int(ano_str)  # exemplo: '24' vira 2024
     return pd.Timestamp(year=ano, month=mes, day=1)
+
 def dashboard_produtividade():
     def carregar_dados():
         df = pd.read_excel("produtividade.xlsx")
@@ -427,6 +438,16 @@ def dashboard_produtividade():
 
     with st.sidebar:
         st.header("🔍 Filtros - Produtividade")
+        
+        # Botão para alternar fixação da sidebar
+        col1, col2 = st.columns([3, 1])
+        with col2:
+            if st.button("📌" if not st.session_state.sidebar_fixed else "📍", 
+                        help="Fixar/Desafixar sidebar",
+                        key="toggle_sidebar_produtividade"):
+                st.session_state.sidebar_fixed = not st.session_state.sidebar_fixed
+                st.rerun()
+        
         tipo_obra_opcoes = ["Todos"] + df['TIPO_OBRA'].unique().tolist()
         tipo_obra = st.selectbox('Selecione o Tipo de Obra', tipo_obra_opcoes)
         servicos_opcoes = df['SERVIÇO'].unique().tolist()
@@ -453,6 +474,9 @@ def dashboard_produtividade():
 # ---------- Execução Principal ----------
 def main():
     st.set_page_config(page_title="Dashboards de Obra", layout="wide")
+    
+    # Configura a sidebar hover/fixa
+    setup_hover_sidebar()
 
     col1, col2 = st.columns([1, 4])
 

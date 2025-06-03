@@ -162,7 +162,7 @@ def dashboard_efetivo():
 
     df = carregar_dados_efetivo()
     df_terceiros = carregar_terceiros()
-    ganhos, descontos = definir_colunas_ganhos_descontos()
+    ganhos, descontos = criar_grafico_detalhado()
 
     df['Total Extra'] = df['Hora Extra 70% - Semana'] + df['Hora Extra 70% - Sabado']
 

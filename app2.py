@@ -33,79 +33,80 @@ def carregar_terceiros():
 
 def definir_colunas_ganhos_descontos():
     """Define as colunas de ganhos e descontos"""
+    base = ['Salário Base Estagiário', 'Salário Base Mês']
     ganhos = [
-        'Salário Base Estagiário', 'Salário Base Mês', 'Dias De Atestado', 'Gratificação',
-        'Adicional noturno 20%', 'Ajuda De Saude', 'Auxilio Creche', 'Auxilio Educacao',
-        'EQUIP. TRAB/FERRAMENTA', 'Auxilio Moradia', 'Auxilio Transporte', 'Dev.desc.indevido',
-        'Salário Substituiçã', 'Reflexo S/ He Produção', 'Reembolso De Despesas',
-        'Reembolso V. Transporte', 'Passagem Interior', 'Hora Extra 70% - Sabado',
-        'Hora Extra 70% - Semana', 'Salário Maternidade', 'Diferença de INSS Férias',
-        'Diferença INSS Férias (esocial)', 'Adicional H.e S/ Producao 70%', 'PRODUÇÃO',
-        'AJUDA DE CUSTO', 'Ajuda de Custo Combustivel', 'REFLEXO S PRODUÇÃO',
-        'Hora Extra 100%', 'Repouso Remunerado', 'Licença Remunerada', 'Periculosidade',
-        'Salário Família', 'Adiantamento', 'Licença Remunerada Estagio', 'Insuficiência de Saldo'
+        'Dias De Atestado', 'Gratificação', 'Adicional noturno 20%', 'Ajuda De Saude',
+        'Auxilio Creche', 'Auxilio Educacao', 'EQUIP. TRAB/FERRAMENTA', 'Auxilio Moradia',
+        'Auxilio Transporte', 'Dev.desc.indevido', 'Salário Substituiçã',
+        'Reflexo S/ He Produção', 'Reembolso De Despesas', 'Reembolso V. Transporte',
+        'Passagem Interior', 'Hora Extra 70% - Sabado', 'Hora Extra 70% - Semana',
+        'Salário Maternidade', 'Diferença de INSS Férias', 'Diferença INSS Férias (esocial)',
+        'Adicional H.e S/ Producao 70%', 'PRODUÇÃO', 'AJUDA DE CUSTO',
+        'Ajuda de Custo Combustivel', 'REFLEXO S PRODUÇÃO', 'Hora Extra 100%',
+        'Repouso Remunerado', 'Licença Remunerada', 'Periculosidade',
+        'Salário Família', 'Adiantamento', 'Licença Remunerada Estagio',
+        'Insuficiência de Saldo'
     ]
-    
     descontos = [
         'Atrasos', 'Faltas em Dias', 'DESCONTO DE ALIMENTAÇÃO', 'MENSALIDADE SINDICAL',
         'Vale Transporte', 'Desconto Insuficiência de Saldo', 'Assistencia Medica',
         'Coparticipacao Dependente', 'Coparticipacao Titular', 'Desconto Empréstimo',
         'Diferenca Plano De Saude', 'Desconto Ótica', 'Plano Odontologico',
         'Plano Odontologico Dependente', 'Pensão Alimentícia  Salário Mínimo',
-        'Assitência Médica Dependente', 'Dsr sobre falta', 'INSS Folha', 'IRRF Folha', 'Pensão Alimentícia'
+        'Assitência Médica Dependente', 'Dsr sobre falta', 'INSS Folha',
+        'IRRF Folha', 'Pensão Alimentícia'
     ]
-    
-    return ganhos, descontos
+    return base, ganhos, descontos
 
-def criar_grafico_cascata(df_filtrado, ganhos, descontos):
-    """Cria o gráfico de cascata"""
-    # Calcula totais
-    total_ganhos = 0
+
+def criar_grafico_cascata(df_filtrado, base, ganhos, descontos):
+    """Cria o gráfico de cascata com ganhos = base - ganhos extras"""
+    total_base = 0
+    total_ganhos_extras = 0
     total_descontos = 0
-    
-    # Soma ganhos (colunas que existem no DataFrame)
+
+    for col in base:
+        if col in df_filtrado.columns:
+            total_base += pd.to_numeric(df_filtrado[col], errors='coerce').fillna(0).sum()
+
     for col in ganhos:
         if col in df_filtrado.columns:
-            total_ganhos += pd.to_numeric(df_filtrado[col], errors='coerce').fillna(0).sum()
-    
-    # Soma descontos (colunas que existem no DataFrame)
+            total_ganhos_extras += pd.to_numeric(df_filtrado[col], errors='coerce').fillna(0).sum()
+
     for col in descontos:
         if col in df_filtrado.columns:
             total_descontos += pd.to_numeric(df_filtrado[col], errors='coerce').fillna(0).sum()
-    
-    # Remuneração líquida
-    remuneracao_liquida = total_ganhos + total_descontos
-    
-    # Dados para o gráfico de cascata
-    categorias = ['Ganhos', 'Descontos', 'Remuneração Líquida']
-    valores = [total_ganhos, -total_descontos, remuneracao_liquida]
-    cores = ['green', 'red', 'blue']
-    
+
+    ganhos_corrigidos = total_base - total_ganhos_extras
+    remuneracao_liquida = ganhos_corrigidos - total_descontos
+
+    categorias = ['Ganhos (Base - Extras)', 'Descontos', 'Remuneração Líquida']
+    valores = [ganhos_corrigidos, -total_descontos, remuneracao_liquida]
+
     fig_cascata = go.Figure()
-    
-    # Adiciona as barras
     fig_cascata.add_trace(go.Waterfall(
         name="Fluxo Financeiro",
         orientation="v",
         measure=["relative", "relative", "total"],
         x=categorias,
         textposition="outside",
-        text=[f"R$ {v:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".") for v in [total_ganhos, total_descontos, remuneracao_liquida]],
-        y=[total_ganhos, -total_descontos, 0],
+        text=[f"R$ {v:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".") for v in valores],
+        y=[ganhos_corrigidos, -total_descontos, 0],
         connector={"line": {"color": "rgb(63, 63, 63)"}},
         increasing={"marker": {"color": "green"}},
         decreasing={"marker": {"color": "red"}},
         totals={"marker": {"color": "blue"}}
     ))
-    
+
     fig_cascata.update_layout(
-        title="Análise Financeira - Ganhos vs Descontos",
+        title="Análise Financeira - Ganhos (Corrigidos) vs Descontos",
         showlegend=False,
         yaxis_title="Valor (R$)",
         xaxis_title="Categoria"
     )
-    
-    return fig_cascata, total_ganhos, total_descontos, remuneracao_liquida
+
+    return fig_cascata, ganhos_corrigidos, total_descontos, remuneracao_liquida
+
 
 def criar_grafico_detalhado(df_filtrado, colunas, titulo, cor):
     """Cria gráfico de colunas detalhado para ganhos ou descontos"""

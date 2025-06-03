@@ -188,7 +188,7 @@ fig_bar.update_traces(
 
 st.plotly_chart(fig_bar, use_container_width=True)
 
-    st.divider()
+st.divider()
 
     # ---- INÍCIO da parte corrigida ----
     todas_obras = sorted(df['Obra'].astype(str).unique())  # <-- dentro da função!

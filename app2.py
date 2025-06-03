@@ -3,6 +3,134 @@ import pandas as pd
 import plotly.express as px
 
 # ======================================
+# CONFIGURAÇÃO DA SIDEBAR HOVER/FIXA
+# ======================================
+
+def setup_hover_sidebar():
+    """Configura o CSS e JavaScript para a sidebar hover/fixa"""
+    
+    # Estado para controlar se a sidebar está fixa
+    if 'sidebar_fixed' not in st.session_state:
+        st.session_state.sidebar_fixed = False
+    
+    # CSS customizado
+    css = f"""
+    <style>
+        /* Esconder a sidebar padrão do Streamlit quando não está fixa */
+        .css-1d391kg {{
+            transition: transform 0.3s ease-in-out;
+            transform: translateX({'0px' if st.session_state.sidebar_fixed else '-100%'});
+        }}
+        
+        /* Mostrar sidebar ao passar o mouse quando não está fixa */
+        .css-1d391kg:hover {{
+            transform: translateX(0px) !important;
+        }}
+        
+        /* Indicador visual na borda esquerda quando não está fixa */
+        .sidebar-indicator {{
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 4px;
+            height: 100vh;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            z-index: 999;
+            opacity: {'0' if st.session_state.sidebar_fixed else '0.7'};
+            transition: all 0.3s ease;
+            pointer-events: none;
+        }}
+        
+        .sidebar-indicator:hover {{
+            width: 8px;
+            opacity: 1;
+        }}
+        
+        /* Botão de fixar/desafixar */
+        .pin-button {{
+            position: fixed;
+            left: {'320px' if st.session_state.sidebar_fixed else '10px'};
+            top: 10px;
+            background: {'#ff4757' if st.session_state.sidebar_fixed else '#2ed573'};
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            cursor: pointer;
+            z-index: 1000;
+            font-size: 16px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+        }}
+        
+        .pin-button:hover {{
+            transform: scale(1.1);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }}
+        
+        /* Ajustar o conteúdo principal */
+        .main .block-container {{
+            padding-left: {'20px' if not st.session_state.sidebar_fixed else '0px'};
+            transition: padding-left 0.3s ease;
+        }}
+        
+        /* Melhorar aparência da sidebar */
+        .css-1d391kg {{
+            background: linear-gradient(180deg, #f8f9fa 0%, #e9ecef 100%);
+            border-right: 2px solid #dee2e6;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+        }}
+        
+        /* Tooltip para o botão quando não está fixo */
+        .pin-button::after {{
+            content: '📌 Clique para fixar';
+            position: absolute;
+            left: 50px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }}
+        
+        .pin-button:hover::after {{
+            opacity: {'0' if st.session_state.sidebar_fixed else '1'};
+        }}
+    </style>
+    """
+    
+    st.markdown(css, unsafe_allow_html=True)
+    
+    # Indicador visual na borda esquerda
+    if not st.session_state.sidebar_fixed:
+        st.markdown('<div class="sidebar-indicator"></div>', unsafe_allow_html=True)
+    
+    # JavaScript para o botão de fixar
+    js = f"""
+    <script>
+        function toggleSidebar() {{
+            // Envia comando para o Streamlit
+            window.parent.postMessage({{
+                type: 'streamlit:setComponentValue',
+                value: {not st.session_state.sidebar_fixed}
+            }}, '*');
+        }}
+    </script>
+    
+    <button class="pin-button" onclick="toggleSidebar()" title="{'Desafixar sidebar' if st.session_state.sidebar_fixed else 'Fixar sidebar'}">
+        {'📌' if st.session_state.sidebar_fixed else '📍'}
+    </button>
+    
+    
+    st.markdown(js, unsafe_allow_html=True)
+# ======================================
 # FUNÇÕES DE CARREGAMENTO DE DADOS
 # ======================================
 

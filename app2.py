@@ -284,7 +284,7 @@ except (ValueError, TypeError) as e:
         st.markdown("### 🏗️ Funcionários Terceirizados por Empresa e Obra")
         tabela_terceiros = df_terceiros_filtrado.groupby(['Obra', 'EMPRESA'])['QUANTIDADE'].sum().reset_index()
         st.dataframe(tabela_terceiros, use_container_width=True)
-        return
+        
 
     coluna_valor = {
         'Produção': 'PRODUÇÃO',

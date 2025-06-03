@@ -215,14 +215,16 @@ for obra in todas_obras:
 
         peso_lista.append({'Obra': obra, 'Peso Financeiro': peso})
 
-df_peso = pd.DataFrame(peso_lista)
-df_peso = df_peso.sort_values(by='Peso Financeiro', ascending=False)
+ # Criação do DataFrame df_peso
+    df_peso = pd.DataFrame(peso_lista)
+    df_peso = df_peso.sort_values(by='Peso Financeiro', ascending=False)
 
-    # Coluna para controlar cor: True se obra está selecionada no filtro, False se não
+    # Adiciona coluna para controle visual (CORRETAMENTE ALINHADO)
     df_peso['Selecionada'] = df_peso['Obra'].apply(lambda x: x in obras_selecionadas)
 
-    # Define cores: azul escuro para selecionadas, azul claro para não selecionadas
+    # Define cores
     colors = df_peso['Selecionada'].map({True: 'darkblue', False: 'lightblue'})
+
 
     fig_peso = px.bar(
         df_peso,

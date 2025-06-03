@@ -188,13 +188,13 @@ def dashboard_efetivo():
 
         peso_lista.append({'Obra': obra, 'Peso Financeiro': peso})
 
-    df_peso = pd.DataFrame(peso_lista)
+      df_peso = pd.DataFrame(peso_lista)
     df_peso = df_peso.sort_values(by='Peso Financeiro', ascending=False)
 
-    # Coluna para controlar cor: True se obra está selecionada no filtro, False se não
-   # Por esta (assumindo que 'obra_selecionada' é a variável única que você quer destacar):
-   df_peso['Selecionada'] = df_peso['Obra'] == obra_selecionada  # <-- Aqui!
-   colors = df_peso['Selecionada'].map({True: 'darkblue', False: 'lightblue'})
+    # Correção aplicada aqui (indentação alinhada com o bloco da função):
+    obra_selecionada = obras_selecionadas[0] if obras_selecionadas else None
+    df_peso['Selecionada'] = df_peso['Obra'] == obra_selecionada  # <-- Agora alinhado!
+    colors = df_peso['Selecionada'].map({True: 'darkblue', False: 'lightblue'})
 
     fig_peso = px.bar(
         df_peso,

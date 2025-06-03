@@ -108,22 +108,36 @@ def criar_grafico_cascata(df_filtrado, base, ganhos, descontos):
     return fig_cascata, ganhos_corrigidos, total_descontos, remuneracao_liquida
 
 
-def criar_grafico_detalhado(df_filtrado, colunas, titulo, cor):
-    """Cria gráfico de colunas detalhado para ganhos ou descontos"""
+def criar_grafico_detalhado(df_filtrado, base, ganhos, titulo, cor):
+    """Cria gráfico de colunas detalhado para ganhos com base - extras, ou para descontos"""
     dados_detalhados = []
+
+    # Calcular valores de base e ganhos extras
+    total_base = sum(
+        pd.to_numeric(df_filtrado[col], errors='coerce').fillna(0).sum()
+        for col in base if col in df_filtrado.columns
+    )
     
-    for col in colunas:
+    total_ganhos_extras = 0
+    for col in ganhos:
         if col in df_filtrado.columns:
             valor = pd.to_numeric(df_filtrado[col], errors='coerce').fillna(0).sum()
-            if valor > 0:  # Só inclui se houver valor
+            if valor > 0:
                 dados_detalhados.append({'Categoria': col, 'Valor': valor})
-    
+                total_ganhos_extras += valor
+
+    # Adiciona a barra do "Base - Ganhos Extras"
+    ganho_corrigido = total_base - total_ganhos_extras
+    if ganho_corrigido > 0:
+        dados_detalhados.insert(0, {'Categoria': 'Base - Ganhos Extras', 'Valor': ganho_corrigido})
+
     if not dados_detalhados:
         return None
-    
+
+    # Construir DataFrame e gráfico
     df_detalhado = pd.DataFrame(dados_detalhados)
     df_detalhado = df_detalhado.sort_values('Valor', ascending=False)
-    
+
     fig_detalhado = px.bar(
         df_detalhado,
         x='Categoria',
@@ -132,11 +146,12 @@ def criar_grafico_detalhado(df_filtrado, colunas, titulo, cor):
         color_discrete_sequence=[cor],
         text=df_detalhado['Valor'].apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
     )
-    
+
     fig_detalhado.update_traces(textposition='outside')
     fig_detalhado.update_layout(xaxis_tickangle=-45)
-    
+
     return fig_detalhado
+
 
 # ======================================
 # DASHBOARD DE EFETIVO

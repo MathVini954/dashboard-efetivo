@@ -167,19 +167,26 @@ def dashboard_efetivo():
     st.dataframe(ranking, use_container_width=True)
     st.divider()
     graf_funcao = df_ranking[nome_col_funcao].value_counts().reset_index()
-    graf_funcao.columns = [nome_col_funcao, 'Qtd']
+graf_funcao.columns = [nome_col_funcao, 'Qtd']
 
-    fig_bar = px.bar(
-        graf_funcao,
-        x=nome_col_funcao,
-        y='Qtd',
-        color='Qtd',
-        color_continuous_scale='Blues',
-        title='Quantidade por Função',
-        labels={'Qtd': 'Quantidade', nome_col_funcao: 'Função'}
-        text_auto=True,  # 👈 Rótulos automáticos (arredondados)
-    )
-    st.plotly_chart(fig_bar, use_container_width=True)
+fig_bar = px.bar(
+    graf_funcao,
+    x=nome_col_funcao,
+    y='Qtd',
+    color='Qtd',
+    color_continuous_scale='Blues',
+    title='Quantidade por Função',
+    labels={'Qtd': 'Quantidade', nome_col_funcao: 'Função'},
+    text_auto=True  # 👈 Adiciona rótulos automaticamente
+)
+
+# Personalização extra (opcional):
+fig_bar.update_traces(
+    texttemplate='%{y:.0f}',  # 👈 Formato inteiro (sem decimais)
+    textposition='outside'    # 👈 Rótulos fora das barras
+)
+
+st.plotly_chart(fig_bar, use_container_width=True)
 
     st.divider()
 

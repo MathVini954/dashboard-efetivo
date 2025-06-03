@@ -192,10 +192,9 @@ def dashboard_efetivo():
     df_peso = df_peso.sort_values(by='Peso Financeiro', ascending=False)
 
     # Coluna para controlar cor: True se obra está selecionada no filtro, False se não
-    df_peso['Selecionada'] = df_peso['Obra'].apply(lambda x: x in obras_selecionadas)
-
-    # Define cores: azul escuro para selecionadas, azul claro para não selecionadas
-    colors = df_peso['Selecionada'].map({True: 'darkblue', False: 'lightblue'})
+   # Por esta (assumindo que 'obra_selecionada' é a variável única que você quer destacar):
+   df_peso['Selecionada'] = df_peso['Obra'] == obra_selecionada  # <-- Aqui!
+   colors = df_peso['Selecionada'].map({True: 'darkblue', False: 'lightblue'})
 
     fig_peso = px.bar(
         df_peso,

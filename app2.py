@@ -13,36 +13,45 @@ def setup_hover_sidebar():
     if 'sidebar_fixed' not in st.session_state:
         st.session_state.sidebar_fixed = False
     
-    # CSS customizado
+    # CSS customizado com JavaScript para controlar hover
     css = f"""
     <style>
-        /* Esconder a sidebar padrão do Streamlit quando não está fixa */
-        .css-1d391kg {{
-            transition: transform 0.3s ease-in-out;
-            transform: translateX({'0px' if st.session_state.sidebar_fixed else '-100%'});
-        }}
-        
-        /* Mostrar sidebar ao passar o mouse quando não está fixa */
-        .css-1d391kg:hover {{
-            transform: translateX(0px) !important;
-        }}
-        
-        /* Indicador visual na borda esquerda quando não está fixa */
-        .sidebar-indicator {{
+        /* Container principal para controlar hover */
+        .sidebar-hover-container {{
             position: fixed;
             left: 0;
             top: 0;
-            width: 4px;
+            width: {'350px' if st.session_state.sidebar_fixed else '20px'};
             height: 100vh;
-            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
             z-index: 999;
-            opacity: {'0' if st.session_state.sidebar_fixed else '0.7'};
-            transition: all 0.3s ease;
-            pointer-events: none;
+            transition: width 0.3s ease;
         }}
         
-        .sidebar-indicator:hover {{
+        /* Esconder/mostrar sidebar baseado no estado */
+        .css-1d391kg {{
+            transition: transform 0.3s ease-in-out !important;
+            transform: translateX({'0px' if st.session_state.sidebar_fixed else '-100%'}) !important;
+            background: linear-gradient(180deg, #f8f9fa 0%, #e9ecef 100%) !important;
+            border-right: 2px solid #dee2e6 !important;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1) !important;
+        }}
+        
+        /* Indicador visual na borda esquerda quando não está fixa */
+        .sidebar-trigger {{
+            position: fixed;
+            left: 0;
+            top: 0;
             width: 8px;
+            height: 100vh;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4, #45b7d1);
+            z-index: 1000;
+            opacity: {'0' if st.session_state.sidebar_fixed else '0.7'};
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }}
+        
+        .sidebar-trigger:hover {{
+            width: 12px;
             opacity: 1;
         }}
         
@@ -58,7 +67,7 @@ def setup_hover_sidebar():
             width: 40px;
             height: 40px;
             cursor: pointer;
-            z-index: 1000;
+            z-index: 1001;
             font-size: 16px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.2);
             transition: all 0.3s ease;
@@ -75,16 +84,14 @@ def setup_hover_sidebar():
             transition: padding-left 0.3s ease;
         }}
         
-        /* Melhorar aparência da sidebar */
-        .css-1d391kg {{
-            background: linear-gradient(180deg, #f8f9fa 0%, #e9ecef 100%);
-            border-right: 2px solid #dee2e6;
-            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+        /* Classe para mostrar sidebar */
+        .sidebar-visible .css-1d391kg {{
+            transform: translateX(0px) !important;
         }}
         
-        /* Tooltip para o botão quando não está fixo */
+        /* Tooltip para o botão */
         .pin-button::after {{
-            content: '📌 Clique para fixar';
+            content: '{'Desafixar sidebar' if st.session_state.sidebar_fixed else 'Fixar sidebar'}';
             position: absolute;
             left: 50px;
             top: 50%;
@@ -101,35 +108,101 @@ def setup_hover_sidebar():
         }}
         
         .pin-button:hover::after {{
-            opacity: {'0' if st.session_state.sidebar_fixed else '1'};
+            opacity: 1;
         }}
     </style>
+    
+    <script>
+        // Função para mostrar sidebar
+        function showSidebar() {{
+            if (!{str(st.session_state.sidebar_fixed).lower()}) {{
+                document.body.classList.add('sidebar-visible');
+            }}
+        }}
+        
+        // Função para esconder sidebar
+        function hideSidebar() {{
+            if (!{str(st.session_state.sidebar_fixed).lower()}) {{
+                document.body.classList.remove('sidebar-visible');
+            }}
+        }}
+        
+        // Função para alternar fixação
+        function toggleSidebar() {{
+            // Simula clique no botão do Streamlit
+            const event = new Event('click');
+            const button = document.querySelector('[data-testid="baseButton-secondary"]');
+            if (button) {{
+                button.click();
+            }}
+        }}
+        
+        // Adiciona eventos quando o DOM carregar
+        document.addEventListener('DOMContentLoaded', function() {{
+            const trigger = document.querySelector('.sidebar-trigger');
+            const sidebar = document.querySelector('.css-1d391kg');
+            
+            if (trigger) {{
+                trigger.addEventListener('mouseenter', showSidebar);
+            }}
+            
+            if (sidebar) {{
+                sidebar.addEventListener('mouseenter', showSidebar);
+                sidebar.addEventListener('mouseleave', hideSidebar);
+            }}
+            
+            // Observer para detectar mudanças no DOM
+            const observer = new MutationObserver(function(mutations) {{
+                const trigger = document.querySelector('.sidebar-trigger');
+                const sidebar = document.querySelector('.css-1d391kg');
+                
+                if (trigger && !trigger.hasEventListener) {{
+                    trigger.addEventListener('mouseenter', showSidebar);
+                    trigger.hasEventListener = true;
+                }}
+                
+                if (sidebar && !sidebar.hasEventListener) {{
+                    sidebar.addEventListener('mouseenter', showSidebar);
+                    sidebar.addEventListener('mouseleave', hideSidebar);
+                    sidebar.hasEventListener = true;
+                }}
+            }});
+            
+            observer.observe(document.body, {{
+                childList: true,
+                subtree: true
+            }});
+        }});
+        
+        // Adiciona eventos imediatamente também
+        setTimeout(function() {{
+            const trigger = document.querySelector('.sidebar-trigger');
+            const sidebar = document.querySelector('.css-1d391kg');
+            
+            if (trigger) {{
+                trigger.addEventListener('mouseenter', showSidebar);
+            }}
+            
+            if (sidebar) {{
+                sidebar.addEventListener('mouseenter', showSidebar);
+                sidebar.addEventListener('mouseleave', hideSidebar);
+            }}
+        }}, 100);
+    </script>
     """
     
     st.markdown(css, unsafe_allow_html=True)
     
     # Indicador visual na borda esquerda
     if not st.session_state.sidebar_fixed:
-        st.markdown('<div class="sidebar-indicator"></div>', unsafe_allow_html=True)
+        st.markdown('<div class="sidebar-trigger" onmouseenter="showSidebar()"></div>', unsafe_allow_html=True)
     
-    # JavaScript para o botão de fixar
-    js = f"""
-    <script>
-        function toggleSidebar() {{
-            // Envia comando para o Streamlit
-            window.parent.postMessage({{
-                type: 'streamlit:setComponentValue',
-                value: {not st.session_state.sidebar_fixed}
-            }}, '*');
-        }}
-    </script>
-    
+    # Botão de fixar/desafixar
+    st.markdown(f'''
     <button class="pin-button" onclick="toggleSidebar()" title="{'Desafixar sidebar' if st.session_state.sidebar_fixed else 'Fixar sidebar'}">
         {'📌' if st.session_state.sidebar_fixed else '📍'}
     </button>
-    """
-    
-    st.markdown(js, unsafe_allow_html=True)
+    ''', unsafe_allow_html=True)
 
 # ======================================
 # FUNÇÕES DE CARREGAMENTO DE DADOS (sem alteração)

@@ -3,11 +3,6 @@ import pandas as pd
 import plotly.graph_objects as go
 import plotly.express as px
 
-
-
-# ======================================
-# FUNÇÕES DE CARREGAMENTO DE DADOS
-# ======================================
 # Imports necessários (adicione no início do seu arquivo)
 import plotly.graph_objects as go
 import plotly.express as px
@@ -38,7 +33,8 @@ def carregar_terceiros():
 
 def definir_colunas_ganhos_descontos():
     """Define as colunas de ganhos e descontos"""
-    ganhos = ['Dias De Atestado', 'Gratificação',
+    ganhos = [
+        'Salário Base Estagiário', 'Salário Base Mês', 'Dias De Atestado', 'Gratificação',
         'Adicional noturno 20%', 'Ajuda De Saude', 'Auxilio Creche', 'Auxilio Educacao',
         'EQUIP. TRAB/FERRAMENTA', 'Auxilio Moradia', 'Auxilio Transporte', 'Dev.desc.indevido',
         'Salário Substituiçã', 'Reflexo S/ He Produção', 'Reembolso De Despesas',

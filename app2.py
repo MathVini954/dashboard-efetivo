@@ -215,8 +215,8 @@ for obra in todas_obras:
 
         peso_lista.append({'Obra': obra, 'Peso Financeiro': peso})
 
-    df_peso = pd.DataFrame(peso_lista)
-    df_peso = df_peso.sort_values(by='Peso Financeiro', ascending=False)
+df_peso = pd.DataFrame(peso_lista)
+df_peso = df_peso.sort_values(by='Peso Financeiro', ascending=False)
 
     # Coluna para controlar cor: True se obra está selecionada no filtro, False se não
     df_peso['Selecionada'] = df_peso['Obra'].apply(lambda x: x in obras_selecionadas)

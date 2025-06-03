@@ -77,7 +77,7 @@ def criar_grafico_cascata(df_filtrado, ganhos, descontos):
     
     # Dados para o gráfico de cascata
     categorias = ['Ganhos', 'Descontos', 'Remuneração Líquida']
-    valores = [total_ganhos, -total_descontos, remuneracao_liquida]
+    valores = [total_ganhos, total_descontos, remuneracao_liquida]
     cores = ['green', 'red', 'blue']
     
     fig_cascata = go.Figure()

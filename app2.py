@@ -193,9 +193,11 @@ def dashboard_efetivo():
 
     df = carregar_dados_efetivo()
     df_terceiros = carregar_terceiros()
-    fig_cascata, total_base, total_ganhos, total_descontos, remuneracao_liquida
- = criar_grafico_detalhado()
-
+  try:
+    ganhos, descontos = criar_grafico_detalhado()
+except (ValueError, TypeError) as e:
+    st.error("Erro ao carregar dados do gráfico")
+    ganhos, descontos = [], []  # ou valores padrão apropriados
     df['Total Extra'] = df['Hora Extra 70% - Semana'] + df['Hora Extra 70% - Sabado']
 
     with st.sidebar:

@@ -3,26 +3,20 @@ import pandas as pd
 import plotly.graph_objects as go
 import plotly.express as px
 
+
+
 # ======================================
 # FUNÇÕES DE CARREGAMENTO DE DADOS
 # ======================================
-# Dashboard de Análise de Efetivo - Abril 2025
-# Imports necessários
-import streamlit as st
-import pandas as pd
+# Imports necessários (adicione no início do seu arquivo)
 import plotly.graph_objects as go
 import plotly.express as px
 
-# ======================================
-# FUNÇÕES DE CARREGAMENTO DE DADOS
-# ======================================
-
 @st.cache_data
 def carregar_dados_efetivo():
-    """Carrega e processa dados do efetivo"""
     df = pd.read_excel("efetivo_abril.xlsx", sheet_name="EFETIVO", engine="openpyxl")
     df.columns = df.columns.str.strip()
-    df = df[df['Obra'].notna()]  # Remove linhas com 'Obra' vazia/nan
+    df = df[df['Obra'].notna()]  # NOVO: Remove linhas com 'Obra' vazia/nan
     
     df['Hora Extra 70% - Semana'] = pd.to_numeric(df['Hora Extra 70% - Semana'], errors='coerce').fillna(0)
     df['Hora Extra 70% - Sabado'] = pd.to_numeric(df['Hora Extra 70% - Sabado'], errors='coerce').fillna(0)
@@ -36,24 +30,16 @@ def carregar_dados_efetivo():
 
 @st.cache_data
 def carregar_terceiros():
-    """Carrega dados dos terceiros"""
     df_terceiros = pd.read_excel("efetivo_abril.xlsx", sheet_name="TERCEIROS", engine="openpyxl")
     df_terceiros.columns = df_terceiros.columns.str.strip()
-    df_terceiros = df_terceiros[df_terceiros['Obra'].notna()]  # Remove linhas com 'Obra' vazia/nan
+    df_terceiros = df_terceiros[df_terceiros['Obra'].notna()]  # NOVO: Remove linhas com 'Obra' vazia/nan
     df_terceiros['QUANTIDADE'] = pd.to_numeric(df_terceiros['QUANTIDADE'], errors='coerce').fillna(0).astype(int)
     return df_terceiros
 
 def definir_colunas_ganhos_descontos():
-    """Define as colunas de ganhos, descontos e base salarial"""
-    # NOVA VARIÁVEL: Salários Base (removidos dos ganhos)
-    base_salarial = [
-        'Salário Base Estagiário', 
-        'Salário Base Mês'
-    ]
-    
-    # Ganhos (sem os salários base)
+    """Define as colunas de ganhos e descontos"""
     ganhos = [
-        'Dias De Atestado', 'Gratificação',
+        'Salário Base Estagiário', 'Salário Base Mês', 'Dias De Atestado', 'Gratificação',
         'Adicional noturno 20%', 'Ajuda De Saude', 'Auxilio Creche', 'Auxilio Educacao',
         'EQUIP. TRAB/FERRAMENTA', 'Auxilio Moradia', 'Auxilio Transporte', 'Dev.desc.indevido',
         'Salário Substituiçã', 'Reflexo S/ He Produção', 'Reembolso De Despesas',
@@ -72,60 +58,34 @@ def definir_colunas_ganhos_descontos():
         'Diferenca Plano De Saude', 'Desconto Ótica', 'Plano Odontologico',
         'Plano Odontologico Dependente', 'Pensão Alimentícia  Salário Mínimo',
         'Assitência Médica Dependente', 'Dsr sobre falta', 'INSS Folha', 'IRRF Folha',
-        'Pensão Alimentícia'
+        'FGTS em Folha', 'Pensão Alimentícia'
     ]
     
-    return ganhos, descontos, base_salarial
+    return ganhos, descontos
 
-def encontrar_colunas_existentes(df, lista_colunas):
-    """Encontra colunas que existem no DataFrame, incluindo busca flexível"""
-    colunas_encontradas = []
-    colunas_df = df.columns.tolist()
-    
-    for col in lista_colunas:
-        # Busca exata
-        if col in colunas_df:
-            colunas_encontradas.append(col)
-        else:
-            # Busca flexível (contém o termo)
-            for col_df in colunas_df:
-                if col.lower() in col_df.lower() or col_df.lower() in col.lower():
-                    if col_df not in colunas_encontradas:
-                        colunas_encontradas.append(col_df)
-                        break
-    
-    return colunas_encontradas
-
-def criar_grafico_cascata(df_filtrado, ganhos, descontos, base_salarial):
-    """Cria o gráfico de cascata com separação de Base e Ganhos"""
-    # Encontra colunas que existem no DataFrame
-    ganhos_existentes = encontrar_colunas_existentes(df_filtrado, ganhos)
-    descontos_existentes = encontrar_colunas_existentes(df_filtrado, descontos)
-    base_existentes = encontrar_colunas_existentes(df_filtrado, base_salarial)
-    
+def criar_grafico_cascata(df_filtrado, ganhos, descontos):
+    """Cria o gráfico de cascata"""
     # Calcula totais
-    total_base = 0
     total_ganhos = 0
     total_descontos = 0
     
-    # Soma base salarial
-    for col in base_existentes:
-        total_base += pd.to_numeric(df_filtrado[col], errors='coerce').fillna(0).sum()
+    # Soma ganhos (colunas que existem no DataFrame)
+    for col in ganhos:
+        if col in df_filtrado.columns:
+            total_ganhos += pd.to_numeric(df_filtrado[col], errors='coerce').fillna(0).sum()
     
-    # Soma ganhos (sem a base)
-    for col in ganhos_existentes:
-        total_ganhos += pd.to_numeric(df_filtrado[col], errors='coerce').fillna(0).sum()
-    
-    # Soma descontos
-    for col in descontos_existentes:
-        total_descontos += pd.to_numeric(df_filtrado[col], errors='coerce').fillna(0).sum()
+    # Soma descontos (colunas que existem no DataFrame)
+    for col in descontos:
+        if col in df_filtrado.columns:
+            total_descontos += pd.to_numeric(df_filtrado[col], errors='coerce').fillna(0).sum()
     
     # Remuneração líquida
-    remuneracao_liquida = total_base - total_ganhos - total_descontos
+    remuneracao_liquida = total_ganhos - total_descontos
     
     # Dados para o gráfico de cascata
-    categorias = ['Base Salarial', 'Ganhos Adicionais', 'Descontos', 'Remuneração Líquida']
-    valores = [total_base, total_ganhos, total_descontos, remuneracao_liquida]
+    categorias = ['Ganhos', 'Descontos', 'Remuneração Líquida']
+    valores = [total_ganhos, -total_descontos, remuneracao_liquida]
+    cores = ['green', 'red', 'blue']
     
     fig_cascata = go.Figure()
     
@@ -133,11 +93,11 @@ def criar_grafico_cascata(df_filtrado, ganhos, descontos, base_salarial):
     fig_cascata.add_trace(go.Waterfall(
         name="Fluxo Financeiro",
         orientation="v",
-        measure=["relative", "relative", "relative", "total"],
+        measure=["relative", "relative", "total"],
         x=categorias,
         textposition="outside",
-        text=[f"R$ {v:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".") for v in [total_base, total_ganhos, total_descontos, remuneracao_liquida]],
-        y=[total_base, total_ganhos, -total_descontos, 0],
+        text=[f"R$ {v:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".") for v in [total_ganhos, total_descontos, remuneracao_liquida]],
+        y=[total_ganhos, -total_descontos, 0],
         connector={"line": {"color": "rgb(63, 63, 63)"}},
         increasing={"marker": {"color": "green"}},
         decreasing={"marker": {"color": "red"}},
@@ -145,25 +105,23 @@ def criar_grafico_cascata(df_filtrado, ganhos, descontos, base_salarial):
     ))
     
     fig_cascata.update_layout(
-        title="Análise Financeira - Base + Ganhos vs Descontos",
+        title="Análise Financeira - Ganhos vs Descontos",
         showlegend=False,
         yaxis_title="Valor (R$)",
         xaxis_title="Categoria"
     )
     
-    return fig_cascata, total_base, total_ganhos, total_descontos, remuneracao_liquida
+    return fig_cascata, total_ganhos, total_descontos, remuneracao_liquida
 
 def criar_grafico_detalhado(df_filtrado, colunas, titulo, cor):
     """Cria gráfico de colunas detalhado para ganhos ou descontos"""
-    # Encontra colunas que existem no DataFrame
-    colunas_existentes = encontrar_colunas_existentes(df_filtrado, colunas)
-    
     dados_detalhados = []
     
-    for col in colunas_existentes:
-        valor = pd.to_numeric(df_filtrado[col], errors='coerce').fillna(0).sum()
-        if valor > 0:  # Só inclui se houver valor
-            dados_detalhados.append({'Categoria': col, 'Valor': valor})
+    for col in colunas:
+        if col in df_filtrado.columns:
+            valor = pd.to_numeric(df_filtrado[col], errors='coerce').fillna(0).sum()
+            if valor > 0:  # Só inclui se houver valor
+                dados_detalhados.append({'Categoria': col, 'Valor': valor})
     
     if not dados_detalhados:
         return None
@@ -184,6 +142,7 @@ def criar_grafico_detalhado(df_filtrado, colunas, titulo, cor):
     fig_detalhado.update_layout(xaxis_tickangle=-45)
     
     return fig_detalhado
+
 # ======================================
 # DASHBOARD DE EFETIVO
 # ======================================
@@ -193,11 +152,8 @@ def dashboard_efetivo():
 
     df = carregar_dados_efetivo()
     df_terceiros = carregar_terceiros()
-try:
-    ganhos, descontos = criar_grafico_detalhado()
-except (ValueError, TypeError) as e:
-    st.error("Erro ao carregar dados do gráfico")
-    ganhos, descontos = [], []  # ou valores padrão apropriados
+    ganhos, descontos = definir_colunas_ganhos_descontos()
+
     df['Total Extra'] = df['Hora Extra 70% - Semana'] + df['Hora Extra 70% - Sabado']
 
     with st.sidebar:
@@ -284,7 +240,7 @@ except (ValueError, TypeError) as e:
         st.markdown("### 🏗️ Funcionários Terceirizados por Empresa e Obra")
         tabela_terceiros = df_terceiros_filtrado.groupby(['Obra', 'EMPRESA'])['QUANTIDADE'].sum().reset_index()
         st.dataframe(tabela_terceiros, use_container_width=True)
-        
+        return
 
     coluna_valor = {
         'Produção': 'PRODUÇÃO',

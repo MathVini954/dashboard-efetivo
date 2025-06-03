@@ -54,26 +54,6 @@ def dashboard_efetivo():
     # Filtra obras selecionadas (já sem 'nan')
     df_filtrado = df[df['Obra'].isin(obras_selecionadas)]
     df_terceiros_filtrado = df_terceiros[df_terceiros['Obra'].isin(obras_selecionadas)]
-def dashboard_efetivo():
-    st.title("📊 Análise de Efetivo - Abril 2025")
-
-    df = carregar_dados_efetivo()
-    df_terceiros = carregar_terceiros()
-
-    df['Total Extra'] = df['Hora Extra 70% - Semana'] + df['Hora Extra 70% - Sabado']
-
-    with st.sidebar:
-        st.header("🔍 Filtros - Efetivo")
-        lista_obras = sorted(df['Obra'].astype(str).unique())
-        obras_selecionadas = st.multiselect("Obras:", lista_obras, default=lista_obras)
-        tipo_selecionado = st.radio("Tipo:", ['Todos', 'DIRETO', 'INDIRETO', 'TERCEIRO'], horizontal=True)
-        tipo_analise = st.radio("Tipo de Análise da Tabela:", ['Produção', 'Hora Extra Semana', 'Hora Extra Sábado'])
-        qtd_linhas = st.radio("Qtd. de Funcionários na Tabela:", ['5', '10', '20', 'Todos'], horizontal=True)
-        tipo_peso = st.radio("Tipo de Peso (Gráficos Novos):", ['Peso sobre Produção', 'Peso sobre Hora Extra'])
-
-    # Filtra obras selecionadas para efetivo e terceiros
-    df_filtrado = df[df['Obra'].isin(obras_selecionadas)]
-    df_terceiros_filtrado = df_terceiros[df_terceiros['Obra'].isin(obras_selecionadas)]
 
     # Filtra por tipo
     if tipo_selecionado != 'Todos':
@@ -167,33 +147,26 @@ def dashboard_efetivo():
     st.dataframe(ranking, use_container_width=True)
     st.divider()
     graf_funcao = df_ranking[nome_col_funcao].value_counts().reset_index()
-graf_funcao.columns = [nome_col_funcao, 'Qtd']
+    graf_funcao.columns = [nome_col_funcao, 'Qtd']
 
-fig_bar = px.bar(
-    graf_funcao,
-    x=nome_col_funcao,
-    y='Qtd',
-    color='Qtd',
-    color_continuous_scale='Blues',
-    title='Quantidade por Função',
-    labels={'Qtd': 'Quantidade', nome_col_funcao: 'Função'},
-    text_auto=True  # 👈 Adiciona rótulos automaticamente
-)
+    fig_bar = px.bar(
+        graf_funcao,
+        x=nome_col_funcao,
+        y='Qtd',
+        color='Qtd',
+        color_continuous_scale='Blues',
+        title='Quantidade por Função',
+        labels={'Qtd': 'Quantidade', nome_col_funcao: 'Função'}
+    )
+    st.plotly_chart(fig_bar, use_container_width=True)
 
-# Personalização extra (opcional):
-fig_bar.update_traces(
-    texttemplate='%{y:.0f}',  # 👈 Formato inteiro (sem decimais)
-    textposition='outside'    # 👈 Rótulos fora das barras
-)
+    st.divider()
 
-st.plotly_chart(fig_bar, use_container_width=True)
+    # ---- INÍCIO da parte corrigida ----
+    todas_obras = sorted(df['Obra'].astype(str).unique())  # <-- dentro da função!
 
-st.divider()
-
-todas_obras = sorted(df['Obra'].astype(str).unique())  # <-- agora corretamente alinhada
-
-peso_lista = []
-for obra in todas_obras:
+    peso_lista = []
+    for obra in todas_obras:
         # Base da obra
         df_obra = df[df['Obra'] == obra]
 
@@ -215,16 +188,14 @@ for obra in todas_obras:
 
         peso_lista.append({'Obra': obra, 'Peso Financeiro': peso})
 
- # Criação do DataFrame df_peso
     df_peso = pd.DataFrame(peso_lista)
     df_peso = df_peso.sort_values(by='Peso Financeiro', ascending=False)
 
-    # Adiciona coluna para controle visual (CORRETAMENTE ALINHADO)
+    # Coluna para controlar cor: True se obra está selecionada no filtro, False se não
     df_peso['Selecionada'] = df_peso['Obra'].apply(lambda x: x in obras_selecionadas)
 
-    # Define cores
+    # Define cores: azul escuro para selecionadas, azul claro para não selecionadas
     colors = df_peso['Selecionada'].map({True: 'darkblue', False: 'lightblue'})
-
 
     fig_peso = px.bar(
         df_peso,
@@ -388,4 +359,4 @@ def main():
         )
 
 if __name__ == "__main__":
-    main() 
+    main()

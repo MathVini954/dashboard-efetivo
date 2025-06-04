@@ -1,9 +1,20 @@
 import pandas as pd
 
-# Troque aqui pelo caminho correto do seu arquivo Excel
 arquivo = "efetivo_abril.xlsx"
 
-# Lista de colunas de descontos que você quer somar — ajuste aqui conforme seu arquivo
+print("Passo 1: tentando carregar o arquivo...")
+
+try:
+    df = pd.read_excel(arquivo)
+    print("Arquivo carregado com sucesso!")
+except Exception as e:
+    print("Erro ao carregar arquivo:", e)
+    exit()
+
+print("\nPasso 2: colunas encontradas:")
+print(df.columns.tolist())
+
+# Defina as colunas que quer somar, veja abaixo um exemplo genérico
 colunas_descontos = [
     "Atrasos", "Faltas em Dias", "DESCONTO DE ALIMENTAÇÃO", "MENSALIDADE SINDICAL",
     "Vale Transporte", "Assistencia Medica", "Coparticipacao Dependente", "Coparticipacao Titular",
@@ -12,30 +23,24 @@ colunas_descontos = [
     "Assitência Médica Dependente", "Dsr sobre falta", "INSS Folha", "IRRF Folha", "Pensão Alimentícia"
 ]
 
-try:
-    df = pd.read_excel(arquivo)
-    print("Arquivo carregado. Colunas disponíveis:")
-    print(df.columns.tolist())
-except Exception as e:
-    print(f"Erro ao ler o arquivo: {e}")
+print("\nPasso 3: filtrando colunas existentes no DataFrame...")
+
+colunas_validas = [col for col in colunas_descontos if col in df.columns]
+
+print(f"Colunas válidas encontradas para desconto: {colunas_validas}")
+
+if len(colunas_validas) == 0:
+    print("Nenhuma coluna de desconto válida encontrada, verifique os nomes.")
     exit()
 
-# Filtra só as colunas de desconto que existem no DataFrame
-colunas_encontradas = [c for c in colunas_descontos if c in df.columns]
-print("\nColunas de desconto encontradas no arquivo:")
-print(colunas_encontradas)
+print("\nPasso 4: convertendo colunas para numérico e somando:")
 
-if not colunas_encontradas:
-    print("Nenhuma coluna de desconto encontrada. Verifique os nomes das colunas.")
-    exit()
+for col in colunas_validas:
+    try:
+        df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
+        soma = df[col].sum()
+        print(f"Soma da coluna '{col}': R$ {soma:,.2f}")
+    except Exception as e:
+        print(f"Erro ao processar a coluna '{col}': {e}")
 
-# Tenta converter para numérico e soma, com debug
-for col in colunas_encontradas:
-    df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
-
-print("\nValores somados por coluna de desconto:")
-for col in colunas_encontradas:
-    total = df[col].sum()
-    print(f"{col}: R$ {total:,.2f}")
-
-print(f"\nTotal geral descontos: R$ {df[colunas_encontradas].sum().sum():,.2f}")
+print(f"\nPasso 5: soma total dos descontos: R$ {df[colunas_validas].sum().sum():,.2f}")

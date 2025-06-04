@@ -47,8 +47,13 @@ def definir_colunas_ganhos_descontos():
     ]
     
     descontos = [
-   'DESCONTO DE ALIMENTAÇÃO'
+   'Atrasos', 'Faltas em Dias', 'DESCONTO DE ALIMENTAÇÃO', 'MENSALIDADE SINDICAL',
+        'Vale Transporte', 'Assistencia Medica', 'Coparticipacao Dependente', 'Coparticipacao Titular', 'Desconto Empréstimo',
+        'Diferenca Plano De Saude', 'Desconto Ótica', 'Plano Odontologico',
+        'Plano Odontologico Dependente', 'Pensão Alimentícia Salário Mínimo',
+        'Assitência Médica Dependente', 'Dsr sobre falta', 'INSS Folha', 'IRRF Folha', 'Pensão Alimentícia'
     ]
+
     
     return ganhos, descontos
 

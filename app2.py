@@ -56,58 +56,7 @@ def definir_colunas_ganhos_descontos():
     
     return ganhos, descontos
 
-
-def criar_grafico_cascata(df_filtrado, ganhos, descontos):
-    """Cria o gráfico de cascata"""
-    # Calcula totais
-    total_ganhos = 0
-    total_descontos = 0
-    
-    # Soma ganhos (colunas que existem no DataFrame)
-    for col in ganhos:
-        if col in df_filtrado.columns:
-            total_ganhos += pd.to_numeric(df_filtrado[col], errors='coerce').fillna(0).sum()
-    
-    # Soma descontos (colunas que existem no DataFrame)
-    for col in descontos:
-        if col in df_filtrado.columns:
-            total_descontos -= pd.to_numeric(df_filtrado[col], errors='coerce').fillna(0).sum()
-    
-    # Remuneração líquida
-    remuneracao_liquida = total_ganhos + total_descontos
-    
-    # Dados para o gráfico de cascata
-    categorias = ['Ganhos', 'Descontos', 'Remuneração Líquida']
-    valores = [total_ganhos, total_descontos, remuneracao_liquida]
-    cores = ['green', 'red', 'blue']
-    
-    fig_cascata = go.Figure()
-    
-    # Adiciona as barras
-    fig_cascata.add_trace(go.Waterfall(
-        name="Fluxo Financeiro",
-        orientation="v",
-        measure=["relative", "relative", "total"],
-        x=categorias,
-        textposition="outside",
-        text=[f"R$ {v:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".") for v in [total_ganhos, total_descontos, remuneracao_liquida]],
-        y=[total_ganhos, -total_descontos, 0],
-        connector={"line": {"color": "rgb(63, 63, 63)"}},
-        increasing={"marker": {"color": "green"}},
-        decreasing={"marker": {"color": "red"}},
-        totals={"marker": {"color": "blue"}}
-    ))
-    
-    fig_cascata.update_layout(
-        title="Análise Financeira - Ganhos vs Descontos",
-        showlegend=False,
-        yaxis_title="Valor (R$)",
-        xaxis_title="Categoria"
-    )
-    
-    return fig_cascata, total_ganhos, total_descontos, remuneracao_liquida
-
-# Corrige e converte colunas de ganhos e descontos para valores numéricos
+# ✅ Cole essa função fora de qualquer outra função (por exemplo, logo após os imports)
 def normalizar_colunas_valores(df, colunas):
     for col in colunas:
         if col in df.columns:
@@ -121,15 +70,55 @@ def normalizar_colunas_valores(df, colunas):
             )
             df[col] = pd.to_numeric(df[col], errors='coerce')
 
-# Aplica normalização antes do cálculo
-normalizar_colunas_valores(df_filtrado, ganhos + descontos)
+# ✅ Agora a função principal
+def criar_grafico_cascata(df_filtrado, ganhos, descontos):
+    import plotly.graph_objects as go
+    import streamlit as st
 
-# Soma total de ganhos e descontos
-total_ganhos = sum(df_filtrado[col].sum() for col in ganhos if col in df_filtrado.columns)
-total_descontos = sum(df_filtrado[col].sum() for col in descontos if col in df_filtrado.columns)
+    # Normaliza os valores das colunas
+    normalizar_colunas_valores(df_filtrado, ganhos + descontos)
 
-# Valor líquido
-valor_liquido = total_ganhos - total_descontos
+    # Soma os valores
+    soma_ganhos = df_filtrado[ganhos].sum(numeric_only=True)
+    soma_descontos = df_filtrado[descontos].sum(numeric_only=True)
+
+    # Calcula totais
+    total_ganhos = soma_ganhos.sum()
+    total_descontos = soma_descontos.sum()
+    saldo_final = total_ganhos - total_descontos
+
+    # Prepara os dados para o gráfico
+    medidas = ['relative'] * len(ganhos) + ['relative'] * len(descontos) + ['total']
+    valores = list(soma_ganhos) + [-v for v in soma_descontos] + [saldo_final]
+    labels = list(soma_ganhos.index) + list(soma_descontos.index) + ['Saldo Final']
+
+    # Cria o gráfico de cascata
+    fig = go.Figure(go.Waterfall(
+        name="Variação",
+        orientation="v",
+        measure=medidas,
+        x=labels,
+        text=[f"R$ {v:,.2f}".replace(".", "#").replace(",", ".").replace("#", ",") for v in valores],
+        y=valores,
+        connector={"line": {"color": "rgb(63, 63, 63)"}},
+    ))
+
+    fig.update_layout(
+        title="Análise Financeira - Ganhos e Descontos",
+        waterfallgap=0.3,
+        autosize=True
+    )
+
+    st.plotly_chart(fig, use_container_width=True)
+
+    # Exibe uma tabela resumo abaixo do gráfico
+    st.subheader("Resumo Financeiro")
+    resumo = {
+        "Total de Ganhos": [f"R$ {total_ganhos:,.2f}".replace(".", "#").replace(",", ".").replace("#", ",")],
+        "Total de Descontos": [f"R$ {total_descontos:,.2f}".replace(".", "#").replace(",", ".").replace("#", ",")],
+        "Saldo Final": [f"R$ {saldo_final:,.2f}".replace(".", "#").replace(",", ".").replace("#", ",")]
+    }
+    st.table(pd.DataFrame(resumo))
 
 def criar_grafico_detalhado(df_filtrado, colunas, titulo, cor):
     """Cria gráfico de colunas detalhado para ganhos ou descontos"""

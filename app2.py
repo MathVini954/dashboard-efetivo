@@ -1,57 +1,41 @@
 import pandas as pd
 
-# Caminho para seu arquivo Excel
-CAMINHO_ARQUIVO = "efetivo_abril.xlsx"  # Altere se necessário
+# Troque aqui pelo caminho correto do seu arquivo Excel
+arquivo = "efetivo_abril.xlsx"
 
-# Colunas que representam descontos
+# Lista de colunas de descontos que você quer somar — ajuste aqui conforme seu arquivo
 colunas_descontos = [
-   'Atrasos', 'Faltas em Dias', 'DESCONTO DE ALIMENTAÇÃO', 'MENSALIDADE SINDICAL',
-        'Vale Transporte', 'Assistencia Medica', 'Coparticipacao Dependente', 'Coparticipacao Titular', 'Desconto Empréstimo',
-        'Diferenca Plano De Saude', 'Desconto Ótica', 'Plano Odontologico',
-        'Plano Odontologico Dependente', 'Pensão Alimentícia Salário Mínimo',
-        'Assitência Médica Dependente', 'Dsr sobre falta', 'INSS Folha', 'IRRF Folha', 'Pensão Alimentícia'
+    "Atrasos", "Faltas em Dias", "DESCONTO DE ALIMENTAÇÃO", "MENSALIDADE SINDICAL",
+    "Vale Transporte", "Assistencia Medica", "Coparticipacao Dependente", "Coparticipacao Titular",
+    "Desconto Empréstimo", "Diferenca Plano De Saude", "Desconto Ótica", "Plano Odontologico",
+    "Plano Odontologico Dependente", "Pensão Alimentícia Salário Mínimo",
+    "Assitência Médica Dependente", "Dsr sobre falta", "INSS Folha", "IRRF Folha", "Pensão Alimentícia"
 ]
 
-# Tenta carregar o DataFrame
 try:
-    df = pd.read_excel(CAMINHO_ARQUIVO)
-    print("✅ Arquivo carregado com sucesso!")
+    df = pd.read_excel(arquivo)
+    print("Arquivo carregado. Colunas disponíveis:")
+    print(df.columns.tolist())
 except Exception as e:
-    print(f"❌ Erro ao carregar o arquivo: {e}")
+    print(f"Erro ao ler o arquivo: {e}")
     exit()
 
-# Mostra as colunas carregadas para debug
-print("\n🔍 Colunas encontradas no DataFrame:")
-print(df.columns.tolist())
+# Filtra só as colunas de desconto que existem no DataFrame
+colunas_encontradas = [c for c in colunas_descontos if c in df.columns]
+print("\nColunas de desconto encontradas no arquivo:")
+print(colunas_encontradas)
 
-# Filtra as colunas de desconto que realmente existem no arquivo
-colunas_existentes = [col for col in colunas_descontos if col in df.columns]
-
-if not colunas_existentes:
-    print("\n⚠️ Nenhuma coluna de desconto foi encontrada no arquivo.")
+if not colunas_encontradas:
+    print("Nenhuma coluna de desconto encontrada. Verifique os nomes das colunas.")
     exit()
 
-print("\n✅ Colunas de desconto encontradas:")
-print(colunas_existentes)
+# Tenta converter para numérico e soma, com debug
+for col in colunas_encontradas:
+    df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
 
-# Normaliza os valores para float (remove R$, vírgulas, etc.)
-for col in colunas_existentes:
-    df[col] = (
-        df[col]
-        .astype(str)
-        .str.replace("R\$", "", regex=True)
-        .str.replace(".", "", regex=False)
-        .str.replace(",", ".", regex=False)
-    )
-    df[col] = pd.to_numeric(df[col], errors="coerce").fillna(0)
+print("\nValores somados por coluna de desconto:")
+for col in colunas_encontradas:
+    total = df[col].sum()
+    print(f"{col}: R$ {total:,.2f}")
 
-# Soma por coluna e total geral
-somas = df[colunas_existentes].sum()
-total_geral = somas.sum()
-
-# Exibe os resultados
-print("\n📊 Soma por coluna de descontos:")
-for col, valor in somas.items():
-    print(f"{col}: R$ {valor:,.2f}")
-
-print(f"\n💰 Total geral de descontos: R$ {total_geral:,.2f}")
+print(f"\nTotal geral descontos: R$ {df[colunas_encontradas].sum().sum():,.2f}")

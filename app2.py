@@ -1,17 +1,25 @@
 import pandas as pd
 
-# Simula leitura do seu DataFrame
-df = pd.read_excel("efetivo_abril.xlsx")  # substitua pelo seu arquivo, se necessário
+# Caminho para seu arquivo Excel
+CAMINHO_ARQUIVO = "efetivo_abril.xlsx"  # Altere se necessário
 
-# Lista de colunas que são consideradas "descontos"
-descontos = [
-    'Atrasos', 'Faltas em Dias', 'DESCONTO DE ALIMENTAÇÃO', 'MENSALIDADE SINDICAL',
+# Colunas que representam descontos
+colunas_descontos = [
+   'Atrasos', 'Faltas em Dias', 'DESCONTO DE ALIMENTAÇÃO', 'MENSALIDADE SINDICAL',
         'Vale Transporte', 'Assistencia Medica', 'Coparticipacao Dependente', 'Coparticipacao Titular', 'Desconto Empréstimo',
         'Diferenca Plano De Saude', 'Desconto Ótica', 'Plano Odontologico',
         'Plano Odontologico Dependente', 'Pensão Alimentícia Salário Mínimo',
         'Assitência Médica Dependente', 'Dsr sobre falta', 'INSS Folha', 'IRRF Folha', 'Pensão Alimentícia'
 
-]
+
+# Tenta carregar o DataFrame
+try:
+    df = pd.read_excel(CAMINHO_ARQUIVO)
+    print("✅ Arquivo carregado com sucesso!")
+except Exception as e:
+    print(f"❌ Erro ao carregar o arquivo: {e}")
+    exit()
+
 # Mostra as colunas carregadas para debug
 print("\n🔍 Colunas encontradas no DataFrame:")
 print(df.columns.tolist())

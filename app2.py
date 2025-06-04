@@ -10,7 +10,7 @@ colunas_descontos = [
         'Diferenca Plano De Saude', 'Desconto Ótica', 'Plano Odontologico',
         'Plano Odontologico Dependente', 'Pensão Alimentícia Salário Mínimo',
         'Assitência Médica Dependente', 'Dsr sobre falta', 'INSS Folha', 'IRRF Folha', 'Pensão Alimentícia'
-
+]
 
 # Tenta carregar o DataFrame
 try:

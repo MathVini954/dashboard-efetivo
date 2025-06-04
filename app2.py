@@ -47,7 +47,7 @@ def definir_colunas_ganhos_descontos():
     ]
     
     descontos = [
-   'IRRF Folha'
+   'DESCONTO DE ALIMENTAÇÃO'
     ]
     
     return ganhos, descontos

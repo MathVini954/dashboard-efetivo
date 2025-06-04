@@ -55,6 +55,29 @@ def definir_colunas_ganhos_descontos():
     ]
     
     return ganhos, descontos
+# Corrige e converte colunas de ganhos e descontos para valores numéricos
+def normalizar_colunas_valores(df, colunas):
+    for col in colunas:
+        if col in df.columns:
+            df[col] = (
+                df[col]
+                .astype(str)
+                .str.replace('R\$', '', regex=True)
+                .str.replace('.', '', regex=False)
+                .str.replace(',', '.', regex=False)
+                .str.strip()
+            )
+            df[col] = pd.to_numeric(df[col], errors='coerce')
+
+# Aplica normalização antes do cálculo
+normalizar_colunas_valores(df_filtrado, ganhos + descontos)
+
+# Soma total de ganhos e descontos
+total_ganhos = sum(df_filtrado[col].sum() for col in ganhos if col in df_filtrado.columns)
+total_descontos = sum(df_filtrado[col].sum() for col in descontos if col in df_filtrado.columns)
+
+# Valor líquido
+valor_liquido = total_ganhos - total_descontos
 
 def criar_grafico_cascata(df_filtrado, ganhos, descontos):
     """Cria o gráfico de cascata"""

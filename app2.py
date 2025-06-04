@@ -12,35 +12,38 @@ descontos = [
         'Assitência Médica Dependente', 'Dsr sobre falta', 'INSS Folha', 'IRRF Folha', 'Pensão Alimentícia'
 
 ]
+# Mostra as colunas carregadas para debug
+print("\n🔍 Colunas encontradas no DataFrame:")
+print(df.columns.tolist())
 
-# Filtra as colunas que existem no DataFrame
-colunas_existentes = [col for col in descontos if col in df.columns]
+# Filtra as colunas de desconto que realmente existem no arquivo
+colunas_existentes = [col for col in colunas_descontos if col in df.columns]
 
-# Função para limpar e converter colunas para float
-def normalizar_colunas(df, colunas):
-    for col in colunas:
-        df[col] = (
-            df[col]
-            .astype(str)
-            .str.replace("R\$", "", regex=True)
-            .str.replace(".", "", regex=False)
-            .str.replace(",", ".", regex=False)
-        )
-        df[col] = pd.to_numeric(df[col], errors="coerce").fillna(0)
-    return df
+if not colunas_existentes:
+    print("\n⚠️ Nenhuma coluna de desconto foi encontrada no arquivo.")
+    exit()
 
-# Aplica normalização
-df = normalizar_colunas(df, colunas_existentes)
+print("\n✅ Colunas de desconto encontradas:")
+print(colunas_existentes)
 
-# Soma por coluna
-soma_colunas = df[colunas_existentes].sum()
+# Normaliza os valores para float (remove R$, vírgulas, etc.)
+for col in colunas_existentes:
+    df[col] = (
+        df[col]
+        .astype(str)
+        .str.replace("R\$", "", regex=True)
+        .str.replace(".", "", regex=False)
+        .str.replace(",", ".", regex=False)
+    )
+    df[col] = pd.to_numeric(df[col], errors="coerce").fillna(0)
 
-# Soma total
-soma_total = soma_colunas.sum()
+# Soma por coluna e total geral
+somas = df[colunas_existentes].sum()
+total_geral = somas.sum()
 
-# Mostra resultados
-print("Soma por coluna de descontos:")
-print(soma_colunas)
+# Exibe os resultados
+print("\n📊 Soma por coluna de descontos:")
+for col, valor in somas.items():
+    print(f"{col}: R$ {valor:,.2f}")
 
-print("\nTotal geral de descontos:")
-print(f"R$ {soma_total:,.2f}")
+print(f"\n💰 Total geral de descontos: R$ {total_geral:,.2f}")

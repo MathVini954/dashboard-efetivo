@@ -91,7 +91,7 @@ def definir_colunas_ganhos_descontos():
     'IRRF Folha',
     'Pensão Alimentícia', 'DESCONTO DE ALIMENTAÇÃO',
     'MENSALIDADE SINDICAL',
-    'Vale Transporte'
+    'Vale Transporte', 'Correção adiantamento'
 
     ]
 

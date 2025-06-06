@@ -39,8 +39,8 @@ def definir_colunas_ganhos_descontos():
         'EQUIP. TRAB/FERRAMENTA', 'Auxilio Moradia', 'Auxilio Transporte', 'Dev.desc.indevido',
         'Salário Substituiçã', 'Reflexo S/ He Produção', 'Reembolso De Despesas',
         'Reembolso V. Transporte', 'Passagem Interior', 'Hora Extra 70% - Sabado',
-        'Hora Extra 70% - Semana', 'Salário Maternidade', 'Diferença de INSS Férias',
-        'Diferença INSS Férias (esocial)', 'Adicional H.e S/ Producao 70%', 'PRODUÇÃO',
+        'Hora Extra 70% - Semana', 'Salário Maternidade',
+         'Adicional H.e S/ Producao 70%', 'PRODUÇÃO',
         'AJUDA DE CUSTO', 'Ajuda de Custo Combustivel', 'REFLEXO S PRODUÇÃO',
         'Hora Extra 100%', 'Repouso Remunerado', 'Licença Remunerada', 'Periculosidade',
         'Salário Família', 'Adiantamento', 'Licença Remunerada Estagio', 'Insuficiência de Saldo'

@@ -34,7 +34,6 @@ def carregar_terceiros():
 def definir_colunas_ganhos_descontos():
     """Define as colunas de ganhos e descontos"""
     ganhos = [
-       colunas = [
     'Salário Base Mês',
     'PRODUÇÃO',
     'Licença Remunerada',
@@ -65,8 +64,6 @@ def definir_colunas_ganhos_descontos():
     'Diferença de INSS Férias',
     'Diferença INSS Férias (esocial)',
     'Adicional noturno 20%'
-]
-
     ]
     
     descontos = [

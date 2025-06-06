@@ -34,8 +34,7 @@ def carregar_terceiros():
 def definir_colunas_ganhos_descontos():
     """Define as colunas de ganhos e descontos"""
     ganhos = [
-  'Salário Base Estagiário',
-    'Salário Base Mês',
+  'Remuneração Líquida',
     'Periculosidade',
     'Dias De Atestado',
     'Gratificação',

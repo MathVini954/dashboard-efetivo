@@ -67,7 +67,6 @@ def definir_colunas_ganhos_descontos():
     'Periculosidade',
     'Salário Família',
     'Adiantamento',
-    'Correção adiantamento',
     'Insuficiência de Saldo',
     'Auxilio Transporte Retroativo',
     'Insuficiência de Saldo'

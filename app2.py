@@ -89,7 +89,9 @@ def definir_colunas_ganhos_descontos():
     'Dsr sobre falta',
     'INSS Folha',
     'IRRF Folha',
-    'Pensão Alimentícia'
+    'Pensão Alimentícia', 'DESCONTO DE ALIMENTAÇÃO',
+    'MENSALIDADE SINDICAL',
+    'Vale Transporte'
 
     ]
 

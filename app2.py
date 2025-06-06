@@ -34,24 +34,62 @@ def carregar_terceiros():
 def definir_colunas_ganhos_descontos():
     """Define as colunas de ganhos e descontos"""
     ganhos = [
-        'CALC_Salário Base Mês', 'CALC_Salário Base Estagiário', 'Dias De Atestado', 'Gratificação',
-        'Adicional noturno 20%', 'Ajuda De Saude', 'Auxilio Creche', 'Auxilio Educacao',
-        'EQUIP. TRAB/FERRAMENTA', 'Auxilio Moradia', 'Auxilio Transporte', 'Dev.desc.indevido',
-        'Salário Substituiçã', 'Reflexo S/ He Produção', 'Reembolso De Despesas',
-        'Reembolso V. Transporte', 'Passagem Interior', 'Hora Extra 70% - Sabado',
-        'Hora Extra 70% - Semana', 'Salário Maternidade', 'Diferença de INSS Férias',
-        'Diferença INSS Férias (esocial)', 'Adicional H.e S/ Producao 70%', 'PRODUÇÃO',
-        'AJUDA DE CUSTO', 'Ajuda de Custo Combustivel', 'REFLEXO S PRODUÇÃO',
-        'Hora Extra 100%', 'Repouso Remunerado', 'Licença Remunerada', 'Periculosidade',
-        'Salário Família', 'Adiantamento', 'Licença Remunerada Estagio', 'Insuficiência de Saldo'
+       colunas = [
+    'Salário Base Mês',
+    'PRODUÇÃO',
+    'Licença Remunerada',
+    'Hora Extra 70% - Semana',
+    'Hora Extra 70% - Sábado',
+    'REFLEXO S PRODUÇÃO',
+    'Salário Base Estagiário',
+    'Passagem Interior',
+    'EQUIP. TRAB./FERRAMENTA',
+    'AJUDA DE CUSTO',
+    'Auxílio Moradia',
+    'Repouso Remunerado',
+    'Salário Família',
+    'Dias De Atestado',
+    'Adicional He S/ Produçao 70%',
+    'Auxílio Transporte',
+    'Salário Substituição',
+    'Salário Maternidade',
+    'Ajuda De Saude',
+    'Licença Remunerada Estagio',
+    'Insuficiência de Saldo',
+    'Reembolso V. Transporte',
+    'Reembolso De Despesas',
+    'Reflexo S/ He Produção',
+    'Dev.desc.indevido',
+    'Hora Extra 100%',
+    'Auxílio Creche',
+    'Diferença de INSS Férias',
+    'Diferença INSS Férias (esocial)',
+    'Adicional noturno 20%'
+]
+
     ]
     
     descontos = [
-   'Atrasos', 'Faltas em Dias', 'DESCONTO DE ALIMENTAÇÃO', 'MENSALIDADE SINDICAL',
-        'Vale Transporte', 'Assistencia Medica', 'Coparticipacao Dependente', 'Coparticipacao Titular', 'Desconto Empréstimo',
-        'Diferenca Plano De Saude', 'Desconto Ótica', 'Plano Odontologico',
-        'Plano Odontologico Dependente', 'Pensão Alimentícia Salário Mínimo',
-        'Assitência Médica Dependente', 'Dsr sobre falta', 'INSS Folha', 'IRRF Folha', 'Pensão Alimentícia'
+  'Desconto Insuficiência de Saldo',
+'Coparticipacao Dependente',
+'Plano Odontologico Dependente',
+'Assistencia Medica',
+'Plano Odontologico',
+'Pensao Alimenticia Salario Minimo',
+'Desconto Emprestimo',
+'Assistencia Medica Dependente',
+'Coparticipacao Titular',
+'Pensao Alimenticia',
+'Desconto Ótica',
+'Atrasos',
+'Dsr sobre falta',
+'IRRF Folha',
+'Faltas em Dias',
+'MENSALIDADE SINDICAL',
+'DESCONTO DE ALIMENTAÇÃO',
+'Vale Transporte',
+'INSS Folha'
+
     ]
 
     

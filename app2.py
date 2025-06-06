@@ -69,8 +69,7 @@ def definir_colunas_ganhos_descontos():
     'Adiantamento',
     'Insuficiência de Saldo',
     'Auxilio Transporte Retroativo',
-    'Insuficiência de Saldo', 'Correção adiantamento'
-
+    'Insuficiência de Saldo'
     ]
     
     descontos = [
@@ -91,7 +90,8 @@ def definir_colunas_ganhos_descontos():
     'IRRF Folha',
     'Pensão Alimentícia', 'DESCONTO DE ALIMENTAÇÃO',
     'MENSALIDADE SINDICAL',
-    'Vale Transporte'
+    'Vale Transporte','Correção adiantamento'
+
 
     ]
 

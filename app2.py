@@ -34,7 +34,7 @@ def carregar_terceiros():
 def definir_colunas_ganhos_descontos():
     """Define as colunas de ganhos e descontos"""
     ganhos = [
-  'Remuneração Bruta_FinalMÊs',
+  'Remuneração Líquida',
     'Periculosidade',
     'Dias De Atestado',
     'Gratificação',

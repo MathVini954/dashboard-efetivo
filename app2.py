@@ -346,46 +346,57 @@ def dashboard_efetivo():
 
     st.divider()
 
-    # ---- INÍCIO da parte corrigida ----
-    todas_obras = sorted(df['Obra'].astype(str).unique())  # <-- dentro da função!
+       # ---- INÍCIO da parte corrigida ----
+    # Usamos df_filtrado em vez de df para respeitar os filtros aplicados
+    obras_disponiveis = sorted(df_filtrado['Obra'].astype(str).unique())
 
     peso_lista = []
-    for obra in todas_obras:
-        # Base da obra
-        df_obra = df[df['Obra'] == obra]
+    for obra in obras_disponiveis:
+        # Base da obra (usando df_filtrado)
+        df_obra = df_filtrado[df_filtrado['Obra'] == obra]
 
-        # Produção: só DIRETO
+        # Cálculos originais mantidos:
         df_direto = df_obra[df_obra['Tipo'] == 'DIRETO']
+        
+        # Produção
         prod_numerador = df_direto['PRODUÇÃO'].sum() if 'PRODUÇÃO' in df_direto.columns else 0
         prod_denominador = df_obra['PRODUÇÃO'].sum() if 'PRODUÇÃO' in df_obra.columns else 0
         peso_producao = prod_numerador / prod_denominador if prod_denominador != 0 else 0
 
-        # Hora extra: só DIRETO
+        # Hora extra
         he_numerador = df_direto['Hora Extra 70% - Semana'].sum() + df_direto['Hora Extra 70% - Sabado'].sum()
         he_denominador = df_obra['Hora Extra 70% - Semana'].sum() + df_obra['Hora Extra 70% - Sabado'].sum()
         peso_he = he_numerador / he_denominador if he_denominador != 0 else 0
 
-        if tipo_peso == 'Peso sobre Produção':
-            peso = peso_producao
-        else:
-            peso = peso_he
-
+        peso = peso_producao if tipo_peso == 'Peso sobre Produção' else peso_he
         peso_lista.append({'Obra': obra, 'Peso Financeiro': peso})
 
     df_peso = pd.DataFrame(peso_lista)
 
-    # Gráfico barra peso financeiro - todas as barras com mesma cor escura
+    # Destaque para obras selecionadas
+    df_peso['Destaque'] = df_peso['Obra'].isin(obras_selecionadas)
+
     fig_peso = px.bar(
         df_peso,
         x='Obra',
         y='Peso Financeiro',
+        color='Destaque',
+        color_discrete_map={True: '#1f77b4', False: '#d3d3d3'},
         title=f'Peso Financeiro por Obra ({tipo_peso})',
-        labels={'Peso Financeiro': 'Índice', 'Obra': 'Obra'},
-        text=df_peso['Peso Financeiro'].apply(lambda x: f"{x:.2%}"),
-        color_discrete_sequence=['darkblue']  # cor fixa para todas as barras
+        text=df_peso['Peso Financeiro'].apply(lambda x: f"{x:.2%}")
     )
-    fig_peso.update_traces(textposition='outside')
-    fig_peso.update_layout(yaxis_tickformat='.0%')
+
+    fig_peso.update_traces(
+        textposition='outside',
+        marker_line_color='black',
+        marker_line_width=0.5
+    )
+    fig_peso.update_layout(
+        yaxis_tickformat='.0%',
+        showlegend=False,
+        xaxis={'categoryorder': 'total descending'}
+    )
+
     st.plotly_chart(fig_peso, use_container_width=True)
     # ---- FIM da parte corrigida ----
 

@@ -346,57 +346,76 @@ def dashboard_efetivo():
 
     st.divider()
 
-    # ---- INÍCIO da parte corrigida ----
-    todas_obras = sorted(df['Obra'].astype(str).unique())  # <-- dentro da função!
+   # ---- INÍCIO da parte corrigida ----
+todas_obras = sorted(df['Obra'].astype(str).unique())  # Mantido dentro da função
 
-    peso_lista = []
-    for obra in todas_obras:
-        # Base da obra
-        df_obra = df[df['Obra'] == obra]
+peso_lista = []
+for obra in todas_obras:
+    # Base da obra
+    df_obra = df[df['Obra'] == obra]
 
-        # Produção: só DIRETO
-        df_direto = df_obra[df_obra['Tipo'] == 'DIRETO']
-        prod_numerador = df_direto['PRODUÇÃO'].sum() + df_direto['REFLEXO S PRODUÇÃO'].sum()
-        prod_denominador = df_direto['Remuneração Líquida Folha'].sum() + df_direto['Adiantamento'].sum()
+    # Cálculo para Produção (apenas DIRETO)
+    df_direto = df_obra[df_obra['Tipo'] == 'DIRETO']
+    
+    # Numerador: PRODUÇÃO + REFLEXO S PRODUÇÃO
+    prod_numerador = (df_direto['PRODUÇÃO'].sum() if 'PRODUÇÃO' in df_direto.columns else 0) + \
+                     (df_direto['REFLEXO S PRODUÇÃO'].sum() if 'REFLEXO S PRODUÇÃO' in df_direto.columns else 0)
+    
+    # Denominador: Remuneração Líquida + Adiantamento
+    prod_denominador = (df_direto['Remuneração Líquida Folha'].sum() if 'Remuneração Líquida Folha' in df_direto.columns else 0) + \
+                       (df_direto['Adiantamento'].sum() if 'Adiantamento' in df_direto.columns else 0)
 
-        # Hora Extra: DIRETO + INDIRETO
-        df_dir_ind = df_obra[df_obra['Tipo'].isin(['DIRETO', 'INDIRETO'])]
-        total_extra = df_dir_ind['Total Extra'].sum()
-        reposo_remunerado = df_dir_ind['Repouso Remunerado'].sum()
-        hor_extra_denominador = df_dir_ind['Remuneração Líquida Folha'].sum() + df_dir_ind['Adiantamento'].sum()
+    # Cálculo para Hora Extra (DIRETO + INDIRETO)
+    df_dir_ind = df_obra[df_obra['Tipo'].isin(['DIRETO', 'INDIRETO'])]
+    
+    # Numerador: Total Extra + Repouso Remunerado
+    total_extra = df_dir_ind['Total Extra'].sum() if 'Total Extra' in df_dir_ind.columns else 0
+    reposo_remunerado = df_dir_ind['Repouso Remunerado'].sum() if 'Repouso Remunerado' in df_dir_ind.columns else 0
+    
+    # Denominador: Remuneração Líquida + Adiantamento
+    hor_extra_denominador = (df_dir_ind['Remuneração Líquida Folha'].sum() if 'Remuneração Líquida Folha' in df_dir_ind.columns else 0) + \
+                            (df_dir_ind['Adiantamento'].sum() if 'Adiantamento' in df_dir_ind.columns else 0)
 
-        if tipo_peso == 'Peso sobre Produção':
-            peso = (prod_numerador / prod_denominador) if prod_denominador > 0 else 0
-        else:
-            peso = ((total_extra + reposo_remunerado) / hor_extra_denominador) if hor_extra_denominador > 0 else 0
+    if tipo_peso == 'Peso sobre Produção':
+        peso = (prod_numerador / prod_denominador) if prod_denominador > 0 else 0
+    else:
+        peso = ((total_extra + reposo_remunerado) / hor_extra_denominador) if hor_extra_denominador > 0 else 0
 
-        peso_lista.append({'Obra': obra, 'Peso Financeiro': peso})
+    peso_lista.append({'Obra': obra, 'Peso Financeiro': peso})
 
-    df_peso = pd.DataFrame(peso_lista)
-    df_peso = df_peso.sort_values(by='Peso Financeiro', ascending=False)
+# Cria DataFrame e ordena
+df_peso = pd.DataFrame(peso_lista)
+df_peso = df_peso.sort_values(by='Peso Financeiro', ascending=False)
 
-    # Coluna para controlar cor: True se obra está selecionada no filtro, False se não
-    df_peso['Selecionada'] = df_peso['Obra'].apply(lambda x: x in obras_selecionadas)
+# Destaca obras selecionadas
+df_peso['Selecionada'] = df_peso['Obra'].isin(obras_selecionadas)
 
-    # Define cores: azul escuro para selecionadas, azul claro para não selecionadas
-    colors = df_peso['Selecionada'].map({True: 'darkblue', False: 'lightblue'})
+# Cria o gráfico com cores condicionais
+fig_peso = px.bar(
+    df_peso,
+    x='Obra',
+    y='Peso Financeiro',
+    title=f'Peso Financeiro por Obra ({tipo_peso})',
+    labels={'Peso Financeiro': 'Índice', 'Obra': 'Obra'},
+    text=df_peso['Peso Financeiro'].apply(lambda x: f"{x:.2%}"),
+    color='Selecionada',
+    color_discrete_map={True: 'darkblue', False: 'lightblue'}
+)
 
-    fig_peso = px.bar(
-        df_peso,
-        x='Obra',
-        y='Peso Financeiro',
-        title=f'Peso Financeiro por Obra ({tipo_peso})',
-        labels={'Peso Financeiro': 'Índice', 'Obra': 'Obra'},
-        text=df_peso['Peso Financeiro'].apply(lambda x: f"{x:.2%}"),
-        color=colors,  # essa cor será usada para as barras
-    )
+# Ajustes finais
+fig_peso.update_traces(
+    textposition='outside',
+    marker_line_color='black',
+    marker_line_width=0.5
+)
+fig_peso.update_layout(
+    yaxis_tickformat='.0%',
+    showlegend=False,
+    xaxis={'categoryorder': 'array', 'categoryarray': df_peso['Obra']}
+)
 
-    # Como px.bar não reconhece diretamente a série de cores, usamos update_traces para forçar cores
-    fig_peso.update_traces(marker_color=colors, textposition='outside')
-    fig_peso.update_layout(yaxis_tickformat='.0%')
-
-    st.plotly_chart(fig_peso, use_container_width=True)
-    # ---- FIM da parte corrigida ----
+st.plotly_chart(fig_peso, use_container_width=True)
+# ---- FIM da parte corrigida ----
 
 # Dicionário para mapear meses em inglês para abreviações em português
 MES_POR_PT = {

@@ -259,7 +259,7 @@ def dashboard_efetivo():
         
         st.divider()
 
-    # Pizza - Distribuição por tipo
+   # Pizza - Distribuição por tipo
     pizza_base = df[df['Obra'].isin(obras_selecionadas)]
     pizza_diretos_indiretos = pizza_base['Tipo'].value_counts().reset_index()
     pizza_diretos_indiretos.columns = ['Tipo', 'count']
@@ -289,7 +289,7 @@ def dashboard_efetivo():
 
     nome_col_funcao = 'Função' if 'Função' in df_ranking.columns else 'Funçao' if 'Funçao' in df_ranking.columns else None
 
-    # Define colunas a exibir e calcula DSR se necessário
+   # Define colunas a exibir e calcula DSR se necessário
     if tipo_analise == 'Produção' and 'REFLEXO S PRODUÇÃO' in df_ranking.columns:
         df_ranking['DSR'] = df_ranking['REFLEXO S PRODUÇÃO']
         cols_rank = ['Nome do Funcionário', nome_col_funcao, 'Obra', 'Tipo', 'PRODUÇÃO', 'DSR']
@@ -346,7 +346,7 @@ def dashboard_efetivo():
 
     st.divider()
 
-      # ---- INÍCIO da parte corrigida ----
+    # ---- INÍCIO da parte corrigida ----
     todas_obras = sorted(df['Obra'].astype(str).unique())  # <-- dentro da função!
 
     peso_lista = []
@@ -356,25 +356,31 @@ def dashboard_efetivo():
 
         # Produção: só DIRETO
         df_direto = df_obra[df_obra['Tipo'] == 'DIRETO']
-        prod_numerador = df_direto['PRODUÇÃO'].sum() if 'PRODUÇÃO' in df_direto.columns else 0
-        prod_denominador = df_obra['PRODUÇÃO'].sum() if 'PRODUÇÃO' in df_obra.columns else 0
-        peso_producao = prod_numerador / prod_denominador if prod_denominador != 0 else 0
+        prod_numerador = df_direto['PRODUÇÃO'].sum() + df_direto['REFLEXO S PRODUÇÃO'].sum()
+        prod_denominador = df_direto['Remuneração Líquida Folha'].sum() + df_direto['Adiantamento'].sum()
 
-        # Hora extra: só DIRETO
-        he_numerador = df_direto['Hora Extra 70% - Semana'].sum() + df_direto['Hora Extra 70% - Sabado'].sum()
-        he_denominador = df_obra['Hora Extra 70% - Semana'].sum() + df_obra['Hora Extra 70% - Sabado'].sum()
-        peso_he = he_numerador / he_denominador if he_denominador != 0 else 0
+        # Hora Extra: DIRETO + INDIRETO
+        df_dir_ind = df_obra[df_obra['Tipo'].isin(['DIRETO', 'INDIRETO'])]
+        total_extra = df_dir_ind['Total Extra'].sum()
+        reposo_remunerado = df_dir_ind['Repouso Remunerado'].sum()
+        hor_extra_denominador = df_dir_ind['Remuneração Líquida Folha'].sum() + df_dir_ind['Adiantamento'].sum()
 
         if tipo_peso == 'Peso sobre Produção':
-            peso = peso_producao
+            peso = (prod_numerador / prod_denominador) if prod_denominador > 0 else 0
         else:
-            peso = peso_he
+            peso = ((total_extra + reposo_remunerado) / hor_extra_denominador) if hor_extra_denominador > 0 else 0
 
         peso_lista.append({'Obra': obra, 'Peso Financeiro': peso})
 
     df_peso = pd.DataFrame(peso_lista)
+    df_peso = df_peso.sort_values(by='Peso Financeiro', ascending=False)
 
-    # Gráfico barra peso financeiro - todas as barras com mesma cor escura
+    # Coluna para controlar cor: True se obra está selecionada no filtro, False se não
+    df_peso['Selecionada'] = df_peso['Obra'].apply(lambda x: x in obras_selecionadas)
+
+    # Define cores: azul escuro para selecionadas, azul claro para não selecionadas
+    colors = df_peso['Selecionada'].map({True: 'darkblue', False: 'lightblue'})
+
     fig_peso = px.bar(
         df_peso,
         x='Obra',
@@ -382,13 +388,15 @@ def dashboard_efetivo():
         title=f'Peso Financeiro por Obra ({tipo_peso})',
         labels={'Peso Financeiro': 'Índice', 'Obra': 'Obra'},
         text=df_peso['Peso Financeiro'].apply(lambda x: f"{x:.2%}"),
-        color_discrete_sequence=['darkblue']  # cor fixa para todas as barras
+        color=colors,  # essa cor será usada para as barras
     )
-    fig_peso.update_traces(textposition='outside')
+
+    # Como px.bar não reconhece diretamente a série de cores, usamos update_traces para forçar cores
+    fig_peso.update_traces(marker_color=colors, textposition='outside')
     fig_peso.update_layout(yaxis_tickformat='.0%')
+
     st.plotly_chart(fig_peso, use_container_width=True)
     # ---- FIM da parte corrigida ----
-
 
 # Dicionário para mapear meses em inglês para abreviações em português
 MES_POR_PT = {
@@ -536,5 +544,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-

@@ -346,64 +346,64 @@ def dashboard_efetivo():
 
     st.divider()
 
-       # ---- INÍCIO da parte corrigida ----
-    todas_obras = sorted(df['Obra'].astype(str).unique())
+      # ---- Mantemos EXATAMENTE a mesma lógica de cálculo ----
+todas_obras = sorted(df['Obra'].astype(str).unique())
 
-    peso_lista = []
-    for obra in todas_obras:
-        # Base da obra
-        df_obra = df[df['Obra'] == obra]
+peso_lista = []
+for obra in todas_obras:
+    # Base da obra
+    df_obra = df[df['Obra'] == obra]
 
-        # Produção: só DIRETO
-        df_direto = df_obra[df_obra['Tipo'] == 'DIRETO']
-        prod_numerador = df_direto['PRODUÇÃO'].sum() if 'PRODUÇÃO' in df_direto.columns else 0
-        prod_denominador = df_obra['PRODUÇÃO'].sum() if 'PRODUÇÃO' in df_obra.columns else 0
-        peso_producao = prod_numerador / prod_denominador if prod_denominador != 0 else 0
+    # Produção: só DIRETO (cálculo original mantido)
+    df_direto = df_obra[df_obra['Tipo'] == 'DIRETO']
+    prod_numerador = df_direto['PRODUÇÃO'].sum() if 'PRODUÇÃO' in df_direto.columns else 0
+    prod_denominador = df_obra['PRODUÇÃO'].sum() if 'PRODUÇÃO' in df_obra.columns else 0
+    peso_producao = prod_numerador / prod_denominador if prod_denominador != 0 else 0
 
-        # Hora extra: só DIRETO
-        he_numerador = df_direto['Hora Extra 70% - Semana'].sum() + df_direto['Hora Extra 70% - Sabado'].sum()
-        he_denominador = df_obra['Hora Extra 70% - Semana'].sum() + df_obra['Hora Extra 70% - Sabado'].sum()
-        peso_he = he_numerador / he_denominador if he_denominador != 0 else 0
+    # Hora extra: só DIRETO (cálculo original mantido)
+    he_numerador = df_direto['Hora Extra 70% - Semana'].sum() + df_direto['Hora Extra 70% - Sabado'].sum()
+    he_denominador = df_obra['Hora Extra 70% - Semana'].sum() + df_obra['Hora Extra 70% - Sabado'].sum()
+    peso_he = he_numerador / he_denominador if he_denominador != 0 else 0
 
-        if tipo_peso == 'Peso sobre Produção':
-            peso = peso_producao
-        else:
-            peso = peso_he
+    if tipo_peso == 'Peso sobre Produção':
+        peso = peso_producao
+    else:
+        peso = peso_he
 
-        peso_lista.append({'Obra': obra, 'Peso Financeiro': peso})
+    peso_lista.append({'Obra': obra, 'Peso Financeiro': peso})
 
-    df_peso = pd.DataFrame(peso_lista)
-    
-    # Cria coluna de cor baseada nas obras selecionadas
-    df_peso['Cor'] = df_peso['Obra'].apply(
-        lambda x: 'green' if x in obras_selecionadas else 'darkblue'
-    )
+df_peso = pd.DataFrame(peso_lista)
 
-    # Gráfico barra peso financeiro - cores condicionais
-    fig_peso = px.bar(
-        df_peso,
-        x='Obra',
-        y='Peso Financeiro',
-        title=f'Peso Financeiro por Obra ({tipo_peso})',
-        labels={'Peso Financeiro': 'Índice', 'Obra': 'Obra'},
-        text=df_peso['Peso Financeiro'].apply(lambda x: f"{x:.2%}"),
-        color='Cor',  # Usa a coluna de cores
-        color_discrete_map={'green': 'green', 'darkblue': 'darkblue'}  # Mapeamento explícito
-    )
-    
-    fig_peso.update_traces(
-        textposition='outside',
-        marker_line_color='black',  # Borda preta nas barras
-        marker_line_width=0.5       # Espessura da borda
-    )
-    
-    fig_peso.update_layout(
-        yaxis_tickformat='.0%',
-        showlegend=False  # Remove a legenda desnecessária
-    )
-    
-    st.plotly_chart(fig_peso, use_container_width=True)
-    # ---- FIM da parte corrigida ----
+# ---- Só alteramos a PARTE VISUAL do gráfico ----
+# Criamos uma coluna auxiliar para as cores
+df_peso['Destaque'] = df_peso['Obra'].isin(obras_selecionadas)
+
+fig_peso = px.bar(
+    df_peso,
+    x='Obra',
+    y='Peso Financeiro',
+    color='Destaque',
+    color_discrete_map={True: '#1f77b4', False: '#d3d3d3'},  # Azul para selecionadas, cinza para outras
+    title=f'Peso Financeiro por Obra ({tipo_peso})',
+    labels={'Peso Financeiro': 'Índice', 'Obra': 'Obra'},
+    text=df_peso['Peso Financeiro'].apply(lambda x: f"{x:.2%}")
+)
+
+# Ajustes visuais (mantendo o estilo original)
+fig_peso.update_traces(
+    textposition='outside',
+    marker_line_color='black',
+    marker_line_width=0.5
+)
+
+fig_peso.update_layout(
+    yaxis_tickformat='.0%',
+    showlegend=False,  # Escondemos a legenda
+    xaxis={'categoryorder': 'total descending'}  # Ordena as obras pelo peso
+)
+
+st.plotly_chart(fig_peso, use_container_width=True)
+
 
 # Dicionário para mapear meses em inglês para abreviações em português
 MES_POR_PT = {

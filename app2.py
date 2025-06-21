@@ -198,7 +198,7 @@ def dashboard_efetivo():
         tipo_analise = st.radio("Tipo de Análise da Tabela:", ['Produção', 'Hora Extra Semana', 'Hora Extra Sábado'])
         qtd_linhas = st.radio("Qtd. de Funcionários na Tabela:", ['5', '10', '20', 'Todos'], horizontal=True)
         tipo_peso = st.radio("Tipo de Peso (Gráficos Novos):", ['Peso sobre Produção', 'Peso sobre Hora Extra'])
-        
+
         st.divider()
         st.header("💰 Análise Financeira")
         analise_financeira = st.radio("Análise Financeira:", ['Geral', 'Ganhos', 'Descontos'])
@@ -231,35 +231,35 @@ def dashboard_efetivo():
     # NOVO: Análise Financeira
     if not df_filtrado.empty and tipo_selecionado != 'TERCEIRO':
         st.markdown("### 💰 Análise Financeira")
-        
+
         if analise_financeira == 'Geral':
             # Gráfico de cascata
             fig_cascata, total_ganhos, total_descontos, remuneracao_liquida = criar_grafico_cascata(df_filtrado, ganhos, descontos)
             st.plotly_chart(fig_cascata, use_container_width=True)
-            
+
             # Métricas financeiras
             col_fin1, col_fin2, col_fin3 = st.columns(3)
             col_fin1.metric("💚 Total Ganhos", f"R$ {total_ganhos:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
             col_fin2.metric("💸 Total Descontos", f"R$ {total_descontos:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
             col_fin3.metric("💰 Remuneração Líquida", f"R$ {remuneracao_liquida:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
-            
+
         elif analise_financeira == 'Ganhos':
             fig_ganhos = criar_grafico_detalhado(df_filtrado, ganhos, "Detalhamento dos Ganhos", "green")
             if fig_ganhos:
                 st.plotly_chart(fig_ganhos, use_container_width=True)
             else:
                 st.warning("Nenhum dado de ganhos encontrado para os filtros selecionados.")
-                
+
         elif analise_financeira == 'Descontos':
             fig_descontos = criar_grafico_detalhado(df_filtrado, descontos, "Detalhamento dos Descontos", "red")
             if fig_descontos:
                 st.plotly_chart(fig_descontos, use_container_width=True)
             else:
                 st.warning("Nenhum dado de descontos encontrado para os filtros selecionados.")
-        
+
         st.divider()
 
-   # Pizza - Distribuição por tipo
+    # Pizza - Distribuição por tipo
     pizza_base = df[df['Obra'].isin(obras_selecionadas)]
     pizza_diretos_indiretos = pizza_base['Tipo'].value_counts().reset_index()
     pizza_diretos_indiretos.columns = ['Tipo', 'count']
@@ -289,7 +289,7 @@ def dashboard_efetivo():
 
     nome_col_funcao = 'Função' if 'Função' in df_ranking.columns else 'Funçao' if 'Funçao' in df_ranking.columns else None
 
-   # Define colunas a exibir e calcula DSR se necessário
+    # Define colunas a exibir e calcula DSR se necessário
     if tipo_analise == 'Produção' and 'REFLEXO S PRODUÇÃO' in df_ranking.columns:
         df_ranking['DSR'] = df_ranking['REFLEXO S PRODUÇÃO']
         cols_rank = ['Nome do Funcionário', nome_col_funcao, 'Obra', 'Tipo', 'PRODUÇÃO', 'DSR']
@@ -328,7 +328,7 @@ def dashboard_efetivo():
 
     st.dataframe(ranking, use_container_width=True)
     st.divider()
-    
+
     if nome_col_funcao and nome_col_funcao in df_ranking.columns:
         graf_funcao = df_ranking[nome_col_funcao].value_counts().reset_index()
         graf_funcao.columns = [nome_col_funcao, 'Qtd']
@@ -375,11 +375,11 @@ def dashboard_efetivo():
     df_peso = pd.DataFrame(peso_lista)
     df_peso = df_peso.sort_values(by='Peso Financeiro', ascending=False)
 
-    # Coluna para controlar cor: True se obra está selecionada no filtro, False se não
+    # Coluna para controlar cor por seleção de filtro
     df_peso['Selecionada'] = df_peso['Obra'].apply(lambda x: x in obras_selecionadas)
 
-    # Define cores: azul escuro para selecionadas, azul claro para não selecionadas
-    colors = df_peso['Selecionada'].map({True: 'darkblue', False: 'lightblue'})
+    # Define cores: azul escuro para selecionadas, cinza claro para as demais
+    colors = df_peso['Obra'].apply(lambda x: 'darkblue' if x in obras_selecionadas else 'lightgray')
 
     fig_peso = px.bar(
         df_peso,
@@ -388,15 +388,15 @@ def dashboard_efetivo():
         title=f'Peso Financeiro por Obra ({tipo_peso})',
         labels={'Peso Financeiro': 'Índice', 'Obra': 'Obra'},
         text=df_peso['Peso Financeiro'].apply(lambda x: f"{x:.2%}"),
-        color=colors,  # essa cor será usada para as barras
+        color=colors,
     )
 
-    # Como px.bar não reconhece diretamente a série de cores, usamos update_traces para forçar cores
     fig_peso.update_traces(marker_color=colors, textposition='outside')
     fig_peso.update_layout(yaxis_tickformat='.0%')
 
     st.plotly_chart(fig_peso, use_container_width=True)
     # ---- FIM da parte corrigida ----
+
 
 # Dicionário para mapear meses em inglês para abreviações em português
 MES_POR_PT = {

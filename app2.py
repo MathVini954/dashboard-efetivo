@@ -34,7 +34,7 @@ def carregar_terceiros():
 def definir_colunas_ganhos_descontos():
     """Define as colunas de ganhos e descontos"""
     ganhos = [
-  'Remuneração Líquida',
+  'SALÁRIO',
     'Periculosidade',
     'Dias De Atestado',
     'Gratificação',
@@ -66,7 +66,6 @@ def definir_colunas_ganhos_descontos():
     'Repouso Remunerado',
     'Periculosidade',
     'Salário Família',
-    'Adiantamento',
     'Insuficiência de Saldo',
     'Auxilio Transporte Retroativo',
     'Insuficiência de Saldo'

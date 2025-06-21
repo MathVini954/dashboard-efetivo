@@ -203,7 +203,7 @@ def dashboard_efetivo():
         st.header("💰 Análise Financeira")
         analise_financeira = st.radio("Análise Financeira:", ['Geral', 'Ganhos', 'Descontos'])
 
-    # Filtra obras selecionadas (já sem 'nan')
+    # Filtra obras selecionadas
     df_filtrado = df[df['Obra'].isin(obras_selecionadas)]
     df_terceiros_filtrado = df_terceiros[df_terceiros['Obra'].isin(obras_selecionadas)]
 
@@ -228,16 +228,14 @@ def dashboard_efetivo():
 
     st.divider()
 
-    # NOVO: Análise Financeira
+    # Análise Financeira
     if not df_filtrado.empty and tipo_selecionado != 'TERCEIRO':
         st.markdown("### 💰 Análise Financeira")
         
         if analise_financeira == 'Geral':
-            # Gráfico de cascata
             fig_cascata, total_ganhos, total_descontos, remuneracao_liquida = criar_grafico_cascata(df_filtrado, ganhos, descontos)
             st.plotly_chart(fig_cascata, use_container_width=True)
             
-            # Métricas financeiras
             col_fin1, col_fin2, col_fin3 = st.columns(3)
             col_fin1.metric("💚 Total Ganhos", f"R$ {total_ganhos:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
             col_fin2.metric("💸 Total Descontos", f"R$ {total_descontos:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
@@ -259,7 +257,7 @@ def dashboard_efetivo():
         
         st.divider()
 
-   # Pizza - Distribuição por tipo
+    # Pizza - Distribuição por tipo
     pizza_base = df[df['Obra'].isin(obras_selecionadas)]
     pizza_diretos_indiretos = pizza_base['Tipo'].value_counts().reset_index()
     pizza_diretos_indiretos.columns = ['Tipo', 'count']
@@ -289,7 +287,7 @@ def dashboard_efetivo():
 
     nome_col_funcao = 'Função' if 'Função' in df_ranking.columns else 'Funçao' if 'Funçao' in df_ranking.columns else None
 
-   # Define colunas a exibir e calcula DSR se necessário
+    # Define colunas a exibir e calcula DSR se necessário
     if tipo_analise == 'Produção' and 'REFLEXO S PRODUÇÃO' in df_ranking.columns:
         df_ranking['DSR'] = df_ranking['REFLEXO S PRODUÇÃO']
         cols_rank = ['Nome do Funcionário', nome_col_funcao, 'Obra', 'Tipo', 'PRODUÇÃO', 'DSR']
@@ -301,7 +299,7 @@ def dashboard_efetivo():
     # Garante que as colunas existem
     cols_rank = [c for c in cols_rank if c is not None and c in df_ranking.columns]
 
-    # 🔹 CÓPIA segura do df_ranking só para o ranking
+    # Cópia segura do df_ranking só para o ranking
     df_ranking_limp = df_ranking[cols_rank].copy()
     df_ranking_limp = df_ranking_limp[pd.to_numeric(df_ranking_limp[valor_coluna], errors='coerce').notna()]
     df_ranking_limp = df_ranking_limp[df_ranking_limp[valor_coluna] > 0]
@@ -346,36 +344,24 @@ def dashboard_efetivo():
 
     st.divider()
 
-  # ---- INÍCIO da parte corrigida ----
-    # Usar df_filtrado que já considera as obras selecionadas
-    todas_obras = sorted(df_filtrado['Obra'].astype(str).unique())
+    # ---- INÍCIO da parte do Peso Financeiro ----
+    todas_obras = sorted(df['Obra'].astype(str).unique())
 
     peso_lista = []
     for obra in todas_obras:
-        # Base da obra (usando df_filtrado)
-        df_obra = df_filtrado[df_filtrado['Obra'] == obra]
+        # Base da obra
+        df_obra = df[df['Obra'] == obra]
 
-        # Cálculo para Produção (apenas DIRETO)
+        # Produção: só DIRETO
         df_direto = df_obra[df_obra['Tipo'] == 'DIRETO']
-        
-        # Numerador: PRODUÇÃO + REFLEXO S PRODUÇÃO
-        prod_numerador = (df_direto['PRODUÇÃO'].sum() if 'PRODUÇÃO' in df_direto.columns else 0) + \
-                         (df_direto['REFLEXO S PRODUÇÃO'].sum() if 'REFLEXO S PRODUÇÃO' in df_direto.columns else 0)
-        
-        # Denominador: Remuneração Líquida + Adiantamento
-        prod_denominador = (df_direto['Remuneração Líquida Folha'].sum() if 'Remuneração Líquida Folha' in df_direto.columns else 0) + \
-                           (df_direto['Adiantamento'].sum() if 'Adiantamento' in df_direto.columns else 0)
+        prod_numerador = df_direto['PRODUÇÃO'].sum() + df_direto['REFLEXO S PRODUÇÃO'].sum()
+        prod_denominador = df_direto['Remuneração Líquida Folha'].sum() + df_direto['Adiantamento'].sum()
 
-        # Cálculo para Hora Extra (DIRETO + INDIRETO)
+        # Hora Extra: DIRETO + INDIRETO
         df_dir_ind = df_obra[df_obra['Tipo'].isin(['DIRETO', 'INDIRETO'])]
-        
-        # Numerador: Total Extra + Repouso Remunerado
-        total_extra = df_dir_ind['Total Extra'].sum() if 'Total Extra' in df_dir_ind.columns else 0
-        reposo_remunerado = df_dir_ind['Repouso Remunerado'].sum() if 'Repouso Remunerado' in df_dir_ind.columns else 0
-        
-        # Denominador: Remuneração Líquida + Adiantamento
-        hor_extra_denominador = (df_dir_ind['Remuneração Líquida Folha'].sum() if 'Remuneração Líquida Folha' in df_dir_ind.columns else 0) + \
-                                (df_dir_ind['Adiantamento'].sum() if 'Adiantamento' in df_dir_ind.columns else 0)
+        total_extra = df_dir_ind['Total Extra'].sum()
+        reposo_remunerado = df_dir_ind['Repouso Remunerado'].sum()
+        hor_extra_denominador = df_dir_ind['Remuneração Líquida Folha'].sum() + df_dir_ind['Adiantamento'].sum()
 
         if tipo_peso == 'Peso sobre Produção':
             peso = (prod_numerador / prod_denominador) if prod_denominador > 0 else 0
@@ -384,14 +370,15 @@ def dashboard_efetivo():
 
         peso_lista.append({'Obra': obra, 'Peso Financeiro': peso})
 
-    # Cria DataFrame e ordena
     df_peso = pd.DataFrame(peso_lista)
     df_peso = df_peso.sort_values(by='Peso Financeiro', ascending=False)
 
-    # Destaca obras selecionadas
-    df_peso['Selecionada'] = df_peso['Obra'].isin(obras_selecionadas)
+    # Coluna para controlar cor: True se obra está selecionada no filtro, False se não
+    df_peso['Selecionada'] = df_peso['Obra'].apply(lambda x: x in obras_selecionadas)
 
-    # Cria o gráfico com cores condicionais
+    # Define cores: azul escuro para selecionadas, azul claro para não selecionadas
+    colors = df_peso['Selecionada'].map({True: 'darkblue', False: 'lightblue'})
+
     fig_peso = px.bar(
         df_peso,
         x='Obra',
@@ -399,16 +386,16 @@ def dashboard_efetivo():
         title=f'Peso Financeiro por Obra ({tipo_peso})',
         labels={'Peso Financeiro': 'Índice', 'Obra': 'Obra'},
         text=df_peso['Peso Financeiro'].apply(lambda x: f"{x:.2%}"),
-        color='Selecionada',
-        color_discrete_map={True: 'darkblue', False: 'lightblue'}
     )
 
-    # Ajustes finais
+    # Aplica as cores manualmente
     fig_peso.update_traces(
+        marker_color=colors,
         textposition='outside',
         marker_line_color='black',
         marker_line_width=0.5
     )
+    
     fig_peso.update_layout(
         yaxis_tickformat='.0%',
         showlegend=False,
@@ -416,7 +403,7 @@ def dashboard_efetivo():
     )
 
     st.plotly_chart(fig_peso, use_container_width=True)
-    # ---- FIM da parte corrigida ----
+    # ---- FIM da parte do Peso Financeiro ----
 
 # Dicionário para mapear meses em inglês para abreviações em português
 MES_POR_PT = {

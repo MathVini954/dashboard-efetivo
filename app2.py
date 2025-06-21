@@ -259,29 +259,15 @@ def dashboard_efetivo():
         
         st.divider()
 
-  # Gráfico de Pizza com Percentuais Visíveis
-pizza_base = df[df['Obra'].isin(obras_selecionadas)]
-pizza_diretos_indiretos = pizza_base['Tipo'].value_counts().reset_index()
-pizza_diretos_indiretos.columns = ['Tipo', 'count']
-pizza_terceiros = pd.DataFrame({'Tipo': ['TERCEIRO'], 'count': [total_terceiros]})
-pizza = pd.concat([pizza_diretos_indiretos, pizza_terceiros], ignore_index=True)
+   # Pizza - Distribuição por tipo
+    pizza_base = df[df['Obra'].isin(obras_selecionadas)]
+    pizza_diretos_indiretos = pizza_base['Tipo'].value_counts().reset_index()
+    pizza_diretos_indiretos.columns = ['Tipo', 'count']
+    pizza_terceiros = pd.DataFrame({'Tipo': ['TERCEIRO'], 'count': [total_terceiros]})
+    pizza = pd.concat([pizza_diretos_indiretos, pizza_terceiros], ignore_index=True)
 
-pizza['percentual'] = pizza['count'] / pizza['count'].sum() * 100
-pizza['label'] = pizza.apply(lambda row: f"{row['Tipo']} - {row['percentual']:.1f}%", axis=1)
-
-fig_pizza = px.pie(
-    pizza,
-    names='label',
-    values='count',
-    title='🔎 Distribuição Percentual do Efetivo por Tipo',
-    hole=0.4  # transforma em gráfico de rosca
-)
-
-fig_pizza.update_traces(textinfo='percent+label', textposition='inside')
-fig_pizza.update_layout(margin=dict(t=40, b=10, l=10, r=10))
-
-st.plotly_chart(fig_pizza, use_container_width=True)
-
+    fig_pizza = px.pie(pizza, names='Tipo', values='count', title='Distribuição por Tipo de Efetivo')
+    st.plotly_chart(fig_pizza, use_container_width=True)
 
     if tipo_selecionado == 'TERCEIRO':
         st.divider()
@@ -558,3 +544,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+

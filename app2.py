@@ -346,8 +346,8 @@ def dashboard_efetivo():
 
     st.divider()
 
-    # ---- INÍCIO da parte corrigida ----
-    todas_obras = sorted(df['Obra'].astype(str).unique())  # <-- dentro da função!
+       # ---- INÍCIO da parte corrigida ----
+    todas_obras = sorted(df['Obra'].astype(str).unique())
 
     peso_lista = []
     for obra in todas_obras:
@@ -373,8 +373,13 @@ def dashboard_efetivo():
         peso_lista.append({'Obra': obra, 'Peso Financeiro': peso})
 
     df_peso = pd.DataFrame(peso_lista)
+    
+    # Cria coluna de cor baseada nas obras selecionadas
+    df_peso['Cor'] = df_peso['Obra'].apply(
+        lambda x: 'green' if x in obras_selecionadas else 'darkblue'
+    )
 
-    # Gráfico barra peso financeiro - todas as barras com mesma cor escura
+    # Gráfico barra peso financeiro - cores condicionais
     fig_peso = px.bar(
         df_peso,
         x='Obra',
@@ -382,13 +387,23 @@ def dashboard_efetivo():
         title=f'Peso Financeiro por Obra ({tipo_peso})',
         labels={'Peso Financeiro': 'Índice', 'Obra': 'Obra'},
         text=df_peso['Peso Financeiro'].apply(lambda x: f"{x:.2%}"),
-        color_discrete_sequence=['darkblue']  # cor fixa para todas as barras
+        color='Cor',  # Usa a coluna de cores
+        color_discrete_map={'green': 'green', 'darkblue': 'darkblue'}  # Mapeamento explícito
     )
-    fig_peso.update_traces(textposition='outside')
-    fig_peso.update_layout(yaxis_tickformat='.0%')
+    
+    fig_peso.update_traces(
+        textposition='outside',
+        marker_line_color='black',  # Borda preta nas barras
+        marker_line_width=0.5       # Espessura da borda
+    )
+    
+    fig_peso.update_layout(
+        yaxis_tickformat='.0%',
+        showlegend=False  # Remove a legenda desnecessária
+    )
+    
     st.plotly_chart(fig_peso, use_container_width=True)
     # ---- FIM da parte corrigida ----
-
 
 # Dicionário para mapear meses em inglês para abreviações em português
 MES_POR_PT = {

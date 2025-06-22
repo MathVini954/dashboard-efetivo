@@ -456,37 +456,25 @@ def dashboard_produtividade():
             df = df[df['DATA'].dt.to_period('M').isin(pd.to_datetime(datas_dt).to_period('M'))]
         return df
 
-    def criar_grafico_indices(df, servico_prefixo):
-        # Colunas a usar
-        colunas_indices = [
-            'ÍNDICE S/ (PP+HH EXT.)',
-            'ÍNDICE + PP',
-            'ÍNDICE + PP + HH EXT',
-            'ÍNDICE ORÇADO',
-            'ÍNDICE + PP + HH EXT ACUMULADO'
-        ]
+    def criar_grafico_indices(df, servico):
+        df['MÊS'] = df['DATA'].dt.to_period('M')
+        df_mensal = df.groupby('MÊS').agg({
+            'ÍNDICE ORÇADO': 'mean',
+            'ÍNDICE + PP + HH EXT': 'mean'
+        }).reset_index()
 
-        # Agrupamento mensal
-        df_mensal = df.groupby(pd.Grouper(key='DATA', freq='M'))[colunas_indices].mean().reset_index()
+        df_mensal['DATA'] = df_mensal['MÊS'].dt.to_timestamp()
         df_mensal['DATA_FORMATADA_PT'] = df_mensal['DATA'].apply(mes_ano_pt)
 
-        # Renomeia colunas com prefixo do serviço
-        df_mensal_renomeado = df_mensal.rename(columns={
-            col: f"{servico_prefixo} - {col}" for col in colunas_indices
-        })
-
-        # Gera gráfico de linha
         fig = px.line(
-            df_mensal_renomeado,
+            df_mensal,
             x='DATA',
-            y=[f"{servico_prefixo} - {col}" for col in colunas_indices],
-            labels={'value': 'Índice', 'DATA': 'Mês'},
-            title=f"Evolução dos Índices de Produtividade - {servico_prefixo}",
-            line_shape='linear',
+            y=['ÍNDICE ORÇADO', 'ÍNDICE + PP + HH EXT'],
+            labels={'value': 'Índice', 'DATA': 'Mês/Ano'},
+            title=f"📈 Evolução dos Índices - {servico}",
             markers=True
         )
 
-        # Eixo X em português
         fig.update_xaxes(
             tickformat="%b/%y",
             tickmode='array',
@@ -494,9 +482,8 @@ def dashboard_produtividade():
             ticktext=df_mensal['DATA_FORMATADA_PT']
         )
 
-        return fig
+        return fig, df_mensal
 
-    # ==== Execução da função ====
     df = carregar_dados()
 
     with st.sidebar:
@@ -504,8 +491,8 @@ def dashboard_produtividade():
         tipo_obra_opcoes = ["Todos"] + df['TIPO_OBRA'].dropna().unique().tolist()
         tipo_obra = st.selectbox('Selecione o Tipo de Obra', tipo_obra_opcoes)
 
-        servicos_opcoes = df['SERVIÇO'].dropna().unique().tolist()
-        servico = st.selectbox('Selecione o Serviço', servicos_opcoes)
+        servicos_opcoes = sorted(df['SERVIÇO'].dropna().unique().tolist())
+        servico = st.selectbox('Selecione o Serviço (1 por vez)', servicos_opcoes)
 
         meses_unicos = df['DATA'].dt.to_period('M').drop_duplicates().sort_values()
         mes_ano_opcoes = [mes_ano_pt(pd.Timestamp(m.start_time)) for m in meses_unicos]
@@ -514,11 +501,26 @@ def dashboard_produtividade():
     df_filtrado = filtrar_dados(df, tipo_obra, servico, datas_selecionadas)
 
     st.title("📈 Dashboard de Produtividade")
+
     if df_filtrado.empty:
-        st.warning("Nenhum dado disponível para os filtros selecionados.")
-    else:
-        fig_indices = criar_grafico_indices(df_filtrado, servico)
-        st.plotly_chart(fig_indices, use_container_width=True)
+        st.warning("Nenhum dado encontrado para os filtros selecionados.")
+        return
+
+    # Gráfico de linha
+    fig_indices, df_mensal = criar_grafico_indices(df_filtrado, servico)
+    st.plotly_chart(fig_indices, use_container_width=True)
+
+    # Tabela com desvios
+    df_mensal['DESVIO'] = df_mensal['ÍNDICE ORÇADO'] - df_mensal['ÍNDICE + PP + HH EXT']
+    df_mensal['DESVIO (%)'] = (df_mensal['DESVIO'] / df_mensal['ÍNDICE ORÇADO']) * 100
+    df_mensal['STATUS'] = df_mensal['DESVIO'].apply(lambda x: '✅ Melhor' if x > 0 else '❌ Pior')
+
+    df_mensal['MÊS'] = df_mensal['DATA'].dt.strftime('%b/%y')
+    tabela_final = df_mensal[['MÊS', 'ÍNDICE ORÇADO', 'ÍNDICE + PP + HH EXT', 'DESVIO', 'DESVIO (%)', 'STATUS']]
+    tabela_final = tabela_final.round(3)
+
+    st.markdown("### 📊 Análise de Desempenho dos Índices")
+    st.dataframe(tabela_final, use_container_width=True)
 
 
 # ---------- Execução Principal ----------

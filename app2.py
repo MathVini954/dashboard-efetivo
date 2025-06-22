@@ -440,6 +440,29 @@ def data_pt_para_datetime(mes_ano_pt_str):
     mes = MES_PT_PARA_NUM[mes_pt]
     ano = 2000 + int(ano_str)  # exemplo: '24' vira 2024
     return pd.Timestamp(year=ano, month=mes, day=1)
+Perfeito! Vou ajustar o gráfico de linha para **manter todas as colunas de índice** como você solicitou anteriormente. Essas colunas são:
+
+* `ÍNDICE S/ (PP+HH EXT.)`
+* `ÍNDICE + PP`
+* `ÍNDICE + PP + HH EXT`
+* `ÍNDICE ORÇADO`
+* `ÍNDICE + PP + HH EXT ACUMULADO`
+
+---
+
+Aqui está o **código corrigido** da função `dashboard_produtividade()` com:
+
+✅ Todas as colunas de índice no gráfico de linha
+✅ Legenda com o prefixo do serviço
+✅ Cálculo de médias mensais (1 ponto por mês)
+✅ Exclusão de colunas extras no gráfico
+✅ Tabela com desvio apenas entre `ÍNDICE ORÇADO` e `ÍNDICE + PP + HH EXT`
+
+---
+
+### 🔁 Substitua sua função `dashboard_produtividade()` por esta:
+
+```python
 def dashboard_produtividade():
     def carregar_dados():
         df = pd.read_excel("produtividade.xlsx")
@@ -512,29 +535,23 @@ def dashboard_produtividade():
         mes_ano_opcoes = [mes_ano_pt(pd.Timestamp(m.start_time)) for m in meses_unicos]
         datas_selecionadas = st.multiselect('Selecione o(s) Mês/Ano', mes_ano_opcoes, default=mes_ano_opcoes)
 
+    # Aplicar filtros
     df_filtrado = filtrar_dados(df, tipo_obra, servico, datas_selecionadas)
 
+    # Criar gráfico de linha com todas as colunas de índice
+    fig_indices, df_mensal = criar_grafico_indices_completos(df_filtrado, servico)
     st.title("📈 Dashboard de Produtividade")
-
-    if df_filtrado.empty:
-        st.warning("Nenhum dado encontrado para os filtros selecionados.")
-        return
-
-    # Gráfico de linha
-    fig_indices, df_mensal = criar_grafico_indices(df_filtrado, servico)
     st.plotly_chart(fig_indices, use_container_width=True)
 
-    # Tabela com desvios
-    df_mensal['DESVIO'] = df_mensal['ÍNDICE ORÇADO'] - df_mensal['ÍNDICE + PP + HH EXT']
-    df_mensal['DESVIO (%)'] = (df_mensal['DESVIO'] / df_mensal['ÍNDICE ORÇADO']) * 100
-    df_mensal['STATUS'] = df_mensal['DESVIO'].apply(lambda x: '✅ Melhor' if x > 0 else '❌ Pior')
+    # Tabela com colunas específicas + desvio (positiva = economia de HH)
+    df_mensal['MÊS/ANO'] = df_mensal['DATA'].apply(mes_ano_pt)
+    df_tabela = df_mensal[['MÊS/ANO', 'ÍNDICE ORÇADO', 'ÍNDICE + PP + HH EXT']].copy()
+    df_tabela['DESVIO'] = df_tabela['ÍNDICE ORÇADO'] - df_tabela['ÍNDICE + PP + HH EXT']
+    df_tabela = df_tabela.round(2)
 
-    df_mensal['MÊS'] = df_mensal['DATA'].dt.strftime('%b/%y')
-    tabela_final = df_mensal[['MÊS', 'ÍNDICE ORÇADO', 'ÍNDICE + PP + HH EXT', 'DESVIO', 'DESVIO (%)', 'STATUS']]
-    tabela_final = tabela_final.round(3)
+    st.markdown("### 📊 Tabela de Índices e Desvio (Orçado - Real)")
+    st.dataframe(df_tabela, use_container_width=True)
 
-    st.markdown("### 📊 Análise de Desempenho dos Índices")
-    st.dataframe(tabela_final, use_container_width=True)
 
 
 # ---------- Execução Principal ----------

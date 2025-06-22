@@ -440,29 +440,8 @@ def data_pt_para_datetime(mes_ano_pt_str):
     mes = MES_PT_PARA_NUM[mes_pt]
     ano = 2000 + int(ano_str)  # exemplo: '24' vira 2024
     return pd.Timestamp(year=ano, month=mes, day=1)
-Perfeito! Vou ajustar o gráfico de linha para **manter todas as colunas de índice** como você solicitou anteriormente. Essas colunas são:
 
-* `ÍNDICE S/ (PP+HH EXT.)`
-* `ÍNDICE + PP`
-* `ÍNDICE + PP + HH EXT`
-* `ÍNDICE ORÇADO`
-* `ÍNDICE + PP + HH EXT ACUMULADO`
 
----
-
-Aqui está o **código corrigido** da função `dashboard_produtividade()` com:
-
-✅ Todas as colunas de índice no gráfico de linha
-✅ Legenda com o prefixo do serviço
-✅ Cálculo de médias mensais (1 ponto por mês)
-✅ Exclusão de colunas extras no gráfico
-✅ Tabela com desvio apenas entre `ÍNDICE ORÇADO` e `ÍNDICE + PP + HH EXT`
-
----
-
-### 🔁 Substitua sua função `dashboard_produtividade()` por esta:
-
-```python
 def dashboard_produtividade():
     def carregar_dados():
         df = pd.read_excel("produtividade.xlsx")

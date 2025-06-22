@@ -456,20 +456,34 @@ def dashboard_produtividade():
             df = df[df['DATA'].dt.to_period('M').isin(pd.to_datetime(datas_dt).to_period('M'))]
         return df
 
-    def criar_grafico_indices(df, servico):
+    def criar_grafico_indices_completos(df, servico):
         df['MÊS'] = df['DATA'].dt.to_period('M')
         df_mensal = df.groupby('MÊS').agg({
+            'ÍNDICE S/ (PP+HH EXT.)': 'mean',
+            'ÍNDICE + PP': 'mean',
+            'ÍNDICE + PP + HH EXT': 'mean',
             'ÍNDICE ORÇADO': 'mean',
-            'ÍNDICE + PP + HH EXT': 'mean'
+            'ÍNDICE + PP + HH EXT ACUMULADO': 'mean'
         }).reset_index()
 
         df_mensal['DATA'] = df_mensal['MÊS'].dt.to_timestamp()
         df_mensal['DATA_FORMATADA_PT'] = df_mensal['DATA'].apply(mes_ano_pt)
 
+        # Renomear colunas com prefixo do serviço
+        df_mensal_renomeado = df_mensal.rename(columns={
+            'ÍNDICE S/ (PP+HH EXT.)': f'{servico} - ÍNDICE S/ (PP+HH EXT.)',
+            'ÍNDICE + PP': f'{servico} - ÍNDICE + PP',
+            'ÍNDICE + PP + HH EXT': f'{servico} - ÍNDICE + PP + HH EXT',
+            'ÍNDICE ORÇADO': f'{servico} - ÍNDICE ORÇADO',
+            'ÍNDICE + PP + HH EXT ACUMULADO': f'{servico} - ÍNDICE + PP + HH EXT ACUMULADO'
+        })
+
+        colunas_plot = [col for col in df_mensal_renomeado.columns if col.startswith(servico)]
+
         fig = px.line(
-            df_mensal,
+            df_mensal_renomeado,
             x='DATA',
-            y=['ÍNDICE ORÇADO', 'ÍNDICE + PP + HH EXT'],
+            y=colunas_plot,
             labels={'value': 'Índice', 'DATA': 'Mês/Ano'},
             title=f"📈 Evolução dos Índices - {servico}",
             markers=True
@@ -478,8 +492,8 @@ def dashboard_produtividade():
         fig.update_xaxes(
             tickformat="%b/%y",
             tickmode='array',
-            tickvals=df_mensal['DATA'],
-            ticktext=df_mensal['DATA_FORMATADA_PT']
+            tickvals=df_mensal_renomeado['DATA'],
+            ticktext=df_mensal_renomeado['DATA_FORMATADA_PT']
         )
 
         return fig, df_mensal

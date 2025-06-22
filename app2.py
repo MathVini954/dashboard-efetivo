@@ -511,7 +511,7 @@ def dashboard_produtividade():
         servico = st.selectbox('Selecione o Serviço (1 por vez)', servicos_opcoes)
 
         meses_unicos = df['DATA'].dt.to_period('M').drop_duplicates().sort_values()
-                mes_ano_opcoes = [mes_ano_pt(pd.Timestamp(m.start_time)) for m in meses_unicos]
+        mes_ano_opcoes = [mes_ano_pt(pd.Timestamp(m.start_time)) for m in meses_unicos]
         datas_selecionadas = st.multiselect('Selecione o(s) Mês/Ano', mes_ano_opcoes, default=mes_ano_opcoes)
 
     # Aplicar filtros

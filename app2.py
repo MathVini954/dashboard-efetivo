@@ -456,19 +456,37 @@ def dashboard_produtividade():
             df = df[df['DATA'].dt.to_period('M').isin(pd.to_datetime(datas_dt).to_period('M'))]
         return df
 
-    def criar_grafico_produtividade(df):
-        df_mensal = df.groupby(pd.Grouper(key='DATA', freq='M')).agg({
-            'PRODUTIVIDADE_PROF_DIAM2': 'mean',
-            'PRODUTIVIDADE_ORCADA_DIAM2': 'mean'
-        }).reset_index()
+    def criar_grafico_indices(df, servico_prefixo):
+        # Colunas a usar
+        colunas_indices = [
+            'ÍNDICE S/ (PP+HH EXT.)',
+            'ÍNDICE + PP',
+            'ÍNDICE + PP + HH EXT',
+            'ÍNDICE ORÇADO',
+            'ÍNDICE + PP + HH EXT ACUMULADO'
+        ]
 
+        # Agrupamento mensal
+        df_mensal = df.groupby(pd.Grouper(key='DATA', freq='M'))[colunas_indices].mean().reset_index()
         df_mensal['DATA_FORMATADA_PT'] = df_mensal['DATA'].apply(mes_ano_pt)
 
-        fig = px.line(df_mensal, x='DATA', y=['PRODUTIVIDADE_PROF_DIAM2', 'PRODUTIVIDADE_ORCADA_DIAM2'],
-                      labels={'value': 'Produtividade', 'DATA': 'Mês/Ano'},
-                      title="Produtividade Profissional por M² (Real x Orçado)",
-                      line_shape='linear', markers=True)
+        # Renomeia colunas com prefixo do serviço
+        df_mensal_renomeado = df_mensal.rename(columns={
+            col: f"{servico_prefixo} - {col}" for col in colunas_indices
+        })
 
+        # Gera gráfico de linha
+        fig = px.line(
+            df_mensal_renomeado,
+            x='DATA',
+            y=[f"{servico_prefixo} - {col}" for col in colunas_indices],
+            labels={'value': 'Índice', 'DATA': 'Mês'},
+            title=f"Evolução dos Índices de Produtividade - {servico_prefixo}",
+            line_shape='linear',
+            markers=True
+        )
+
+        # Eixo X em português
         fig.update_xaxes(
             tickformat="%b/%y",
             tickmode='array',
@@ -478,40 +496,30 @@ def dashboard_produtividade():
 
         return fig
 
-    def criar_grafico_barras(df):
-        df_produtividade_obra = df.groupby('TIPO_OBRA').agg({
-            'PRODUTIVIDADE_PROF_DIAM2': 'mean'
-        }).reset_index()
-        fig_barras = px.bar(df_produtividade_obra, x='TIPO_OBRA', y='PRODUTIVIDADE_PROF_DIAM2',
-                            title="Produtividade Profissional Média por Tipo de Obra")
-        return fig_barras
-
+    # ==== Execução da função ====
     df = carregar_dados()
 
     with st.sidebar:
         st.header("🔍 Filtros - Produtividade")
-        tipo_obra_opcoes = ["Todos"] + df['TIPO_OBRA'].unique().tolist()
+        tipo_obra_opcoes = ["Todos"] + df['TIPO_OBRA'].dropna().unique().tolist()
         tipo_obra = st.selectbox('Selecione o Tipo de Obra', tipo_obra_opcoes)
-        servicos_opcoes = df['SERVIÇO'].unique().tolist()
+
+        servicos_opcoes = df['SERVIÇO'].dropna().unique().tolist()
         servico = st.selectbox('Selecione o Serviço', servicos_opcoes)
 
         meses_unicos = df['DATA'].dt.to_period('M').drop_duplicates().sort_values()
         mes_ano_opcoes = [mes_ano_pt(pd.Timestamp(m.start_time)) for m in meses_unicos]
-
         datas_selecionadas = st.multiselect('Selecione o(s) Mês/Ano', mes_ano_opcoes, default=mes_ano_opcoes)
 
-    # Aplica todos os filtros (tipo_obra, serviço, datas) para o gráfico principal
     df_filtrado = filtrar_dados(df, tipo_obra, servico, datas_selecionadas)
 
-    # Aplica só o filtro de serviço e datas para o gráfico de barras, ignorando tipo_obra
-    df_filtrado_barras = filtrar_dados(df, "Todos", servico, datas_selecionadas)
-
-    fig_produtividade = criar_grafico_produtividade(df_filtrado)
-    fig_barras = criar_grafico_barras(df_filtrado_barras)
-
     st.title("📈 Dashboard de Produtividade")
-    st.plotly_chart(fig_produtividade)
-    st.plotly_chart(fig_barras)
+    if df_filtrado.empty:
+        st.warning("Nenhum dado disponível para os filtros selecionados.")
+    else:
+        fig_indices = criar_grafico_indices(df_filtrado, servico)
+        st.plotly_chart(fig_indices, use_container_width=True)
+
 
 # ---------- Execução Principal ----------
 def main():

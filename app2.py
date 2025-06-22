@@ -458,110 +458,77 @@ def dashboard_produtividade():
             df = df[df['DATA'].dt.to_period('M').isin(pd.to_datetime(datas_dt).to_period('M'))]
         return df
 
-    def mes_ano_pt(dt):
-        MES_POR_PT = {
-            'Jan': 'Jan', 'Feb': 'Fev', 'Mar': 'Mar', 'Apr': 'Abr', 'May': 'Mai', 'Jun': 'Jun',
-            'Jul': 'Jul', 'Aug': 'Ago', 'Sep': 'Set', 'Oct': 'Out', 'Nov': 'Nov', 'Dec': 'Dez'
-        }
-        mes_eng = dt.strftime('%b')
-        mes_pt = MES_POR_PT.get(mes_eng, mes_eng)
-        ano = dt.strftime('%y')
-        return f"{mes_pt}/{ano}"
+    def criar_grafico_indices_completos(df, servico):
+        df['MÊS'] = df['DATA'].dt.to_period('M')
+        df_mensal = df.groupby('MÊS').agg({
+            'ÍNDICE S/ (PP+HH EXT.)': 'mean',
+            'ÍNDICE + PP': 'mean',
+            'ÍNDICE + PP + HH EXT': 'mean',
+            'ÍNDICE ORÇADO': 'mean',
+            'ÍNDICE + PP + HH EXT ACUMULADO': 'mean'
+        }).reset_index()
 
-    def data_pt_para_datetime(mes_ano_pt_str):
-        MES_PT_PARA_NUM = {
-            'Jan': 1, 'Fev': 2, 'Mar': 3, 'Abr': 4, 'Mai': 5, 'Jun': 6,
-            'Jul': 7, 'Ago': 8, 'Set': 9, 'Out': 10, 'Nov': 11, 'Dez': 12
-        }
-        mes_pt, ano_str = mes_ano_pt_str.split('/')
-        mes = MES_PT_PARA_NUM[mes_pt]
-        ano = 2000 + int(ano_str)
-        return pd.Timestamp(year=ano, month=mes, day=1)
+        df_mensal['DATA'] = df_mensal['MÊS'].dt.to_timestamp()
+        df_mensal['DATA_FORMATADA_PT'] = df_mensal['DATA'].apply(mes_ano_pt)
 
-    def criar_grafico_indices_completos(df_filtrado, servico):
-        prefixo = servico if servico else ''
-        colunas = [
-            'ÍNDICE S/ (PP+HH EXT.)',
-            'ÍNDICE + PP',
-            'ÍNDICE + PP + HH EXT',
-            'ÍNDICE ORÇADO',
-            'ÍNDICE + PP + HH EXT ACUMULADO'
-        ]
-        colunas_completas = [f"{prefixo} - {col}" if prefixo else col for col in colunas]
+        # Renomear colunas com prefixo do serviço
+        df_mensal_renomeado = df_mensal.rename(columns={
+            'ÍNDICE S/ (PP+HH EXT.)': f'{servico} - ÍNDICE S/ (PP+HH EXT.)',
+            'ÍNDICE + PP': f'{servico} - ÍNDICE + PP',
+            'ÍNDICE + PP + HH EXT': f'{servico} - ÍNDICE + PP + HH EXT',
+            'ÍNDICE ORÇADO': f'{servico} - ÍNDICE ORÇADO',
+            'ÍNDICE + PP + HH EXT ACUMULADO': f'{servico} - ÍNDICE + PP + HH EXT ACUMULADO'
+        })
 
-        # Calcula média mensal para cada coluna
-        df_mensal = df_filtrado.groupby(pd.Grouper(key='DATA', freq='M'))[colunas_completas].mean().reset_index()
+        colunas_plot = [col for col in df_mensal_renomeado.columns if col.startswith(servico)]
 
-        # Ajusta nomes para uso interno e para legenda
-        rename_map = {col: col.replace(f"{prefixo} - ", "") for col in colunas_completas}
-        df_mensal.rename(columns=rename_map, inplace=True)
-
-        # Prepara gráfico de linha com legendas prefixadas
-        fig = go.Figure()
-        for col in rename_map.values():
-            fig.add_trace(go.Scatter(
-                x=df_mensal['DATA'],
-                y=df_mensal[col],
-                mode='lines+markers',
-                name=f"{prefixo} {col}".strip()
-            ))
-
-        # Formata eixo x com meses em português
-        tickvals = df_mensal['DATA']
-        ticktext = [mes_ano_pt(d) for d in tickvals]
-        fig.update_layout(
-            title=f"Produtividade - Índices para o serviço: {prefixo}",
-            xaxis=dict(tickmode='array', tickvals=tickvals, ticktext=ticktext),
-            yaxis_title="Índice",
-            legend_title="Índices"
+        fig = px.line(
+            df_mensal_renomeado,
+            x='DATA',
+            y=colunas_plot,
+            labels={'value': 'Índice', 'DATA': 'Mês/Ano'},
+            title=f"📈 Evolução dos Índices - {servico}",
+            markers=True
         )
+
+        fig.update_xaxes(
+            tickformat="%b/%y",
+            tickmode='array',
+            tickvals=df_mensal_renomeado['DATA'],
+            ticktext=df_mensal_renomeado['DATA_FORMATADA_PT']
+        )
+
         return fig, df_mensal
 
     df = carregar_dados()
 
     with st.sidebar:
         st.header("🔍 Filtros - Produtividade")
-        tipo_obra_opcoes = ["Todos"] + sorted(df['TIPO_OBRA'].dropna().unique().tolist())
+        tipo_obra_opcoes = ["Todos"] + df['TIPO_OBRA'].dropna().unique().tolist()
         tipo_obra = st.selectbox('Selecione o Tipo de Obra', tipo_obra_opcoes)
+
         servicos_opcoes = sorted(df['SERVIÇO'].dropna().unique().tolist())
-        servico = st.selectbox('Selecione o Serviço', servicos_opcoes)
+        servico = st.selectbox('Selecione o Serviço (1 por vez)', servicos_opcoes)
+
         meses_unicos = df['DATA'].dt.to_period('M').drop_duplicates().sort_values()
-        mes_ano_opcoes = [mes_ano_pt(pd.Timestamp(m.start_time)) for m in meses_unicos]
+                mes_ano_opcoes = [mes_ano_pt(pd.Timestamp(m.start_time)) for m in meses_unicos]
         datas_selecionadas = st.multiselect('Selecione o(s) Mês/Ano', mes_ano_opcoes, default=mes_ano_opcoes)
 
-    # Garante que só um serviço pode ser selecionado (já com selectbox, mas reforça)
-    if isinstance(servico, list):
-        servico = servico[0] if servico else servicos_opcoes[0]
-
+    # Aplicar filtros
     df_filtrado = filtrar_dados(df, tipo_obra, servico, datas_selecionadas)
 
+    # Criar gráfico de linha com todas as colunas de índice
     fig_indices, df_mensal = criar_grafico_indices_completos(df_filtrado, servico)
-
     st.title("📈 Dashboard de Produtividade")
     st.plotly_chart(fig_indices, use_container_width=True)
 
-    # Preparar tabela com índices, desvio e eficiência
-    df_mensal['MÊS_PT'] = df_mensal['DATA'].apply(mes_ano_pt)
-    df_mensal['Diferença'] = df_mensal['ÍNDICE ORÇADO'] - df_mensal['ÍNDICE + PP + HH EXT']
+    # Tabela com colunas específicas + desvio (positiva = economia de HH)
+    df_mensal['MÊS/ANO'] = df_mensal['DATA'].apply(mes_ano_pt)
+    df_tabela = df_mensal[['MÊS/ANO', 'ÍNDICE ORÇADO', 'ÍNDICE + PP + HH EXT']].copy()
+    df_tabela['DESVIO'] = df_tabela['ÍNDICE ORÇADO'] - df_tabela['ÍNDICE + PP + HH EXT']
+    df_tabela = df_tabela.round(2)
 
-    def classificar_eficiencia(x):
-        if x > 0:
-            return "Eficiente"
-        elif x < 0:
-            return "Ineficiente"
-        else:
-            return "No Alvo"
-
-    df_mensal['Eficiência'] = df_mensal['Diferença'].apply(classificar_eficiencia)
-
-    df_tabela = df_mensal[['MÊS_PT', 'ÍNDICE ORÇADO', 'ÍNDICE + PP + HH EXT', 'Diferença', 'Eficiência']].copy()
-    df_tabela.columns = ['Mês', 'Índice Orçado', 'Índice Real (+PP+HH)', 'Diferença', 'Eficiência']
-
-    df_tabela['Índice Orçado'] = df_tabela['Índice Orçado'].apply(lambda x: f"{x:.2f}")
-    df_tabela['Índice Real (+PP+HH)'] = df_tabela['Índice Real (+PP+HH)'].apply(lambda x: f"{x:.2f}")
-    df_tabela['Diferença'] = df_tabela['Diferença'].apply(lambda x: f"{x:.2f}")
-
-    st.markdown("### 📊 Comparativo de Índices com Eficiência")
+    st.markdown("### 📊 Tabela de Índices e Desvio (Orçado - Real)")
     st.dataframe(df_tabela, use_container_width=True)
 
 

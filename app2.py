@@ -186,8 +186,12 @@ def dashboard_efetivo():
 
     df = carregar_dados_efetivo()
     df_terceiros = carregar_terceiros()
-    ganhos, descontos = definir_colunas_ganhos_descontos()
 
+    # 🔴 Excluir obra "ESCRITÓRIO ENGENHARIA"
+    df = df[df['Obra'] != 'ESCRITÓRIO ENGENHARIA']
+    df_terceiros = df_terceiros[df_terceiros['Obra'] != 'ESCRITÓRIO ENGENHARIA']
+
+    ganhos, descontos = definir_colunas_ganhos_descontos()
     df['Total Extra'] = df['Hora Extra 70% - Semana'] + df['Hora Extra 70% - Sabado']
 
     with st.sidebar:
@@ -264,7 +268,8 @@ def dashboard_efetivo():
     pizza_terceiros = pd.DataFrame({'Tipo': ['TERCEIRO'], 'count': [total_terceiros]})
     pizza = pd.concat([pizza_diretos_indiretos, pizza_terceiros], ignore_index=True)
 
-    fig_pizza = px.pie(pizza, names='Tipo', values='count', title='Distribuição por Tipo de Efetivo')
+    fig_pizza = px.pie(pizza, names='Tipo', values='count', title='Distribuição por Tipo de Efetivo', hole=0.3)
+    fig_pizza.update_traces(textposition='inside', textinfo='percent+label')
     st.plotly_chart(fig_pizza, use_container_width=True)
 
     if tipo_selecionado == 'TERCEIRO':
@@ -287,7 +292,6 @@ def dashboard_efetivo():
 
     nome_col_funcao = 'Função' if 'Função' in df_ranking.columns else 'Funçao' if 'Funçao' in df_ranking.columns else None
 
-    # Define colunas a exibir e calcula DSR se necessário
     if tipo_analise == 'Produção' and 'REFLEXO S PRODUÇÃO' in df_ranking.columns:
         df_ranking['DSR'] = df_ranking['REFLEXO S PRODUÇÃO']
         cols_rank = ['Nome do Funcionário', nome_col_funcao, 'Obra', 'Tipo', 'PRODUÇÃO', 'DSR']
@@ -296,27 +300,19 @@ def dashboard_efetivo():
         cols_rank = ['Nome do Funcionário', nome_col_funcao, 'Obra', 'Tipo', coluna_valor]
         valor_coluna = coluna_valor
 
-    # Garante que as colunas existem
     cols_rank = [c for c in cols_rank if c is not None and c in df_ranking.columns]
-
-    # Cópia segura do df_ranking só para o ranking
     df_ranking_limp = df_ranking[cols_rank].copy()
     df_ranking_limp = df_ranking_limp[pd.to_numeric(df_ranking_limp[valor_coluna], errors='coerce').notna()]
     df_ranking_limp = df_ranking_limp[df_ranking_limp[valor_coluna] > 0]
-
-    # Ordena
     ranking = df_ranking_limp.sort_values(by=valor_coluna, ascending=False)
 
-    # Mostra total
     valor_total = df_ranking_limp[valor_coluna].sum()
     st.markdown(f"### 📋 Top Funcionários por **{tipo_analise}**")
     st.markdown(f"**Total em {tipo_analise}:** R$ {valor_total:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
 
-    # Filtra quantidade
     if qtd_linhas != 'Todos':
         ranking = ranking.head(int(qtd_linhas))
 
-    # Formata valores
     def formatar_valor(x):
         return f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
 
@@ -330,7 +326,6 @@ def dashboard_efetivo():
     if nome_col_funcao and nome_col_funcao in df_ranking.columns:
         graf_funcao = df_ranking[nome_col_funcao].value_counts().reset_index()
         graf_funcao.columns = [nome_col_funcao, 'Qtd']
-
         fig_bar = px.bar(
             graf_funcao,
             x=nome_col_funcao,
@@ -344,20 +339,13 @@ def dashboard_efetivo():
 
     st.divider()
 
-    # ---- INÍCIO da parte do Peso Financeiro ----
     todas_obras = sorted(df['Obra'].astype(str).unique())
-
     peso_lista = []
     for obra in todas_obras:
-        # Base da obra
         df_obra = df[df['Obra'] == obra]
-
-        # Produção: só DIRETO
         df_direto = df_obra[df_obra['Tipo'] == 'DIRETO']
         prod_numerador = df_direto['PRODUÇÃO'].sum() + df_direto['REFLEXO S PRODUÇÃO'].sum()
         prod_denominador = df_direto['Remuneração Líquida Folha'].sum() + df_direto['Adiantamento'].sum()
-
-        # Hora Extra: DIRETO + INDIRETO
         df_dir_ind = df_obra[df_obra['Tipo'].isin(['DIRETO', 'INDIRETO'])]
         total_extra = df_dir_ind['Total Extra'].sum()
         reposo_remunerado = df_dir_ind['Repouso Remunerado'].sum()
@@ -372,11 +360,7 @@ def dashboard_efetivo():
 
     df_peso = pd.DataFrame(peso_lista)
     df_peso = df_peso.sort_values(by='Peso Financeiro', ascending=False)
-
-    # Coluna para controlar cor: True se obra está selecionada no filtro, False se não
     df_peso['Selecionada'] = df_peso['Obra'].apply(lambda x: x in obras_selecionadas)
-
-    # Define cores: azul escuro para selecionadas, azul claro para não selecionadas
     colors = df_peso['Selecionada'].map({True: 'darkblue', False: 'lightblue'})
 
     fig_peso = px.bar(
@@ -388,7 +372,6 @@ def dashboard_efetivo():
         text=df_peso['Peso Financeiro'].apply(lambda x: f"{x:.2%}"),
     )
 
-    # Aplica as cores manualmente
     fig_peso.update_traces(
         marker_color=colors,
         textposition='outside',
@@ -403,7 +386,7 @@ def dashboard_efetivo():
     )
 
     st.plotly_chart(fig_peso, use_container_width=True)
-    # ---- FIM da parte do Peso Financeiro ----
+
 
 # Dicionário para mapear meses em inglês para abreviações em português
 MES_POR_PT = {

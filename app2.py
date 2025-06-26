@@ -514,6 +514,23 @@ def dashboard_produtividade():
     st.markdown("### 📊 Tabela de Índices e Desvio (Orçado - Real)")
     st.dataframe(df_tabela, use_container_width=True)
 
+@st.cache_data
+def carregar_dados_escritorio():
+    df = pd.read_excel("efetivo_abril.xlsx", sheet_name="EFETIVO", engine="openpyxl")
+    df.columns = df.columns.str.strip()
+    df = df[df['Obra'] == 'ESCRITÓRIO ENGENHARIA']
+
+    df['Hora Extra 70% - Semana'] = pd.to_numeric(df['Hora Extra 70% - Semana'], errors='coerce').fillna(0)
+    df['Hora Extra 70% - Sabado'] = pd.to_numeric(df['Hora Extra 70% - Sabado'], errors='coerce').fillna(0)
+    df['Total Extra'] = df['Hora Extra 70% - Semana'] + df['Hora Extra 70% - Sabado']
+    df['Remuneração Líquida Folha'] = pd.to_numeric(df['Remuneração Líquida Folha'], errors='coerce').fillna(0)
+    df['Adiantamento'] = pd.to_numeric(df['Adiantamento'], errors='coerce').fillna(0)
+    if 'Repouso Remunerado' not in df.columns:
+        df['Repouso Remunerado'] = 0
+    else:
+        df['Repouso Remunerado'] = pd.to_numeric(df['Repouso Remunerado'], errors='coerce').fillna(0)
+    return df
+
 def dashboard_escritorio():
     st.title("🏢 Análise Efetivo - Escritório Engenharia")
     df = carregar_dados_escritorio()

@@ -513,11 +513,120 @@ def dashboard_produtividade():
 
     st.markdown("### 📊 Tabela de Índices e Desvio (Orçado - Real)")
     st.dataframe(df_tabela, use_container_width=True)
+@st.cache_data
+def carregar_dados_escritorio():
+    df = pd.read_excel("efetivo_abril.xlsx", sheet_name="EFETIVO", engine="openpyxl")
+    df.columns = df.columns.str.strip()
+    df = df[df['Obra'] == 'ESCRITÓRIO ENGENHARIA']
 
+    df['Hora Extra 70% - Semana'] = pd.to_numeric(df['Hora Extra 70% - Semana'], errors='coerce').fillna(0)
+    df['Hora Extra 70% - Sabado'] = pd.to_numeric(df['Hora Extra 70% - Sabado'], errors='coerce').fillna(0)
+    df['Total Extra'] = df['Hora Extra 70% - Semana'] + df['Hora Extra 70% - Sabado']
+    df['Remuneração Líquida Folha'] = pd.to_numeric(df['Remuneração Líquida Folha'], errors='coerce').fillna(0)
+    df['Adiantamento'] = pd.to_numeric(df['Adiantamento'], errors='coerce').fillna(0)
+    if 'Repouso Remunerado' not in df.columns:
+        df['Repouso Remunerado'] = 0
+    else:
+        df['Repouso Remunerado'] = pd.to_numeric(df['Repouso Remunerado'], errors='coerce').fillna(0)
+    return df
 
+def dashboard_escritorio():
+    st.title("🏢 Análise Efetivo - Escritório Engenharia")
+    df = carregar_dados_escritorio()
 
+    departamentos = sorted(df['Departamento'].dropna().unique())
 
-# ---------- Execução Principal ----------
+    with st.sidebar:
+        st.header("🔍 Filtros - Escritório")
+        deps_selecionados = st.multiselect("Departamentos:", departamentos, default=departamentos)
+        tipo_analise = st.radio("Tipo de Análise da Tabela:", ['Produção', 'Hora Extra Semana', 'Hora Extra Sábado'])
+        qtd_linhas = st.radio("Qtd. de Funcionários na Tabela:", ['5', '10', 'Todos'], horizontal=True)
+        tipo_peso = st.radio("Tipo de Peso (Gráficos):", ['Peso sobre Produção', 'Peso sobre Hora Extra'])
+
+    df = df[df['Departamento'].isin(deps_selecionados)]
+
+    st.markdown("### 📊 Distribuição por Departamento")
+    dist = df['Departamento'].value_counts().reset_index()
+    dist.columns = ['Departamento', 'Qtd']
+    fig_dep = px.bar(dist, x='Departamento', y='Qtd', color='Qtd', text='Qtd', title="Efetivo por Departamento")
+    fig_dep.update_traces(textposition='outside')
+    st.plotly_chart(fig_dep, use_container_width=True)
+
+    coluna_valor = {
+        'Produção': 'PRODUÇÃO',
+        'Hora Extra Semana': 'Hora Extra 70% - Semana',
+        'Hora Extra Sábado': 'Hora Extra 70% - Sabado'
+    }[tipo_analise]
+
+    nome_col_funcao = 'Função' if 'Função' in df.columns else 'Funçao' if 'Funçao' in df.columns else None
+
+    if tipo_analise == 'Produção' and 'REFLEXO S PRODUÇÃO' in df.columns:
+        df['DSR'] = df['REFLEXO S PRODUÇÃO']
+        cols_rank = ['Nome do Funcionário', nome_col_funcao, 'Departamento', 'PRODUÇÃO', 'DSR']
+        valor_coluna = 'PRODUÇÃO'
+    else:
+        cols_rank = ['Nome do Funcionário', nome_col_funcao, 'Departamento', coluna_valor]
+        valor_coluna = coluna_valor
+
+    cols_rank = [c for c in cols_rank if c is not None and c in df.columns]
+    df_ranking_limp = df[cols_rank].copy()
+    df_ranking_limp = df_ranking_limp[pd.to_numeric(df_ranking_limp[valor_coluna], errors='coerce').notna()]
+    df_ranking_limp = df_ranking_limp[df_ranking_limp[valor_coluna] > 0]
+    ranking = df_ranking_limp.sort_values(by=valor_coluna, ascending=False)
+
+    valor_total = df_ranking_limp[valor_coluna].sum()
+    st.markdown(f"### 📋 Top Funcionários por **{tipo_analise}**")
+    st.markdown(f"**Total em {tipo_analise}:** R$ {valor_total:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+
+    if qtd_linhas != 'Todos':
+        ranking = ranking.head(int(qtd_linhas))
+
+    def formatar_valor(x):
+        return f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+
+    ranking[valor_coluna] = ranking[valor_coluna].apply(formatar_valor)
+    if 'DSR' in ranking.columns:
+        ranking['DSR'] = ranking['DSR'].apply(formatar_valor)
+
+    st.dataframe(ranking, use_container_width=True)
+
+    # Peso por Departamento
+    st.markdown("### 💰 Peso Financeiro por Departamento")
+    lista_peso = []
+    for dep in sorted(df['Departamento'].unique()):
+        df_dep = df[df['Departamento'] == dep]
+        prod_numerador = df_dep['PRODUÇÃO'].sum() + df_dep['REFLEXO S PRODUÇÃO'].sum()
+        prod_denominador = df_dep['Remuneração Líquida Folha'].sum() + df_dep['Adiantamento'].sum()
+
+        total_extra = df_dep['Total Extra'].sum()
+        reposo_remunerado = df_dep['Repouso Remunerado'].sum()
+        hor_extra_denominador = df_dep['Remuneração Líquida Folha'].sum() + df_dep['Adiantamento'].sum()
+
+        if tipo_peso == 'Peso sobre Produção':
+            peso = (prod_numerador / prod_denominador) if prod_denominador > 0 else 0
+        else:
+            peso = ((total_extra + reposo_remunerado) / hor_extra_denominador) if hor_extra_denominador > 0 else 0
+
+        lista_peso.append({'Departamento': dep, 'Peso Financeiro': peso})
+
+    df_peso = pd.DataFrame(lista_peso).sort_values(by='Peso Financeiro', ascending=False)
+    df_peso['Selecionado'] = df_peso['Departamento'].apply(lambda x: x in deps_selecionados)
+    colors = df_peso['Selecionado'].map({True: 'darkblue', False: 'lightblue'})
+
+    fig_peso = px.bar(
+        df_peso,
+        x='Departamento',
+        y='Peso Financeiro',
+        text=df_peso['Peso Financeiro'].apply(lambda x: f"{x:.2%}"),
+        title=f"Peso Financeiro por Departamento ({tipo_peso})",
+        labels={'Peso Financeiro': 'Índice', 'Departamento': 'Departamento'}
+    )
+
+    fig_peso.update_traces(marker_color=colors, textposition='outside', marker_line_color='black', marker_line_width=0.5)
+    fig_peso.update_layout(yaxis_tickformat='.0%', showlegend=False)
+    st.plotly_chart(fig_peso, use_container_width=True)
+
+# Adicionar ao main()
 def main():
     st.set_page_config(page_title="Dashboards de Obra", layout="wide")
 
@@ -527,10 +636,7 @@ def main():
         st.image("logotipo.png", width=400)
 
     with col2:
-        st.markdown(
-            "<h1 style='margin-top: 30px; vertical-align: middle;'>SISTEMA DE CUSTO E PLANEJAMENTO</h1>",
-            unsafe_allow_html=True,
-        )
+        st.markdown("<h1 style='margin-top: 30px; vertical-align: middle;'>SISTEMA DE CUSTO E PLANEJAMENTO</h1>", unsafe_allow_html=True)
 
     st.sidebar.title("👋 Bem-vindo")
 
@@ -544,18 +650,15 @@ def main():
 
     with aba3:
         st.title("🏗️ ANÁLISE CUSTO E PLANEJAMENTO")
-        st.markdown(
-            """
+        st.markdown("""
             <div style="text-align: center; margin-top: 100px;">
                 <h2>ESTAMOS EM DESENVOLVIMENTO</h2>
                 <div style="font-size: 50px; color: grey;">👷‍♂️🚧</div>
             </div>
-            """, unsafe_allow_html=True
-        )
+        """, unsafe_allow_html=True)
 
     with aba4:
-          st.title("Efetivo Escritório")
-
+        dashboard_escritorio()
 
 if __name__ == "__main__":
     main()

@@ -534,7 +534,7 @@ def main():
 
     st.sidebar.title("👋 Bem-vindo")
 
-    aba1, aba2, aba3 = st.tabs(["📊 Efetivo", "📈 Produtividade", "🏗️ Análise Custo e Planejamento"])
+    aba1, aba2, aba3 = st.tabs(["📊 Efetivo Obra", "📈 Produtividade", "🏗️ Análise Custo e Planejamento"])
 
     with aba1:
         dashboard_efetivo()

@@ -513,7 +513,8 @@ def dashboard_produtividade():
 
     st.markdown("### 📊 Tabela de Índices e Desvio (Orçado - Real)")
     st.dataframe(df_tabela, use_container_width=True)
-    @st.cache_data
+
+@st.cache_data
 def carregar_dados_escritorio():
     df = pd.read_excel("efetivo_abril.xlsx", sheet_name="EFETIVO", engine="openpyxl")
     df.columns = df.columns.str.strip()
@@ -529,6 +530,7 @@ def carregar_dados_escritorio():
     else:
         df['Repouso Remunerado'] = pd.to_numeric(df['Repouso Remunerado'], errors='coerce').fillna(0)
     return df
+
 
 def dashboard_escritorio():
     st.title("🏢 Análise Efetivo - Escritório Engenharia")
@@ -700,6 +702,7 @@ def main():
 
     with aba4:
         dashboard_escritorio()
+
 
 if __name__ == "__main__":
     main()

@@ -534,7 +534,7 @@ def main():
 
     st.sidebar.title("👋 Bem-vindo")
 
-    aba1, aba2, aba3 = st.tabs(["📊 Efetivo Obra", "📈 Produtividade", "🏗️ Análise Custo e Planejamento"])
+    aba1, aba2, aba3 = st.tabs(["📊 Efetivo Obra", "📈 Produtividade", "🏗️ Análise Custo e Planejamento", "Efetivo Escritório"])
 
     with aba1:
         dashboard_efetivo()
@@ -552,6 +552,10 @@ def main():
             </div>
             """, unsafe_allow_html=True
         )
+
+    with aba4:
+          st.title("Efetivo Escritório")
+
 
 if __name__ == "__main__":
     main()

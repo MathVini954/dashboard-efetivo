@@ -347,7 +347,7 @@ with col1:
         marker=dict(line=dict(color='#FFFFFF', width=1))
     fig_pizza.update_layout(showlegend=True)
     st.plotly_chart(fig_pizza, use_container_width=True)
-
+    )
 with col2:
     # Gráfico de Pizza - Gênero (usando GENÊRO)
     if 'GENÊRO' in pizza_base.columns:

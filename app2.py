@@ -250,10 +250,9 @@ if not df_filtrado.empty and tipo_selecionado != 'TERCEIRO':
 
     if analise_financeira == 'Geral':
         if aplicar_media:
-        # Calcula médias ao invés de totais
-        total_ganhos = df_filtrado[ganhos].sum(axis=1).mean()
-        total_descontos = df_filtrado[descontos].sum(axis=1).mean()
-        remuneracao_liquida = df_filtrado['Remuneração Líquida Folha'].mean()
+    total_ganhos = df_filtrado[ganhos].sum(axis=1).mean()
+    total_descontos = df_filtrado[descontos].sum(axis=1).mean()
+    remuneracao_liquida = df_filtrado['Remuneração Líquida Folha'].mean()
 
         # Criar gráfico cascata manualmente com médias
         fig_cascata = criar_grafico_cascata_media(total_ganhos, total_descontos, remuneracao_liquida)

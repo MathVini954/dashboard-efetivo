@@ -592,7 +592,7 @@ def dashboard_escritorio():
         return
 import requests
 
-   def inferir_genero(nome):
+def inferir_genero(nome):
     primeiro_nome = str(nome).split()[0]
     response = requests.get(f"https://api.genderize.io/?name={primeiro_nome}")
     if response.status_code == 200:

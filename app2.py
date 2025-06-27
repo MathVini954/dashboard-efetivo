@@ -912,7 +912,7 @@ if st.session_state.rerun_count < config["max_reruns"]:
     time.sleep(config["timeout"])
     st.experimental_rerun()
     
-ef main():
+def main():
     st.set_page_config(page_title="Dashboards Inteligentes", layout="wide")
     
     # Estado da aplicação

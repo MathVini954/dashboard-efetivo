@@ -407,15 +407,54 @@ def dashboard_efetivo():
             peso = (prod_numerador / prod_denominador) if prod_denominador > 0 else 0
        elif:
             peso = ((total_extra + reposo_remunerado) / hor_extra_denominador) if hor_extra_denominador > 0 else 0
-               elif tipo_peso == 'Peso do Custo Real':
-        colunas_ganhos = [...]  # coloque aqui as colunas de ganhos
-        colunas_descontos = [...]  # e aqui as de descontos
+               else tipo_peso == 'Peso do Custo Real':
+        colunas_ganhos = ['SALÁRIO',
+    'Periculosidade',
+    'Dias De Atestado',
+    'Gratificação',
+    'Adicional noturno 20%',
+    'Ajuda De Saude',
+    'Auxilio Creche',
+    'Auxilio Educacao',
+    'EQUIP. TRAB/FERRAMENTA',
+    'Auxilio Moradia',
+    'Auxilio Transporte',
+    'Adicional Noturno 20%',
+    'Dev.desc.indevido',
+    'Salário Substituiçã',
+    'Reflexo S/ He Produção',
+    'Reembolso V. Transporte',
+    'Prêmio',
+    'Premio-gestao Desempenho',
+    'Passagem Interior',
+    'Passagem Interior Adiantamento',
+    'Hora Extra 70% - Sabado',
+    'Hora Extra 70% - Semana',
+    'Salário Maternidade',
+    'Adicional H.e S/ Producao 70%',
+    'PRODUÇÃO',
+    'AJUDA DE CUSTO',
+    'Ajuda de Custo Combustivel',
+    'REFLEXO S PRODUÇÃO',
+    'Hora Extra 100%',
+    'Repouso Remunerado',
+    'Periculosidade',
+    'Salário Família',
+    'Insuficiência de Saldo',
+    'Auxilio Transporte Retroativo',
+    'Insuficiência de Saldo']  # coloque aqui as colunas de ganhos
+        colunas_descontos = [  'Atrasos', 'Assistencia Medica', 'Coparticipacao Dependente',
+    'Coparticipacao Titular', 'Desconto Empréstimo', 'Diferenca Plano De Saude',
+    'Desconto Ótica', 'Plano Odontologico', 'Plano Odontologico Dependente',
+    'Pensão Alimentícia  Salário Mínimo', 'Assitência Médica Dependente',
+    'INSS Folha', 'IRRF Folha', 'Pensão Alimentícia',
+    'MENSALIDADE SINDICAL', 'Vale Transporte', 'Correção adiantamento']  # e aqui as de descontos
 
         df_obra = df[df['Obra'] == obra]
 
         ganhos = df_obra[colunas_ganhos].apply(pd.to_numeric, errors='coerce').fillna(0).sum().sum()
         descontos = df_obra[colunas_descontos].apply(pd.to_numeric, errors='coerce').fillna(0).abs().sum().sum()
-        fgts = df_obra[['FGTS em Férias', 'FGTS em Folha']].apply(pd.to_numeric, errors='coerce').fillna(0).sum().sum()
+        fgts = df_obra[['FGTS em Folha']].apply(pd.to_numeric, errors='coerce').fillna(0).sum().sum()
         salario_base = df_obra['Salário Base Mês'].apply(pd.to_numeric, errors='coerce').fillna(0).sum()
 
         numerador = ganhos + descontos + fgts

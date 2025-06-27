@@ -902,15 +902,7 @@ def criar_grafico_detalhado(df_filtrado, colunas, titulo, cor):
 # EXECUÇÃO PRINCIPAL (com a nova aba)
 # ======================================
 
-@st.cache_resource
-def config_inicial():
-    return {"max_reruns": 3, "timeout": 2}
 
-# E usar esses valores no controle
-config = config_inicial()
-if st.session_state.rerun_count < config["max_reruns"]:
-    time.sleep(config["timeout"])
-    st.experimental_rerun()
     
 def main():
     st.set_page_config(page_title="Dashboards Inteligentes", layout="wide")

@@ -186,12 +186,8 @@ def dashboard_efetivo():
 
     df = carregar_dados_efetivo()
     df_terceiros = carregar_terceiros()
-
-    # 🔴 Excluir obra "ESCRITÓRIO ENGENHARIA"
-    df = df[df['Obra'] != 'ESCRITÓRIO ENGENHARIA']
-    df_terceiros = df_terceiros[df_terceiros['Obra'] != 'ESCRITÓRIO ENGENHARIA']
-
     ganhos, descontos = definir_colunas_ganhos_descontos()
+
     df['Total Extra'] = df['Hora Extra 70% - Semana'] + df['Hora Extra 70% - Sabado']
 
     with st.sidebar:
@@ -268,8 +264,7 @@ def dashboard_efetivo():
     pizza_terceiros = pd.DataFrame({'Tipo': ['TERCEIRO'], 'count': [total_terceiros]})
     pizza = pd.concat([pizza_diretos_indiretos, pizza_terceiros], ignore_index=True)
 
-    fig_pizza = px.pie(pizza, names='Tipo', values='count', title='Distribuição por Tipo de Efetivo', hole=0.3)
-    fig_pizza.update_traces(textposition='inside', textinfo='percent+label')
+    fig_pizza = px.pie(pizza, names='Tipo', values='count', title='Distribuição por Tipo de Efetivo')
     st.plotly_chart(fig_pizza, use_container_width=True)
 
     if tipo_selecionado == 'TERCEIRO':
@@ -292,6 +287,7 @@ def dashboard_efetivo():
 
     nome_col_funcao = 'Função' if 'Função' in df_ranking.columns else 'Funçao' if 'Funçao' in df_ranking.columns else None
 
+    # Define colunas a exibir e calcula DSR se necessário
     if tipo_analise == 'Produção' and 'REFLEXO S PRODUÇÃO' in df_ranking.columns:
         df_ranking['DSR'] = df_ranking['REFLEXO S PRODUÇÃO']
         cols_rank = ['Nome do Funcionário', nome_col_funcao, 'Obra', 'Tipo', 'PRODUÇÃO', 'DSR']
@@ -300,19 +296,27 @@ def dashboard_efetivo():
         cols_rank = ['Nome do Funcionário', nome_col_funcao, 'Obra', 'Tipo', coluna_valor]
         valor_coluna = coluna_valor
 
+    # Garante que as colunas existem
     cols_rank = [c for c in cols_rank if c is not None and c in df_ranking.columns]
+
+    # Cópia segura do df_ranking só para o ranking
     df_ranking_limp = df_ranking[cols_rank].copy()
     df_ranking_limp = df_ranking_limp[pd.to_numeric(df_ranking_limp[valor_coluna], errors='coerce').notna()]
     df_ranking_limp = df_ranking_limp[df_ranking_limp[valor_coluna] > 0]
+
+    # Ordena
     ranking = df_ranking_limp.sort_values(by=valor_coluna, ascending=False)
 
+    # Mostra total
     valor_total = df_ranking_limp[valor_coluna].sum()
     st.markdown(f"### 📋 Top Funcionários por **{tipo_analise}**")
     st.markdown(f"**Total em {tipo_analise}:** R$ {valor_total:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
 
+    # Filtra quantidade
     if qtd_linhas != 'Todos':
         ranking = ranking.head(int(qtd_linhas))
 
+    # Formata valores
     def formatar_valor(x):
         return f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
 
@@ -326,6 +330,7 @@ def dashboard_efetivo():
     if nome_col_funcao and nome_col_funcao in df_ranking.columns:
         graf_funcao = df_ranking[nome_col_funcao].value_counts().reset_index()
         graf_funcao.columns = [nome_col_funcao, 'Qtd']
+
         fig_bar = px.bar(
             graf_funcao,
             x=nome_col_funcao,
@@ -339,13 +344,20 @@ def dashboard_efetivo():
 
     st.divider()
 
+    # ---- INÍCIO da parte do Peso Financeiro ----
     todas_obras = sorted(df['Obra'].astype(str).unique())
+
     peso_lista = []
     for obra in todas_obras:
+        # Base da obra
         df_obra = df[df['Obra'] == obra]
+
+        # Produção: só DIRETO
         df_direto = df_obra[df_obra['Tipo'] == 'DIRETO']
         prod_numerador = df_direto['PRODUÇÃO'].sum() + df_direto['REFLEXO S PRODUÇÃO'].sum()
         prod_denominador = df_direto['Remuneração Líquida Folha'].sum() + df_direto['Adiantamento'].sum()
+
+        # Hora Extra: DIRETO + INDIRETO
         df_dir_ind = df_obra[df_obra['Tipo'].isin(['DIRETO', 'INDIRETO'])]
         total_extra = df_dir_ind['Total Extra'].sum()
         reposo_remunerado = df_dir_ind['Repouso Remunerado'].sum()
@@ -360,7 +372,11 @@ def dashboard_efetivo():
 
     df_peso = pd.DataFrame(peso_lista)
     df_peso = df_peso.sort_values(by='Peso Financeiro', ascending=False)
+
+    # Coluna para controlar cor: True se obra está selecionada no filtro, False se não
     df_peso['Selecionada'] = df_peso['Obra'].apply(lambda x: x in obras_selecionadas)
+
+    # Define cores: azul escuro para selecionadas, azul claro para não selecionadas
     colors = df_peso['Selecionada'].map({True: 'darkblue', False: 'lightblue'})
 
     fig_peso = px.bar(
@@ -372,6 +388,7 @@ def dashboard_efetivo():
         text=df_peso['Peso Financeiro'].apply(lambda x: f"{x:.2%}"),
     )
 
+    # Aplica as cores manualmente
     fig_peso.update_traces(
         marker_color=colors,
         textposition='outside',
@@ -386,7 +403,7 @@ def dashboard_efetivo():
     )
 
     st.plotly_chart(fig_peso, use_container_width=True)
-
+    # ---- FIM da parte do Peso Financeiro ----
 
 # Dicionário para mapear meses em inglês para abreviações em português
 MES_POR_PT = {
@@ -514,249 +531,10 @@ def dashboard_produtividade():
     st.markdown("### 📊 Tabela de Índices e Desvio (Orçado - Real)")
     st.dataframe(df_tabela, use_container_width=True)
 
-@st.cache_data
-def carregar_dados_escritorio():
-    df = pd.read_excel("efetivo_abril.xlsx", sheet_name="EFETIVO", engine="openpyxl")
-    df.columns = df.columns.str.strip()
-    df = df[df['Obra'] == 'ESCRITÓRIO ENGENHARIA']
-
-    df['Hora Extra 70% - Semana'] = pd.to_numeric(df['Hora Extra 70% - Semana'], errors='coerce').fillna(0)
-    df['Hora Extra 70% - Sabado'] = pd.to_numeric(df['Hora Extra 70% - Sabado'], errors='coerce').fillna(0)
-    if 'Repouso Remunerado' not in df.columns:
-        df['Repouso Remunerado'] = 0
-    else:
-        df['Repouso Remunerado'] = pd.to_numeric(df['Repouso Remunerado'], errors='coerce').fillna(0)
-    df['Remuneração Líquida Folha'] = pd.to_numeric(df['Remuneração Líquida Folha'], errors='coerce').fillna(0)
-    df['Adiantamento'] = pd.to_numeric(df['Adiantamento'], errors='coerce').fillna(0)
-    return df
-
-def definir_colunas_ganhos_descontos():
-    ganhos = [
-        'SALÁRIO', 'Periculosidade', 'Dias De Atestado', 'Gratificação', 'Adicional noturno 20%',
-        'Ajuda De Saude', 'Auxilio Creche', 'Auxilio Educacao', 'EQUIP. TRAB/FERRAMENTA', 'Auxilio Moradia',
-        'Auxilio Transporte', 'Adicional Noturno 20%', 'Dev.desc.indevido', 'Salário Substituiçã',
-        'Reflexo S/ He Produção', 'Reembolso V. Transporte', 'Prêmio', 'Premio-gestao Desempenho',
-        'Passagem Interior', 'Passagem Interior Adiantamento', 'Hora Extra 70% - Sabado',
-        'Hora Extra 70% - Semana', 'Salário Maternidade', 'Adicional H.e S/ Producao 70%', 'PRODUÇÃO',
-        'AJUDA DE CUSTO', 'Ajuda de Custo Combustivel', 'REFLEXO S PRODUÇÃO', 'Hora Extra 100%',
-        'Repouso Remunerado', 'Periculosidade', 'Salário Família', 'Insuficiência de Saldo',
-        'Auxilio Transporte Retroativo', 'Insuficiência de Saldo'
-    ]
-    descontos = [
-        'Atrasos', 'Faltas em Dias', 'Assistencia Medica', 'Coparticipacao Dependente', 'Coparticipacao Titular',
-        'Desconto Empréstimo', 'Diferenca Plano De Saude', 'Desconto Ótica', 'Plano Odontologico',
-        'Plano Odontologico Dependente', 'Pensão Alimentícia  Salário Mínimo', 'Assitência Médica Dependente',
-        'Dsr sobre falta', 'INSS Folha', 'IRRF Folha', 'Pensão Alimentícia', 'DESCONTO DE ALIMENTAÇÃO',
-        'MENSALIDADE SINDICAL', 'Vale Transporte', 'Correção adiantamento'
-    ]
-    return ganhos, descontos
-
-def criar_grafico_cascata(df_filtrado, ganhos, descontos):
-    total_ganhos = 0
-    total_descontos = 0
-
-    for col in ganhos:
-        if col in df_filtrado.columns:
-            total_ganhos += pd.to_numeric(df_filtrado[col], errors='coerce').fillna(0).sum()
-    for col in descontos:
-        if col in df_filtrado.columns:
-            total_descontos += pd.to_numeric(df_filtrado[col], errors='coerce').fillna(0).sum()
-
-    remuneracao_liquida = total_ganhos - total_descontos
-
-    categorias = ['Ganhos', 'Descontos', 'Remuneração Líquida']
-
-    fig = go.Figure(go.Waterfall(
-        name="Análise Financeira",
-        orientation="v",
-        measure=["relative", "relative", "total"],
-        x=categorias,
-        y=[total_ganhos, -total_descontos, remuneracao_liquida],
-        text=[f"R$ {total_ganhos:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."),
-              f"R$ {total_descontos:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."),
-              f"R$ {remuneracao_liquida:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")],
-        textposition="outside",
-        increasing={"marker":{"color":"green"}},
-        decreasing={"marker":{"color":"red"}},
-        totals={"marker":{"color":"blue"}}
-    ))
-
-    fig.update_layout(
-        title="Análise Financeira - Ganhos vs Descontos",
-        showlegend=False,
-        yaxis_title="Valor (R$)",
-        xaxis_title="Categoria"
-    )
-    return fig, total_ganhos, total_descontos, remuneracao_liquida
-
-def criar_grafico_detalhado(df_filtrado, colunas, titulo, cor):
-    dados = []
-    for col in colunas:
-        if col in df_filtrado.columns:
-            valor = pd.to_numeric(df_filtrado[col], errors='coerce').fillna(0).sum()
-            if valor != 0:
-                dados.append({'Categoria': col, 'Valor': valor})
-    if not dados:
-        return None
-    df_detalhado = pd.DataFrame(dados).sort_values('Valor', ascending=False)
-    fig = px.bar(df_detalhado, x='Categoria', y='Valor', title=titulo,
-                 color_discrete_sequence=[cor],
-                 text=df_detalhado['Valor'].apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")))
-    fig.update_traces(textposition='outside')
-    fig.update_layout(xaxis_tickangle=-45)
-    return fig
-
-def dashboard_escritorio():
-    st.title("📊 Análise de Efetivo - Escritório")
-
-    df = carregar_dados_efetivo()
-    df = df[df['Obra'] == 'ESCRITÓRIO ENGENHARIA']
-
-    ganhos, descontos = definir_colunas_ganhos_descontos()
-    df['Total Extra'] = df['Hora Extra 70% - Semana'] + df['Hora Extra 70% - Sabado']
-
-    # Lista de departamentos para filtro
-    lista_departamentos = sorted(df['Departamento'].dropna().unique())
-    departamentos_selecionados = st.multiselect("Departamento(s):", lista_departamentos, default=lista_departamentos, key="multiselect_departamentos_escritorio")
-
-    tipo_analise = st.radio(
-        "Tipo de Análise da Tabela:",
-        ['Produção', 'Hora Extra Semana', 'Hora Extra Sábado'],
-        key="radio_tipo_analise_escritorio"
-    )
-
-    qtd_linhas = st.radio(
-        "Qtd. de Funcionários na Tabela:",
-        ['5', '10', '20', 'Todos'],
-        horizontal=True,
-        key="radio_qtd_linhas_escritorio"
-    )
-
-    tipo_peso = st.radio(
-        "Tipo de Peso (Gráficos Novos):",
-        ['Peso sobre Produção', 'Peso sobre Hora Extra'],
-        key="radio_tipo_peso_escritorio"
-    )
-
-    st.divider()
-
-    st.header("💰 Análise Financeira")
-    analise_financeira = st.radio(
-        "Análise Financeira:",
-        ['Geral', 'Ganhos', 'Descontos'],
-        key="radio_analise_financeira_escritorio"
-    )
-
-    # Filtra departamento selecionado
-    df_filtrado = df[df['Departamento'].isin(departamentos_selecionados)]
-
-    # Continua o resto do processamento e exibição da análise financeira, gráficos, tabelas, etc.
-    # Por exemplo:
-
-    if not df_filtrado.empty:
-        if analise_financeira == 'Geral':
-            fig_cascata, total_ganhos, total_descontos, remuneracao_liquida = criar_grafico_cascata(df_filtrado, ganhos, descontos)
-            st.plotly_chart(fig_cascata, use_container_width=True)
-
-            col_fin1, col_fin2, col_fin3 = st.columns(3)
-            col_fin1.metric("💚 Total Ganhos", f"R$ {total_ganhos:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
-            col_fin2.metric("💸 Total Descontos", f"R$ {total_descontos:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
-            col_fin3.metric("💰 Remuneração Líquida", f"R$ {remuneracao_liquida:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
-        elif analise_financeira == 'Ganhos':
-            fig_ganhos = criar_grafico_detalhado(df_filtrado, ganhos, "Detalhamento dos Ganhos", "green")
-            if fig_ganhos:
-                st.plotly_chart(fig_ganhos, use_container_width=True)
-            else:
-                st.warning("Nenhum dado de ganhos encontrado para os filtros selecionados.")
-        elif analise_financeira == 'Descontos':
-            fig_descontos = criar_grafico_detalhado(df_filtrado, descontos, "Detalhamento dos Descontos", "red")
-            if fig_descontos:
-                st.plotly_chart(fig_descontos, use_container_width=True)
-            else:
-                st.warning("Nenhum dado de descontos encontrado para os filtros selecionados.")
-
-    # Métricas principais
-    total_funcionarios = len(df_filtrado)
-    st.metric("👥 Total Funcionários", total_funcionarios)
-    st.divider()
-
-    # Análise Financeira
-    if not df_filtrado.empty:
-        st.markdown("### 💰 Análise Financeira")
-
-        if analise_financeira == 'Geral':
-            fig_cascata, total_ganhos, total_descontos, remuneracao_liquida = criar_grafico_cascata(df_filtrado, ganhos, descontos)
-            st.plotly_chart(fig_cascata, use_container_width=True)
-
-            col1, col2, col3 = st.columns(3)
-            col1.metric("💚 Total Ganhos", f"R$ {total_ganhos:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
-            col2.metric("💸 Total Descontos", f"R$ {total_descontos:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
-            col3.metric("💰 Remuneração Líquida", f"R$ {remuneracao_liquida:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
-
-        elif analise_financeira == 'Ganhos':
-            fig_ganhos = criar_grafico_detalhado(df_filtrado, ganhos, "Detalhamento dos Ganhos", "green")
-            if fig_ganhos:
-                st.plotly_chart(fig_ganhos, use_container_width=True)
-            else:
-                st.warning("Nenhum dado de ganhos encontrado para os filtros selecionados.")
-
-        elif analise_financeira == 'Descontos':
-            fig_descontos = criar_grafico_detalhado(df_filtrado, descontos, "Detalhamento dos Descontos", "red")
-            if fig_descontos:
-                st.plotly_chart(fig_descontos, use_container_width=True)
-            else:
-                st.warning("Nenhum dado de descontos encontrado para os filtros selecionados.")
-        st.divider()
-
-    # Ranking por tipo de análise
-    coluna_valor = {
-        'Produção': 'PRODUÇÃO',
-        'Hora Extra Semana': 'Hora Extra 70% - Semana',
-        'Hora Extra Sábado': 'Hora Extra 70% - Sabado'
-    }[tipo_analise]
-
-    df_ranking = df_filtrado.copy()
-
-    nome_col_funcao = 'Função' if 'Função' in df_ranking.columns else 'Funçao' if 'Funçao' in df_ranking.columns else None
-
-    cols_rank = ['Nome do Funcionário', nome_col_funcao, 'Departamento', coluna_valor]
-    cols_rank = [c for c in cols_rank if c is not None and c in df_ranking.columns]
-
-    df_ranking_limp = df_ranking[cols_rank].copy()
-    df_ranking_limp = df_ranking_limp[pd.to_numeric(df_ranking_limp[coluna_valor], errors='coerce').notna()]
-    df_ranking_limp = df_ranking_limp[df_ranking_limp[coluna_valor] > 0]
-
-    ranking = df_ranking_limp.sort_values(by=coluna_valor, ascending=False)
-
-    valor_total = df_ranking_limp[coluna_valor].sum()
-    st.markdown(f"### 📋 Top Funcionários por **{tipo_analise}**")
-    st.markdown(f"**Total em {tipo_analise}:** R$ {valor_total:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
-
-    if qtd_linhas != 'Todos':
-        ranking = ranking.head(int(qtd_linhas))
-
-    ranking[coluna_valor] = ranking[coluna_valor].apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
-
-    st.dataframe(ranking, use_container_width=True)
-    st.divider()
-
-    # Gráfico por função
-    if nome_col_funcao:
-        graf_funcao = df_ranking[nome_col_funcao].value_counts().reset_index()
-        graf_funcao.columns = [nome_col_funcao, 'Qtd']
-        fig_bar = px.bar(
-            graf_funcao,
-            x=nome_col_funcao,
-            y='Qtd',
-            color='Qtd',
-            color_continuous_scale='Blues',
-            title='Quantidade por Função',
-            labels={'Qtd': 'Quantidade', nome_col_funcao: 'Função'}
-        )
-        st.plotly_chart(fig_bar, use_container_width=True)
 
 
-# Adicionar ao main()
+
+# ---------- Execução Principal ----------
 def main():
     st.set_page_config(page_title="Dashboards de Obra", layout="wide")
 
@@ -766,11 +544,14 @@ def main():
         st.image("logotipo.png", width=400)
 
     with col2:
-        st.markdown("<h1 style='margin-top: 30px; vertical-align: middle;'>SISTEMA DE CUSTO E PLANEJAMENTO</h1>", unsafe_allow_html=True)
+        st.markdown(
+            "<h1 style='margin-top: 30px; vertical-align: middle;'>SISTEMA DE CUSTO E PLANEJAMENTO</h1>",
+            unsafe_allow_html=True,
+        )
 
     st.sidebar.title("👋 Bem-vindo")
 
-    aba1, aba2, aba3, aba4 = st.tabs(["📊 Efetivo Obra", "📈 Produtividade", "🏗️ Análise Custo e Planejamento", "Efetivo Escritório"])
+    aba1, aba2, aba3 = st.tabs(["📊 Efetivo", "📈 Produtividade", "🏗️ Análise Custo e Planejamento"])
 
     with aba1:
         dashboard_efetivo()
@@ -780,16 +561,14 @@ def main():
 
     with aba3:
         st.title("🏗️ ANÁLISE CUSTO E PLANEJAMENTO")
-        st.markdown("""
+        st.markdown(
+            """
             <div style="text-align: center; margin-top: 100px;">
                 <h2>ESTAMOS EM DESENVOLVIMENTO</h2>
                 <div style="font-size: 50px; color: grey;">👷‍♂️🚧</div>
             </div>
-        """, unsafe_allow_html=True)
-
-    with aba4:
-        dashboard_escritorio()
-
+            """, unsafe_allow_html=True
+        )
 
 if __name__ == "__main__":
-    main()
+    main() 

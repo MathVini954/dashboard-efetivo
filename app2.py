@@ -925,7 +925,6 @@ def main():
         opcoes_abas = {
             "📊": "efetivo",
             "📈": "produtividade",
-            "🏗️": "custo",
             "🏢": "escritorio"
         }
         
@@ -944,9 +943,7 @@ def main():
             dashboard_escritorio()
         elif st.session_state.aba_atual == "📈":
             dashboard_produtividade()
-        else:
-            st.title("🏗️ ANÁLISE CUSTO E PLANEJAMENTO")
-            st.markdown("""...""")
+
             
     except Exception as e:
         st.error(f"Erro ao carregar o dashboard: {str(e)}")

@@ -114,7 +114,7 @@ def criar_grafico_cascata(df_filtrado, ganhos, descontos):
             total_descontos -= pd.to_numeric(df_filtrado[col], errors='coerce').fillna(0).sum()
     
     # Remuneração líquida
-    remuneracao_liquida = total_ganhos - total_descontos
+    remuneracao_liquida = total_ganhos + total_descontos
     
     # Dados para o gráfico de cascata
     categorias = ['Ganhos', 'Descontos', 'Remuneração Líquida']
@@ -817,7 +817,7 @@ def criar_grafico_cascata(df_filtrado, ganhos, descontos):
     """Cria o gráfico de cascata (compartilhado)"""
     total_ganhos = sum(pd.to_numeric(df_filtrado[col], errors='coerce').fillna(0).sum() for col in ganhos if col in df_filtrado.columns)
     total_descontos = sum(pd.to_numeric(df_filtrado[col], errors='coerce').fillna(0).sum() for col in descontos if col in df_filtrado.columns)
-    remuneracao_liquida = total_ganhos - total_descontos
+    remuneracao_liquida = total_ganhos + total_descontos
 
     fig = go.Figure(go.Waterfall(
         name="Fluxo Financeiro",

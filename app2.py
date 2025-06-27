@@ -249,7 +249,7 @@ if not df_filtrado.empty and tipo_selecionado != 'TERCEIRO':
     aplicar_media = funcao_selecionada != "Todas"
 
     if analise_financeira == 'Geral':
-    if aplicar_media:
+        if aplicar_media:
         # Calcula médias ao invés de totais
         total_ganhos = df_filtrado[ganhos].sum(axis=1).mean()
         total_descontos = df_filtrado[descontos].sum(axis=1).mean()

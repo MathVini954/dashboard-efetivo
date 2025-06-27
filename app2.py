@@ -8,41 +8,26 @@ import hmac
 import plotly.graph_objects as go
 import plotly.express as px
 
-# Digite sua senha aqui (exemplo: "minhasenha123")
-senha = "digite_a_senha_que_voce_quer_aqui"  
-hash_gerado = hashlib.sha256(senha.encode()).hexdigest()
-print(f"Hash para colocar no código: {hash_gerado}")
-# Configuração da página (opcional)
-st.set_page_config(page_title="App Privado", layout="wide")
+# Configuração da senha (altere para a senha que desejar)
+SENHA_CORRETA = "sua_senha_secreta_123"  # 👈 Modifique aqui!
 
-def check_password():
-    """Verifica a senha com hash seguro"""
-    if st.session_state.get("password_correct", False):
-        return True
+# Sistema de autenticação
+def verificar_senha():
+    if "autenticado" not in st.session_state:
+        st.session_state.autenticado = False
     
-    # Substitua este hash pelo que você gerou no passo 1
-    correct_hash = "aqui_vai_seu_hash_gerado_no_passo_1"
-    
-    password_placeholder = st.empty()
-    input_password = password_placeholder.text_input(
-        "Digite a senha para acessar:", 
-        type="password", 
-        key="password_input"
-    )
-    
-    if input_password:
-        input_hash = hashlib.sha256(input_password.encode()).hexdigest()
-        if hmac.compare_digest(input_hash, correct_hash):
-            st.session_state["password_correct"] = True
-            password_placeholder.empty()  # Remove o campo de senha
-            return True
-        else:
-            st.error("❌ Senha incorreta")
-            return False
-    return False
+    if not st.session_state.autenticado:
+        senha = st.text_input("Digite a senha de acesso:", type="password", key="senha_input")
+        if senha:
+            if senha == SENHA_CORRETA:
+                st.session_state.autenticado = True
+                st.rerun()  # Recarrega o app após autenticação
+            else:
+                st.error("Senha incorreta! Tente novamente.")
+        st.stop()  # Impede o acesso ao restante do app
 
-if not check_password():
-    st.stop() 
+# Verifica a senha
+verificar_senha()
 
 @st.cache_data
 def carregar_dados_efetivo():

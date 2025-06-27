@@ -572,6 +572,15 @@ def definir_colunas_ganhos_descontos():
         'Correção adiantamento'
     ]
     return ganhos, descontos
+    
+def inferir_genero(nome):
+    if pd.isna(nome) or not isinstance(nome, str):
+        return "Não definido"
+    primeiro_nome = nome.strip().split()[0].upper()
+    if primeiro_nome.endswith("A"):
+        return "Mulher"
+    else:
+        return "Homem"
 
 # ======================================
 # DASHBOARD ESCRITÓRIO (NOVO)
@@ -581,61 +590,38 @@ def definir_colunas_ganhos_descontos():
 def dashboard_escritorio():
     st.title("🏢 Análise de Efetivo - Escritório")
 
-    # Carrega dados
     df = carregar_dados_efetivo()
-    
-    # Filtra apenas escritório engenharia
     df = df[df['Obra'] == 'ESCRITÓRIO ENGENHARIA']
-    
-    # Verifica se existe coluna Departamento
+
     if 'Departamento' not in df.columns:
         st.error("Coluna 'Departamento' não encontrada!")
         return
 
     lista_departamentos = sorted(df['Departamento'].astype(str).unique())
-    lista_funcionarios = sorted(df['Nome do Funcionário'].unique())  # Lista para o novo filtro
-    
     ganhos, descontos = definir_colunas_ganhos_descontos()
     df['Total Extra'] = df['Hora Extra 70% - Semana'] + df['Hora Extra 70% - Sabado']
 
-    with st.sidebar:
+   with st.sidebar:
         st.header("🔍 Filtros - Escritório")
-        departamentos_selecionados = st.multiselect(
-            "Departamentos:", 
-            lista_departamentos, 
-            default=lista_departamentos,
-            key="escritorio_deptos"
-        )
-        tipo_selecionado = st.radio(
-            "Tipo:", 
-            ['Todos', 'DIRETO', 'INDIRETO'],
-            horizontal=True,
-            key="escritorio_tipo"
-        )
-        tipo_analise = st.radio(
-            "Tipo de Análise da Tabela:", 
-            ['Produção', 'Hora Extra Semana', 'Hora Extra Sábado'],
-            key="escritorio_analise"
-        )
-        qtd_linhas = st.radio(
-            "Qtd. de Funcionários na Tabela:", 
-            ['5', '10', '20', 'Todos'], 
-            horizontal=True,
-            key="escritorio_qtd"
-        )
-        tipo_peso = st.radio(
-            "Tipo de Peso:", 
-            ['Peso sobre Produção', 'Peso sobre Hora Extra'],
-            key="escritorio_peso"
-        )
-        
-        st.divider()
-        st.header("💰 Análise Financeira")
-        analise_financeira = st.radio(
-            "Análise:", 
-            ['Geral', 'Ganhos', 'Descontos'],
-            key="escritorio_financeira"
-        )
+        departamentos_selecionados = st.multiselect("Departamentos:", lista_departamentos, default=lista_departamentos)
+
+    df_filtrado = df[df['Departamento'].isin(departamentos_selecionados)]
+
+    # Gráfico de Gênero
+    df_genero = df_filtrado.copy()
+    df_genero['Gênero'] = df_genero['Nome do Funcionário'].apply(inferir_genero)
+    genero_contagem = df_genero['Gênero'].value_counts().reset_index()
+    genero_contagem.columns = ['Gênero', 'Quantidade']
+
+    fig_genero = px.pie(
+        genero_contagem,
+        names='Gênero',
+        values='Quantidade',
+        title='Distribuição por Gênero (Inferido pelo Nome)',
+        hole=0.3
+    )
+    fig_genero.update_traces(textposition='inside', textinfo='percent+label')
+    st.plotly_chart(fig_genero, use_container_width=True)
 
     # Filtra dados por departamento e tipo
     df_filtrado = df[df['Departamento'].isin(departamentos_selecionados)]

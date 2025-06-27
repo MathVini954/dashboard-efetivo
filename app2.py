@@ -244,24 +244,37 @@ def dashboard_efetivo():
 
     # Análise Financeira
     if not df_filtrado.empty and tipo_selecionado != 'TERCEIRO':
-        st.markdown("### 💰 Análise Financeira")
+    st.markdown("### 💰 Análise Financeira")
 
-        # Média ou total dependendo do filtro de função
-        aplicar_media = funcao_selecionada != "Todas"
+    aplicar_media = funcao_selecionada != "Todas"
 
-        if analise_financeira == 'Geral':
+    if analise_financeira == 'Geral':
+        if aplicar_media:
+            # Calcula médias ao invés de totais
+            total_ganhos = df_filtrado[ganhos].sum(axis=1).mean()
+            total_descontos = df_filtrado[descontos].sum(axis=1).mean()
+            remuneracao_liquida = df_filtrado['Remuneração Líquida Folha'].mean()
+
+            # Criar gráfico cascata manualmente com médias
+            fig_cascata = criar_grafico_cascata_media(total_ganhos, total_descontos, remuneracao_liquida)
+        else:
+            # Comportamento normal, totais e gráfico normal
             fig_cascata, total_ganhos, total_descontos, remuneracao_liquida = criar_grafico_cascata(df_filtrado, ganhos, descontos)
-            st.plotly_chart(fig_cascata, use_container_width=True)
+        
+        st.plotly_chart(fig_cascata, use_container_width=True)
 
-            if aplicar_media:
-                total_ganhos = df_filtrado[ganhos].sum(axis=1).mean()
-                total_descontos = df_filtrado[descontos].sum(axis=1).mean()
-                remuneracao_liquida = df_filtrado['Remuneração Líquida Folha'].mean()
+        # Métricas no topo
+        col_fin1, col_fin2, col_fin3 = st.columns(3)
+        if aplicar_media:
+            col_fin1.metric("💚 Média Ganhos", f"R$ {total_ganhos:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+            col_fin2.metric("💸 Média Descontos", f"R$ {total_descontos:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+            col_fin3.metric("💰 Média Remuneração Líquida", f"R$ {remuneracao_liquida:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+        else:
+            col_fin1.metric("💚 Total Ganhos", f"R$ {total_ganhos:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+            col_fin2.metric("💸 Total Descontos", f"R$ {total_descontos:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+            col_fin3.metric("💰 Remuneração Líquida", f"R$ {remuneracao_liquida:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
 
-            col_fin1, col_fin2, col_fin3 = st.columns(3)
-            col_fin1.metric("💚 Média Ganhos" if aplicar_media else "💚 Total Ganhos", f"R$ {total_ganhos:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
-            col_fin2.metric("💸 Média Descontos" if aplicar_media else "💸 Total Descontos", f"R$ {total_descontos:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
-            col_fin3.metric("💰 Média Remuneração Líquida" if aplicar_media else "💰 Remuneração Líquida", f"R$ {remuneracao_liquida:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+    # Código para Ganhos e Descontos detalhados permanece igual
 
         elif analise_financeira == 'Ganhos':
             fig_ganhos = criar_grafico_detalhado(df_filtrado, ganhos, "Detalhamento dos Ganhos", "green")

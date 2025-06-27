@@ -67,6 +67,7 @@ def definir_colunas_ganhos_descontos():
     'Periculosidade',
     'Salário Família',
     'Insuficiência de Saldo',
+    'Auxilio Transporte Retroativo',
     'Insuficiência de Saldo'
     ]
     
@@ -201,14 +202,7 @@ def dashboard_efetivo():
         tipo_analise = st.radio("Tipo de Análise da Tabela:", ['Produção', 'Hora Extra Semana', 'Hora Extra Sábado'])
         qtd_linhas = st.radio("Qtd. de Funcionários na Tabela:", ['5', '10', '20', 'Todos'], horizontal=True)
         tipo_peso = st.radio("Tipo de Peso (Gráficos Novos):", ['Peso sobre Produção', 'Peso sobre Hora Extra'])
-
-        # Novo filtro por função
-        if 'Função' in df.columns:
-            lista_funcoes = sorted(df['Função'].astype(str).dropna().unique())
-            funcao_selecionada = st.selectbox("Função (opcional):", ["Todas"] + lista_funcoes)
-        else:
-            funcao_selecionada = "Todas"
-
+        
         st.divider()
         st.header("💰 Análise Financeira")
         analise_financeira = st.radio("Análise Financeira:", ['Geral', 'Ganhos', 'Descontos'])
@@ -223,10 +217,6 @@ def dashboard_efetivo():
             df_filtrado = df_filtrado[df_filtrado['Tipo'] == tipo_selecionado]
         elif tipo_selecionado == 'TERCEIRO':
             df_filtrado = df_filtrado[0:0]  # vazio, terceiros estão em outro DF
-
-    # Filtra por função (novo)
-    if funcao_selecionada != "Todas" and 'Função' in df_filtrado.columns:
-        df_filtrado = df_filtrado[df_filtrado['Função'] == funcao_selecionada]
 
     # Métricas principais
     direto_count = len(df[df['Obra'].isin(obras_selecionadas) & (df['Tipo'] == 'DIRETO')])
@@ -243,65 +233,44 @@ def dashboard_efetivo():
     st.divider()
 
     # Análise Financeira
-if not df_filtrado.empty and tipo_selecionado != 'TERCEIRO':
-    st.markdown("### 💰 Análise Financeira")
+    if not df_filtrado.empty and tipo_selecionado != 'TERCEIRO':
+        st.markdown("### 💰 Análise Financeira")
+        
+        if analise_financeira == 'Geral':
+            fig_cascata, total_ganhos, total_descontos, remuneracao_liquida = criar_grafico_cascata(df_filtrado, ganhos, descontos)
+            st.plotly_chart(fig_cascata, use_container_width=True)
+            
+            col_fin1, col_fin2, col_fin3 = st.columns(3)
+            col_fin1.metric("💚 Total Ganhos", f"R$ {total_ganhos:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+            col_fin2.metric("💸 Total Descontos", f"R$ {total_descontos:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+            col_fin3.metric("💰 Remuneração Líquida", f"R$ {remuneracao_liquida:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+            
+        elif analise_financeira == 'Ganhos':
+            fig_ganhos = criar_grafico_detalhado(df_filtrado, ganhos, "Detalhamento dos Ganhos", "green")
+            if fig_ganhos:
+                st.plotly_chart(fig_ganhos, use_container_width=True)
+            else:
+                st.warning("Nenhum dado de ganhos encontrado para os filtros selecionados.")
+                
+        elif analise_financeira == 'Descontos':
+            fig_descontos = criar_grafico_detalhado(df_filtrado, descontos, "Detalhamento dos Descontos", "red")
+            if fig_descontos:
+                st.plotly_chart(fig_descontos, use_container_width=True)
+            else:
+                st.warning("Nenhum dado de descontos encontrado para os filtros selecionados.")
+        
+        st.divider()
 
-    aplicar_media = funcao_selecionada != "Todas"
+    # Pizza - Distribuição por tipo
+    pizza_base = df[df['Obra'].isin(obras_selecionadas)]
+    pizza_diretos_indiretos = pizza_base['Tipo'].value_counts().reset_index()
+    pizza_diretos_indiretos.columns = ['Tipo', 'count']
+    pizza_terceiros = pd.DataFrame({'Tipo': ['TERCEIRO'], 'count': [total_terceiros]})
+    pizza = pd.concat([pizza_diretos_indiretos, pizza_terceiros], ignore_index=True)
 
-if analise_financeira == 'Geral':
-    if aplicar_media:
-        # Calcula médias ao invés de totais
-        total_ganhos = df_filtrado[ganhos].sum(axis=1).mean()
-        total_descontos = df_filtrado[descontos].sum(axis=1).mean()
-        remuneracao_liquida = df_filtrado['Remuneração Líquida Folha'].mean()
-
-        # Criar gráfico cascata manualmente com médias
-        fig_cascata = criar_grafico_cascata_media(total_ganhos, total_descontos, remuneracao_liquida)
-    else:
-        # Comportamento normal, totais e gráfico normal
-        fig_cascata, total_ganhos, total_descontos, remuneracao_liquida = criar_grafico_cascata(df_filtrado, ganhos, descontos)
-    
-    st.plotly_chart(fig_cascata, use_container_width=True)
-
-    # Métricas no topo
-    col_fin1, col_fin2, col_fin3 = st.columns(3)
-    if aplicar_media:
-        col_fin1.metric("💚 Média Ganhos", f"R$ {total_ganhos:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
-        col_fin2.metric("💸 Média Descontos", f"R$ {total_descontos:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
-        col_fin3.metric("💰 Média Remuneração Líquida", f"R$ {remuneracao_liquida:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
-    else:
-        col_fin1.metric("💚 Total Ganhos", f"R$ {total_ganhos:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
-        col_fin2.metric("💸 Total Descontos", f"R$ {total_descontos:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
-        col_fin3.metric("💰 Remuneração Líquida", f"R$ {remuneracao_liquida:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
-
-elif analise_financeira == 'Ganhos':
-    fig_ganhos = criar_grafico_detalhado(df_filtrado, ganhos, "Detalhamento dos Ganhos", "green")
-    if fig_ganhos:
-        st.plotly_chart(fig_ganhos, use_container_width=True)
-    else:
-        st.warning("Nenhum dado de ganhos encontrado para os filtros selecionados.")
-
-elif analise_financeira == 'Descontos':
-    fig_descontos = criar_grafico_detalhado(df_filtrado, descontos, "Detalhamento dos Descontos", "red")
-    if fig_descontos:
-        st.plotly_chart(fig_descontos, use_container_width=True)
-    else:
-        st.warning("Nenhum dado de descontos encontrado para os filtros selecionados.")
-
-st.divider()
-
-
-
-# Pizza - Distribuição por tipo
-pizza_base = df[df['Obra'].isin(obras_selecionadas)]
-pizza_diretos_indiretos = pizza_base['Tipo'].value_counts().reset_index()
-pizza_diretos_indiretos.columns = ['Tipo', 'count']
-pizza_terceiros = pd.DataFrame({'Tipo': ['TERCEIRO'], 'count': [total_terceiros]})
-pizza = pd.concat([pizza_diretos_indiretos, pizza_terceiros], ignore_index=True)
-
-fig_pizza = px.pie(pizza, names='Tipo', values='count', title='Distribuição por Tipo de Efetivo', hole=0.3)
-fig_pizza.update_traces(textposition='inside', textinfo='percent+label')
-st.plotly_chart(fig_pizza, use_container_width=True)
+    fig_pizza = px.pie(pizza, names='Tipo', values='count', title='Distribuição por Tipo de Efetivo', hole=0.3)
+    fig_pizza.update_traces(textposition='inside', textinfo='percent+label')
+    st.plotly_chart(fig_pizza, use_container_width=True)
 
     if tipo_selecionado == 'TERCEIRO':
         st.divider()

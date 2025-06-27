@@ -924,7 +924,7 @@ def main():
             options=["📊 Efetivo Obra", "📈 Produtividade", "🏗️ Análise Custo", "🏢 Efetivo Escritório"],
             key="seletor_abas",
             index=["📊 Efetivo Obra", "📈 Produtividade", "🏗️ Análise Custo", "🏢 Efetivo Escritório"].index(st.session_state.aba_atual)
-        
+        )
         # Atualiza o estado imediatamente
         if nova_aba != st.session_state.aba_atual:
             st.session_state.aba_atual = nova_aba

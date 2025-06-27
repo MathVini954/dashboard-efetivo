@@ -7,7 +7,10 @@ import hashlib
 import plotly.graph_objects as go
 import plotly.express as px
 
-
+# Digite sua senha aqui (exemplo: "minhasenha123")
+senha = "digite_a_senha_que_voce_quer_aqui"  
+hash_gerado = hashlib.sha256(senha.encode()).hexdigest()
+print(f"Hash para colocar no código: {hash_gerado}")
 # Configuração da página (opcional)
 st.set_page_config(page_title="App Privado", layout="wide")
 

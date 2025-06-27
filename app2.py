@@ -825,7 +825,7 @@ def criar_grafico_cascata(df_filtrado, ganhos, descontos):
         measure=["relative", "relative", "total"],
         x=['Ganhos', 'Descontos', 'Remuneração Líquida'],
         text=[f"R$ {v:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".") for v in [total_ganhos, total_descontos, remuneracao_liquida]],
-        y=[total_ganhos, -total_descontos, 0],
+        y=[total_ganhos, total_descontos, 0],
         connector={"line": {"color": "rgb(63, 63, 63)"}},
         increasing={"marker": {"color": "green"}},
         decreasing={"marker": {"color": "red"}},

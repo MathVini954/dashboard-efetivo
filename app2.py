@@ -207,18 +207,28 @@ def dashboard_efetivo():
         st.header("💰 Análise Financeira")
         analise_financeira = st.radio("Análise Financeira:", ['Geral', 'Ganhos', 'Descontos'])
         
-        # Novo filtro por função APENAS para análise financeira
+        # Novo filtro por função para análise financeira (apenas funções das obras selecionadas)
         nome_col_funcao = 'Função' if 'Função' in df.columns else 'Funçao' if 'Funçao' in df.columns else None
         if nome_col_funcao:
-            funcoes_disponiveis = sorted(df[nome_col_funcao].astype(str).unique())
+            # Filtra primeiro pelas obras selecionadas
+            df_filtrado_obras = df[df['Obra'].isin(obras_selecionadas)] if obras_selecionadas else df
+            
+            # Filtra por tipo se selecionado
+            if tipo_selecionado in ['DIRETO', 'INDIRETO']:
+                df_filtrado_obras = df_filtrado_obras[df_filtrado_obras['Tipo'] == tipo_selecionado]
+            
+            # Pega apenas as funções que existem no filtro atual
+            funcoes_disponiveis = sorted(df_filtrado_obras[nome_col_funcao].astype(str).dropna().unique())
+            
             funcao_selecionada = st.selectbox(
                 "Filtrar por Função (Análise Financeira):",
                 ["Todas"] + funcoes_disponiveis
             )
 
     # Filtra obras selecionadas (para todos os gráficos)
-    df_filtrado = df[df['Obra'].isin(obras_selecionadas)]
-    df_terceiros_filtrado = df_terceiros[df_terceiros['Obra'].isin(obras_selecionadas)]
+     df_filtrado = df[df['Obra'].isin(obras_selecionadas)] if obras_selecionadas else df.copy()
+     df_terceiros_filtrado = df_terceiros[df_terceiros['Obra'].isin(obras_selecionadas)] if obras_selecionadas else df_terceiros.copy()
+
 
     # Filtra por tipo (para todos os gráficos)
     if tipo_selecionado != 'Todos':
@@ -232,6 +242,7 @@ def dashboard_efetivo():
         df_filtrado_financeiro = df_filtrado[df_filtrado[nome_col_funcao] == funcao_selecionada]
     else:
         df_filtrado_financeiro = df_filtrado.copy()
+
 
     # Métricas principais (usa df_filtrado - sem filtro de função)
     direto_count = len(df[df['Obra'].isin(obras_selecionadas) & (df['Tipo'] == 'DIRETO')])

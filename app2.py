@@ -518,7 +518,6 @@ def dashboard_produtividade():
 def carregar_dados_escritorio():
     df = pd.read_excel("efetivo_abril.xlsx", sheet_name="EFETIVO", engine="openpyxl")
     df.columns = df.columns.str.strip()
-    # Filtra só escritório
     df = df[df['Obra'] == 'ESCRITÓRIO ENGENHARIA']
 
     df['Hora Extra 70% - Semana'] = pd.to_numeric(df['Hora Extra 70% - Semana'], errors='coerce').fillna(0)

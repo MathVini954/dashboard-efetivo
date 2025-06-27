@@ -739,7 +739,7 @@ def dashboard_escritorio():
     # [...] (restante do código existente - ranking, gráfico por função, peso financeiro)
 
     # Ranking de Funcionários (ajustado para departamento)
-   coluna_valor = {
+    coluna_valor = {
         'Produção': 'PRODUÇÃO',
         'Hora Extra Semana': 'Hora Extra 70% - Semana',
         'Hora Extra Sábado': 'Hora Extra 70% - Sabado'

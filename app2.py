@@ -657,16 +657,7 @@ def dashboard_escritorio():
         st.error("Coluna 'Departamento' não encontrada!")
         return
 
-
-    # Inferência de gênero a partir do primeiro nome
-    def inferir_genero(nome):
-        nome = str(nome).split()[0].strip().upper()
-        if nome.endswith('A'):
-            return 'Feminino'
-        else:
-            return 'Masculino'
-
-    df['Gênero'] = df['Nome do Funcionário'].apply(inferir_genero)
+    df['Gênero'] = df['GENÊRO'].apply(inferir_genero)
 
     lista_departamentos = sorted(df['Departamento'].astype(str).unique())
     lista_funcionarios = sorted(df['Nome do Funcionário'].unique())
@@ -802,7 +793,7 @@ def dashboard_escritorio():
     # Gráfico de Pizza - Gênero
     genero_counts = pizza_base['Gênero'].value_counts().reset_index()
     genero_counts.columns = ['Gênero', 'Quantidade']
-    fig_genero = px.pie(genero_counts, names='Gênero', values='Quantidade', title='Distribuição por Gênero (Estimado)', hole=0.3)
+    fig_genero = px.pie(genero_counts, names='Gênero', values='Quantidade', title='Distribuição por Gênero', hole=0.3)
     fig_genero.update_traces(textposition='inside', textinfo='percent+label')
     st.plotly_chart(fig_genero, use_container_width=True)
 

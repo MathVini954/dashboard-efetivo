@@ -657,65 +657,77 @@ def dashboard_escritorio():
         st.error("Coluna 'Departamento' não encontrada!")
         return
 
-    # VERIFICA SE A COLUNA GENÊRO EXISTE
+    # Verifica e prepara coluna GENÊRO
     if 'GENÊRO' not in df.columns:
         st.warning("Coluna 'GENÊRO' não encontrada - usando inferência a partir do nome")
-        # Inferência de gênero a partir do primeiro nome (apenas se GENÊRO não existir)
         def inferir_genero(nome):
             nome = str(nome).split()[0].strip().upper()
-            if nome.endswith('A'):
-                return 'Feminino'
-            else:
-                return 'Masculino'
+            return 'FEMININO' if nome.endswith('A') else 'MASCULINO'
         df['GENÊRO'] = df['Nome do Funcionário'].apply(inferir_genero)
     else:
-        # Padroniza os valores da coluna GENÊRO existente
         df['GENÊRO'] = df['GENÊRO'].str.upper().str.strip()
 
-    # Sidebar com filtros (mantido igual)
-    # ... [código dos filtros permanece igual] ...
+    # Prepara listas para filtros
+    lista_departamentos = sorted(df['Departamento'].astype(str).unique())
+    lista_funcionarios = sorted(df['Nome do Funcionário'].unique())
+    ganhos, descontos = definir_colunas_ganhos_descontos()
+    df['Total Extra'] = df['Hora Extra 70% - Semana'] + df['Hora Extra 70% - Sabado']
 
-    # Gráficos de Pizza - ATUALIZADO PARA USAR GENÊRO
+    # Sidebar com filtros
+    with st.sidebar:
+        st.header("🔍 Filtros - Escritório")
+        departamentos_selecionados = st.multiselect(
+            "Departamentos:", 
+            lista_departamentos, 
+            default=lista_departamentos
+        )
+        tipo_selecionado = st.radio(
+            "Tipo:", 
+            ['Todos', 'DIRETO', 'INDIRETO'],
+            horizontal=True
+        )
+        
+        # Filtro por funcionário
+        funcionario_selecionado = st.selectbox(
+            "Filtrar por funcionário:",
+            ["Todos"] + lista_funcionarios
+        )
+
+    # FILTRA OS DADOS (definindo df_filtrado antes de usar)
+    df_filtrado = df[df['Departamento'].isin(departamentos_selecionados)]
+    
+    if tipo_selecionado != 'Todos':
+        df_filtrado = df_filtrado[df_filtrado['Tipo'] == tipo_selecionado]
+    
+    if funcionario_selecionado != "Todos":
+        df_filtrado = df_filtrado[df_filtrado['Nome do Funcionário'] == funcionario_selecionado]
+
+    # Métricas
+    col1, col2, col3 = st.columns(3)
+    col1.metric("Total Funcionários", len(df_filtrado))
+    col2.metric("Diretos", len(df_filtrado[df_filtrado['Tipo'] == 'DIRETO']))
+    col3.metric("Indiretos", len(df_filtrado[df_filtrado['Tipo'] == 'INDIRETO']))
+
+    st.divider()
+
+    # Gráficos de Pizza
     col1, col2 = st.columns(2)
     
     with col1:
-        # Gráfico por Tipo (mantido igual)
+        # Gráfico por Tipo
         tipo_counts = df_filtrado['Tipo'].value_counts().reset_index()
         fig_tipo = px.pie(tipo_counts, names='Tipo', values='count', 
                          title='Distribuição por Tipo', hole=0.3)
         st.plotly_chart(fig_tipo, use_container_width=True)
     
     with col2:
-        # Gráfico por Gênero - AGORA USANDO COLUNA GENÊRO
+        # Gráfico por Gênero (usando GENÊRO)
         genero_counts = df_filtrado['GENÊRO'].value_counts().reset_index()
-        genero_counts.columns = ['GENÊRO', 'Quantidade']
-        
-        # Mapeamento de cores para valores comuns
-        cores_genero = {
-            'MASCULINO': '#3498db',
-            'FEMININO': '#e74c3c',
-            'OUTRO': '#9b59b6',
-            'M': '#3498db',
-            'F': '#e74c3c'
-        }
-        
-        fig_genero = px.pie(
-            genero_counts, 
-            names='GENÊRO', 
-            values='Quantidade',
-            title='Distribuição por Gênero',
-            hole=0.3,
-            color='GENÊRO',
-            color_discrete_map=cores_genero
-        )
-        fig_genero.update_traces(
-            textposition='inside',
-            textinfo='percent+label',
-            textfont_size=12
-        )
+        fig_genero = px.pie(genero_counts, names='GENÊRO', values='count',
+                           title='Distribuição por Gênero', hole=0.3)
         st.plotly_chart(fig_genero, use_container_width=True)
 
-    # ... [restante do código permanece igual] ...
+    # ... [adicione aqui o restante das análises financeiras] ...
 
     # Análise Financeira
     if not df_filtrado.empty:

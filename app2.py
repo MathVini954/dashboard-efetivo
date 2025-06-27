@@ -573,6 +573,17 @@ def definir_colunas_ganhos_descontos():
     ]
     return ganhos, descontos
 
+# Função simples para inferir gênero com base no primeiro nome
+def inferir_genero(nome):
+    nome = str(nome).split()[0].strip().upper()
+    if nome.endswith('A'):
+        return 'Feminino'
+    else:
+        return 'Masculino'
+
+# Aplica a inferência de gênero
+df['Gênero'] = df['Nome do Funcionário'].apply(inferir_genero)
+
 # ======================================
 # DASHBOARD ESCRITÓRIO (NOVO)
 # ======================================
@@ -665,7 +676,22 @@ def dashboard_escritorio():
     col3.metric("👥 Total", total_geral)
 
     st.divider()
-  
+  # Gráfico de Pizza por Gênero
+df_genero = df[df['Departamento'].isin(departamentos_selecionados)]
+genero_counts = df_genero['Gênero'].value_counts().reset_index()
+genero_counts.columns = ['Gênero', 'Quantidade']
+
+fig_genero = px.pie(
+    genero_counts,
+    names='Gênero',
+    values='Quantidade',
+    title='Distribuição por Gênero (Estimado)',
+    hole=0.3
+)
+fig_genero.update_traces(textposition='inside', textinfo='percent+label')
+
+st.plotly_chart(fig_genero, use_container_width=True)
+
     # Análise Financeira
     if not df_filtrado.empty:
         st.markdown("### 💰 Análise Financeira")

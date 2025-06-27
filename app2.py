@@ -207,7 +207,7 @@ def dashboard_efetivo():
         st.header("💰 Análise Financeira")
         analise_financeira = st.radio("Análise Financeira:", ['Geral', 'Ganhos', 'Descontos'])
         
-        # Novo filtro por função para análise financeira
+        # Novo filtro por função APENAS para análise financeira
         nome_col_funcao = 'Função' if 'Função' in df.columns else 'Funçao' if 'Funçao' in df.columns else None
         if nome_col_funcao:
             funcoes_disponiveis = sorted(df[nome_col_funcao].astype(str).unique())
@@ -216,27 +216,38 @@ def dashboard_efetivo():
                 ["Todas"] + funcoes_disponiveis
             )
 
-    # Filtra obras selecionadas
+    # Filtra obras selecionadas (para todos os gráficos)
     df_filtrado = df[df['Obra'].isin(obras_selecionadas)]
     df_terceiros_filtrado = df_terceiros[df_terceiros['Obra'].isin(obras_selecionadas)]
 
-    # Filtra por tipo
+    # Filtra por tipo (para todos os gráficos)
     if tipo_selecionado != 'Todos':
         if tipo_selecionado in ['DIRETO', 'INDIRETO']:
             df_filtrado = df_filtrado[df_filtrado['Tipo'] == tipo_selecionado]
         elif tipo_selecionado == 'TERCEIRO':
             df_filtrado = df_filtrado[0:0]  # vazio, terceiros estão em outro DF
 
-    # Aplica filtro de função se selecionado e se a coluna existe
+    # Cria um DataFrame filtrado APENAS para análise financeira (se função selecionada)
     if nome_col_funcao and 'funcao_selecionada' in locals() and funcao_selecionada != "Todas":
         df_filtrado_financeiro = df_filtrado[df_filtrado[nome_col_funcao] == funcao_selecionada]
     else:
         df_filtrado_financeiro = df_filtrado.copy()
 
-    # Métricas principais (restante do código permanece igual)
-    # ... [código existente das métricas] ...
+    # Métricas principais (usa df_filtrado - sem filtro de função)
+    direto_count = len(df[df['Obra'].isin(obras_selecionadas) & (df['Tipo'] == 'DIRETO')])
+    indireto_count = len(df[df['Obra'].isin(obras_selecionadas) & (df['Tipo'] == 'INDIRETO')])
+    total_terceiros = df_terceiros_filtrado['QUANTIDADE'].sum()
+    total_geral = direto_count + indireto_count + total_terceiros
 
-    # Análise Financeira (modificada para usar df_filtrado_financeiro)
+    col1, col2, col3, col4 = st.columns(4)
+    col1.metric("👷 Direto", direto_count)
+    col2.metric("👷‍♂️ Indireto", indireto_count)
+    col3.metric("🏗️ Terceiro", total_terceiros)
+    col4.metric("👥 Total", total_geral)
+
+    st.divider()
+
+    # Análise Financeira (usa df_filtrado_financeiro - com filtro de função se aplicável)
     if not df_filtrado_financeiro.empty and tipo_selecionado != 'TERCEIRO':
         st.markdown("### 💰 Análise Financeira")
         
@@ -252,14 +263,14 @@ def dashboard_efetivo():
             
             col_fin1, col_fin2, col_fin3 = st.columns(3)
             col_fin1.metric("💚 Total Ganhos", 
-                           f"R$ {total_ganhos:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."),
-                           f"Média: R$ {media_ganhos:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+                          f"R$ {total_ganhos:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."),
+                          f"Média: R$ {media_ganhos:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
             col_fin2.metric("💸 Total Descontos", 
-                           f"R$ {total_descontos:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."),
-                           f"Média: R$ {media_descontos:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+                          f"R$ {total_descontos:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."),
+                          f"Média: R$ {media_descontos:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
             col_fin3.metric("💰 Remuneração Líquida", 
-                           f"R$ {remuneração_liquida:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."),
-                           f"Média: R$ {media_liquida:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+                          f"R$ {remuneracao_liquida:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."),
+                          f"Média: R$ {media_liquida:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
             
         elif analise_financeira == 'Ganhos':
             fig_ganhos = criar_grafico_detalhado(df_filtrado_financeiro, ganhos, "Detalhamento dos Ganhos", "green")
@@ -277,6 +288,7 @@ def dashboard_efetivo():
         
         st.divider()
 
+    # Todos os outros gráficos usam df_filtrado (sem filtro de função)
     # Pizza - Distribuição por tipo
     pizza_base = df[df['Obra'].isin(obras_selecionadas)]
     pizza_diretos_indiretos = pizza_base['Tipo'].value_counts().reset_index()
@@ -294,7 +306,6 @@ def dashboard_efetivo():
         tabela_terceiros = df_terceiros_filtrado.groupby(['Obra', 'EMPRESA'])['QUANTIDADE'].sum().reset_index()
         st.dataframe(tabela_terceiros, use_container_width=True)
         return
-
     coluna_valor = {
         'Produção': 'PRODUÇÃO',
         'Hora Extra Semana': 'Hora Extra 70% - Semana',

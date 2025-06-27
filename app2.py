@@ -218,16 +218,6 @@ def dashboard_efetivo():
     ganhos, descontos = definir_colunas_ganhos_descontos()
     df['Total Extra'] = df['Hora Extra 70% - Semana'] + df['Hora Extra 70% - Sabado']
 
-        # Inferência de gênero a partir do primeiro nome
-    def inferir_genero(nome):
-        nome = str(nome).split()[0].strip().upper()
-        if nome.endswith('A'):
-            return 'Feminino'
-        else:
-            return 'Masculino'
-
-    df['Gênero'] = df['Nome do Funcionário'].apply(inferir_genero)
-
 
     with st.sidebar:
         st.header("🔍 Filtros - Efetivo")
@@ -325,23 +315,71 @@ def dashboard_efetivo():
 
     # Todos os outros gráficos usam df_filtrado (sem filtro de função)
     # Pizza - Distribuição por tipo
-    pizza_base = df[df['Obra'].isin(obras_selecionadas)]
-    pizza_diretos_indiretos = pizza_base['Tipo'].value_counts().reset_index()
-    pizza_diretos_indiretos.columns = ['Tipo', 'count']
-    pizza_terceiros = pd.DataFrame({'Tipo': ['TERCEIRO'], 'count': [total_terceiros]})
-    pizza = pd.concat([pizza_diretos_indiretos, pizza_terceiros], ignore_index=True)
+    # Pizza - Distribuição por tipo
+pizza_base = df[df['Obra'].isin(obras_selecionadas)]
+pizza_diretos_indiretos = pizza_base['Tipo'].value_counts().reset_index()
+pizza_diretos_indiretos.columns = ['Tipo', 'count']
+pizza_terceiros = pd.DataFrame({'Tipo': ['TERCEIRO'], 'count': [total_terceiros]})
+pizza = pd.concat([pizza_diretos_indiretos, pizza_terceiros], ignore_index=True)
 
-      # Gráfico de Pizza - Gênero
-    genero_counts = pizza_base['Gênero'].value_counts().reset_index()
-    genero_counts.columns = ['Gênero', 'Quantidade']
-    fig_genero = px.pie(genero_counts, names='Gênero', values='Quantidade', title='Distribuição por Gênero (Estimado)', hole=0.3)
-    fig_genero.update_traces(textposition='inside', textinfo='percent+label')
-    st.plotly_chart(fig_genero, use_container_width=True)
+# Criação de colunas para os gráficos lado a lado
+col1, col2 = st.columns(2)
 
-
-    fig_pizza = px.pie(pizza, names='Tipo', values='count', title='Distribuição por Tipo de Efetivo', hole=0.3)
-    fig_pizza.update_traces(textposition='inside', textinfo='percent+label')
+with col1:
+    # Gráfico de Pizza - Distribuição por Tipo
+    fig_pizza = px.pie(
+        pizza, 
+        names='Tipo', 
+        values='count', 
+        title='Distribuição por Tipo de Efetivo', 
+        hole=0.3,
+        color='Tipo',
+        color_discrete_map={
+            'DIRETO': '#1f77b4',
+            'INDIRETO': '#ff7f0e',
+            'TERCEIRO': '#2ca02c'
+        }
+    )
+    fig_pizza.update_traces(
+        textposition='inside',
+        textinfo='percent+label',
+        textfont_size=12,
+        marker=dict(line=dict(color='#FFFFFF', width=1))
+    fig_pizza.update_layout(showlegend=True)
     st.plotly_chart(fig_pizza, use_container_width=True)
+
+with col2:
+    # Gráfico de Pizza - Gênero (usando GENÊRO)
+    if 'GENÊRO' in pizza_base.columns:
+        genero_counts = pizza_base['GENÊRO'].value_counts().reset_index()
+        genero_counts.columns = ['Gênero', 'Quantidade']
+        
+        # Padroniza os valores de gênero (opcional)
+        genero_counts['Gênero'] = genero_counts['Gênero'].str.upper().str.strip()
+        
+        fig_genero = px.pie(
+            genero_counts, 
+            names='Gênero', 
+            values='Quantidade', 
+            title='Distribuição por Gênero', 
+            hole=0.3,
+            color='Gênero',
+            color_discrete_map={
+                'MASCULINO': '#3498db',
+                'FEMININO': '#e74c3c',
+                'OUTRO': '#9b59b6'
+            }
+        )
+        fig_genero.update_traces(
+            textposition='inside',
+            textinfo='percent+label',
+            textfont_size=12,
+            marker=dict(line=dict(color='#FFFFFF', width=1))
+        )
+        fig_genero.update_layout(showlegend=True)
+        st.plotly_chart(fig_genero, use_container_width=True)
+    else:
+        st.warning("Coluna 'GENÊRO' não encontrada para análise de gênero")
 
     if tipo_selecionado == 'TERCEIRO':
         st.divider()

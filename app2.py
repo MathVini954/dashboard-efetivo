@@ -11,7 +11,7 @@ import plotly.express as px
 
 
 # Configuração da senha (altere para a senha que desejar)
-SENHA_CORRETA = "sua_senha_secreta_123"  # 👈 Modifique aqui!
+SENHA_CORRETA = "RioAve2025"  # 👈 Modifique aqui!
 
 # Sistema de autenticação
 def verificar_senha():

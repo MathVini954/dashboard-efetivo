@@ -4,38 +4,78 @@ import plotly.graph_objects as go
 import plotly.express as px
 import time
 import requests
-import plotly.graph_objects as go
-import plotly.express as px
 from streamlit.components.v1 import html
+from PIL import Image
+import hashlib
+import hmac
 
+# Configuração da página
+st.set_page_config(
+    page_title="Dashboards Inteligentes",
+    layout="wide",
+    initial_sidebar_state="auto"
+)
 
-placeholder = st.empty()
+# ======================================
+# SISTEMA DE AUTENTICAÇÃO
+# ======================================
 
-while True:
-    with placeholder.container():
-        st.write(f"Última atualização: {time.ctime()}")
-        time.sleep(30)  # Atualiza a cada 30 segundos
-# Configuração de keep-alive e verificação de atualizações
+# Configuração da senha
+SENHA_CORRETA = "RioAve2025"  # 👈 Modifique aqui!
+
+# Sistema de autenticação
+def verificar_senha():
+    if "autenticado" not in st.session_state:
+        st.session_state.autenticado = False
+    
+    if not st.session_state.autenticado:
+        # Container centralizado para o login
+        with st.container():
+            col1, col2, col3 = st.columns([1, 2, 1])
+            with col2:
+                st.image("logotipo.png", width=300)
+                senha = st.text_input("Digite a senha de acesso:", 
+                                    type="password", 
+                                    key="senha_input")
+                
+                if st.button("Acessar"):
+                    if senha == SENHA_CORRETA:
+                        st.session_state.autenticado = True
+                        st.success("Autenticação bem-sucedida!")
+                        time.sleep(1)
+                        st.rerun()
+                    else:
+                        st.error("Senha incorreta! Tente novamente.")
+        st.stop()  # Impede o acesso ao restante do app
+
+# Verifica a senha
+verificar_senha()
+
+# ======================================
+# VERIFICAÇÃO DE ATUALIZAÇÕES
+# ======================================
+
 def check_github_updates():
     try:
-        # Substitua pela URL do seu repositório
-        response = requests.get("https://github.com/MathVini954/dashboard-efetivo/edit/main/app2.py")
-        latest_commit = response.json()[0]['sha']
-        return latest_commit
-    except:
+        # URL correta para API do GitHub
+        response = requests.get("https://api.github.com/repos/MathVini954/dashboard-efetivo/commits/main")
+        if response.status_code == 200:
+            return response.json()['sha']
+    except Exception as e:
+        st.error(f"Erro ao verificar atualizações: {str(e)}")
         return None
 
-# Inicializar variável de sessão para o último commit conhecido
+# Inicializar variável de sessão
 if 'last_commit' not in st.session_state:
     st.session_state.last_commit = check_github_updates()
 
-# JavaScript para manter a conexão ativa e verificar atualizações
+# JavaScript para manter a conexão ativa
 keep_alive_js = """
 <script>
 function keepAliveAndCheck() {
     // Ping para manter a conexão
     fetch(window.location.href, {method: 'HEAD', cache: 'no-store'});
-    
+
     // Verificar atualizações a cada 30 segundos
     setTimeout(() => {
         fetch(window.location.href, {method: 'GET'})
@@ -54,27 +94,13 @@ setInterval(keepAliveAndCheck, 30000);
 # Injetar o JavaScript
 html(keep_alive_js)
 
-# Configuração da senha (altere para a senha que desejar)
-SENHA_CORRETA = "RioAve2025"  # 👈 Modifique aqui!
-
-# Sistema de autenticação
-def verificar_senha():
-    if "autenticado" not in st.session_state:
-        st.session_state.autenticado = False
-
-    if not st.session_state.autenticado:
-        senha = st.text_input("Digite a senha de acesso:", type="password", key="senha_input")
-        if senha:
-            if senha == SENHA_CORRETA:
-                st.session_state.autenticado = True
-                st.rerun()  # Recarrega o app após autenticação
-            else:
-                st.error("Senha incorreta! Tente novamente.")
-                st.stop()  # Impede o acesso ao restante do app
-
-# Verifica a senha
-verificar_senha()
-
+# Verificar atualizações
+if st.session_state.last_commit:
+    current_commit = check_github_updates()
+    if current_commit and current_commit != st.session_state.last_commit:
+        st.markdown('<div id="new-version-detected"></div>', unsafe_allow_html=True)
+        st.session_state.last_commit = current_commit
+        st.rerun()
 
 @st.cache_data
 def carregar_dados_efetivo():

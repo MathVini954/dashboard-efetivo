@@ -903,59 +903,61 @@ def criar_grafico_detalhado(df_filtrado, colunas, titulo, cor):
 def main():
     st.set_page_config(page_title="Dashboards Inteligentes", layout="wide")
     
-    # 1. Controle de estado inteligente
+    # Estado da aplicação
     if 'aba_atual' not in st.session_state:
         st.session_state.aba_atual = "📊 Efetivo Obra"
+        st.session_state.rerun_count = 0  # Contador de reruns
     
-    # 2. Cabeçalho
+    # Cabeçalho
     col1, col2 = st.columns([1, 4])
     with col1:
         st.image("logotipo.png", width=400)
     with col2:
         st.markdown("<h1 style='margin-top: 30px;'>SISTEMA INTELIGENTE DE GESTÃO</h1>", unsafe_allow_html=True)
     
-    # 3. Sidebar Reativa
+    # Sidebar inteligente
     with st.sidebar:
         st.title("🎛️ Painel de Controle")
         
-        # Selector de abas que atualiza instantaneamente
         nova_aba = st.radio(
             "Selecione o Dashboard:",
             options=["📊 Efetivo Obra", "📈 Produtividade", "🏗️ Análise Custo", "🏢 Efetivo Escritório"],
             key="seletor_abas",
-            index=["📊 Efetivo Obra", "📈 Produtividade", "🏗️ Análise Custo", "🏢 Efetivo Escritório"].index(st.session_state.aba_atual)
+            index=["📊 Efetivo Obra", "📈 Produtividade", "🏗️ Análise Custo", "🏢 Efetivo Escritório"].index(
+                st.session_state.aba_atual
+            )
         )
-        # Atualiza o estado imediatamente
+        
+        # Controle de mudança de aba com segurança
         if nova_aba != st.session_state.aba_atual:
             st.session_state.aba_atual = nova_aba
-            st.experimental_rerun()
-        
-        st.divider()
-        
-        # 4. Filtros Dinâmicos (aparecem apenas quando relevantes)
-        if st.session_state.aba_atual == "📊 Efetivo Obra":
-            st.header("⚙️ Filtros de Obra")
-            # [Adicione aqui os filtros específicos do dashboard_efetivo()]
+            st.session_state.rerun_count += 1
             
-        elif st.session_state.aba_atual == "🏢 Efetivo Escritório":
-            st.header("⚙️ Filtros de Escritório")
-            # [Adicione aqui os filtros específicos do dashboard_escritorio()]
-            
-        elif st.session_state.aba_atual == "📈 Produtividade":
-            st.header("⚙️ Filtros de Produtividade")
-            # [Adicione aqui os filtros específicos do dashboard_produtividade()]
+            # Previne loops infinitos
+            if st.session_state.rerun_count < 3:  # Número máximo de reruns
+                st.experimental_rerun()
+            else:
+                st.error("Muitas tentativas de recarregamento. Reinicie a aplicação.")
+                st.session_state.rerun_count = 0
     
-    # 5. Renderização Dinâmica do Conteúdo
-    if st.session_state.aba_atual == "📊 Efetivo Obra":
-        dashboard_efetivo()
-    elif st.session_state.aba_atual == "📈 Produtividade":
-        dashboard_produtividade()
-    elif st.session_state.aba_atual == "🏢 Efetivo Escritório":
-        dashboard_escritorio()
-    else:
-        # Página em desenvolvimento
-        st.title("🏗️ ANÁLISE CUSTO E PLANEJAMENTO")
-        st.markdown("""...""")
+    # Renderização condicional segura
+    try:
+        if st.session_state.aba_atual == "📊 Efetivo Obra":
+            dashboard_efetivo()
+        elif st.session_state.aba_atual == "🏢 Efetivo Escritório":
+            dashboard_escritorio()
+        elif st.session_state.aba_atual == "📈 Produtividade":
+            dashboard_produtividade()
+        else:
+            st.title("🏗️ ANÁLISE CUSTO E PLANEJAMENTO")
+            st.markdown("""...""")
+            
+        # Reset do contador após renderização bem-sucedida
+        st.session_state.rerun_count = 0
+        
+    except Exception as e:
+        st.error(f"Erro ao carregar o dashboard: {str(e)}")
+        st.session_state.rerun_count = 0
 # def main():
     #st.set_page_config(page_title="Dashboards de Obra", layout="wide")
 

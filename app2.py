@@ -652,160 +652,200 @@ def dashboard_escritorio():
     # Filtra apenas escritório engenharia
     df = df[df['Obra'] == 'ESCRITÓRIO ENGENHARIA']
 
-    # Verifica colunas essenciais
+    # Verifica se existe coluna Departamento
     if 'Departamento' not in df.columns:
         st.error("Coluna 'Departamento' não encontrada!")
         return
 
-    # Verifica e prepara coluna GENÊRO
-    if 'GENÊRO' not in df.columns:
-        st.warning("Coluna 'GENÊRO' não encontrada - usando inferência a partir do nome")
-        def inferir_genero(nome):
-            nome = str(nome).split()[0].strip().upper()
-            return 'FEMININO' if nome.endswith('A') else 'MASCULINO'
-        df['GENÊRO'] = df['Nome do Funcionário'].apply(inferir_genero)
-    else:
-        df['GENÊRO'] = df['GENÊRO'].str.upper().str.strip()
 
-    # Prepara listas para filtros
+    # Inferência de gênero a partir do primeiro nome
+    def inferir_genero(nome):
+        nome = str(nome).split()[0].strip().upper()
+        if nome.endswith('A'):
+            return 'Feminino'
+        else:
+            return 'Masculino'
+
+    df['Gênero'] = df['Nome do Funcionário'].apply(inferir_genero)
+
     lista_departamentos = sorted(df['Departamento'].astype(str).unique())
     lista_funcionarios = sorted(df['Nome do Funcionário'].unique())
+
     ganhos, descontos = definir_colunas_ganhos_descontos()
     df['Total Extra'] = df['Hora Extra 70% - Semana'] + df['Hora Extra 70% - Sabado']
 
-    # Inicializa todas as variáveis de controle
-    analise_financeira = 'Nenhuma'
-    tipo_analise = 'Produção'  # Valor padrão
-    funcionario_selecionado = "Todos"
-    qtd_linhas = '10'  # Valor padrão
 
-    # Sidebar com filtros
+
+
+    lista_departamentos = sorted(df['Departamento'].astype(str).unique())
+    lista_funcionarios = sorted(df['Nome do Funcionário'].unique())  # Lista para o novo filtro
+
+    ganhos, descontos = definir_colunas_ganhos_descontos()
+    df['Total Extra'] = df['Hora Extra 70% - Semana'] + df['Hora Extra 70% - Sabado']
+
     with st.sidebar:
         st.header("🔍 Filtros - Escritório")
         departamentos_selecionados = st.multiselect(
             "Departamentos:", 
             lista_departamentos, 
-            default=lista_departamentos
+            default=lista_departamentos,
+            key="escritorio_deptos"
         )
         tipo_selecionado = st.radio(
             "Tipo:", 
             ['Todos', 'DIRETO', 'INDIRETO'],
-            horizontal=True
+            horizontal=True,
+            key="escritorio_tipo"
         )
-        
-        # Seção de análise de ranking
-        st.divider()
-        st.header("📊 Análise de Desempenho")
         tipo_analise = st.radio(
-            "Tipo de Análise:", 
+            "Tipo de Análise da Tabela:", 
             ['Produção', 'Hora Extra Semana', 'Hora Extra Sábado'],
-            key='tipo_analise_escritorio'
+            key="escritorio_analise"
         )
         qtd_linhas = st.radio(
             "Qtd. de Funcionários na Tabela:", 
             ['5', '10', '20', 'Todos'], 
             horizontal=True,
-            key='qtd_linhas_escritorio'
+            key="escritorio_qtd"
         )
-        
-        # Seção de análise financeira
+        tipo_peso = st.radio(
+            "Tipo de Peso:", 
+            ['Peso sobre Produção', 'Peso sobre Hora Extra'],
+            key="escritorio_peso"
+        )
+
         st.divider()
         st.header("💰 Análise Financeira")
         analise_financeira = st.radio(
-            "Tipo de Análise:", 
-            ['Nenhuma', 'Geral', 'Ganhos', 'Descontos'],
-            key='analise_fin_escritorio'
+            "Análise:", 
+            ['Geral', 'Ganhos', 'Descontos'],
+            key="escritorio_financeira"
         )
-        
-        if analise_financeira != 'Nenhuma':
-            funcionario_selecionado = st.selectbox(
-                "Filtrar por funcionário:",
-                ["Todos"] + lista_funcionarios,
-                key='func_escritorio'
-            )
 
-    # Filtra os dados
+    # Filtra dados por departamento e tipo
     df_filtrado = df[df['Departamento'].isin(departamentos_selecionados)]
-    
+
     if tipo_selecionado != 'Todos':
         df_filtrado = df_filtrado[df_filtrado['Tipo'] == tipo_selecionado]
-    
-    if analise_financeira != 'Nenhuma' and funcionario_selecionado != "Todos":
-        df_filtrado = df_filtrado[df_filtrado['Nome do Funcionário'] == funcionario_selecionado]
 
-    # Métricas
-    col1, col2, col3 = st.columns(3)
-    col1.metric("Total Funcionários", len(df_filtrado))
-    col2.metric("Diretos", len(df_filtrado[df_filtrado['Tipo'] == 'DIRETO']))
-    col3.metric("Indiretos", len(df_filtrado[df_filtrado['Tipo'] == 'INDIRETO']))
-
-    st.divider()
-
-    # Gráficos de Pizza
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        tipo_counts = df_filtrado['Tipo'].value_counts().reset_index()
-        fig_tipo = px.pie(tipo_counts, names='Tipo', values='count', 
-                         title='Distribuição por Tipo', hole=0.3)
-        st.plotly_chart(fig_tipo, use_container_width=True)
-    
-    with col2:
-        genero_counts = df_filtrado['GENÊRO'].value_counts().reset_index()
-        fig_genero = px.pie(genero_counts, names='GENÊRO', values='count',
-                           title='Distribuição por Gênero', hole=0.3)
-        st.plotly_chart(fig_genero, use_container_width=True)
-
-    # Seção de Ranking de Funcionários
-    st.divider()
-    st.header("🏆 Ranking de Funcionários")
-    
-    coluna_valor = {
-        'Produção': 'PRODUÇÃO',
-        'Hora Extra Semana': 'Hora Extra 70% - Semana',
-        'Hora Extra Sábado': 'Hora Extra 70% - Sabado'
-    }.get(tipo_analise, 'PRODUÇÃO')  # Default para produção
-    
-    if coluna_valor in df_filtrado.columns:
-        df_ranking = df_filtrado.sort_values(by=coluna_valor, ascending=False)
-        
-        if qtd_linhas != 'Todos':
-            df_ranking = df_ranking.head(int(qtd_linhas))
-        
-        st.dataframe(
-            df_ranking[['Nome do Funcionário', 'Departamento', 'Tipo', coluna_valor]],
-            use_container_width=True
+    # Novo filtro por funcionário (apenas para análise financeira)
+    if analise_financeira in ['Geral', 'Ganhos', 'Descontos']:
+        funcionario_selecionado = st.selectbox(
+            "🔎 Filtrar por funcionário (opcional):",
+            ["Todos"] + lista_funcionarios,
+            key="filtro_funcionario"
         )
-    else:
-        st.warning(f"Coluna '{coluna_valor}' não encontrada para análise de desempenho")
 
-    # Análise Financeira (só executa se selecionado)
-    if analise_financeira != 'Nenhuma':
-        st.divider()
-        st.header("💰 Análise Financeira Detalhada")
-        
+        if funcionario_selecionado != "Todos":
+            df_filtrado = df_filtrado[df_filtrado['Nome do Funcionário'] == funcionario_selecionado]
+
+    # Métricas (sem terceiros)
+    direto_count = len(df_filtrado[df_filtrado['Tipo'] == 'DIRETO'])
+    indireto_count = len(df_filtrado[df_filtrado['Tipo'] == 'INDIRETO'])
+    total_geral = direto_count + indireto_count
+
+    col1, col2, col3 = st.columns(3)
+    col1.metric("👷 Direto", direto_count)
+    col2.metric("👷‍♂️ Indireto", indireto_count)
+    col3.metric("👥 Total", total_geral)
+
+    st.divider()
+
+        # Gráficos de Pizza
+    pizza_base = df[df['Obra'].isin(obras_selecionadas)]
+    pizza_diretos_indiretos = pizza_base['Tipo'].value_counts().reset_index()
+    pizza_diretos_indiretos.columns = ['Tipo', 'count']
+    pizza_terceiros = pd.DataFrame({'Tipo': ['TERCEIRO'], 'count': [df_terceiros_filtrado['QUANTIDADE'].sum()]})
+    pizza = pd.concat([pizza_diretos_indiretos, pizza_terceiros], ignore_index=True)
+
+    # Cria colunas para os gráficos
+    col1, col2 = st.columns(2)
+
+    with col1:
+        # Gráfico de Pizza - Tipo de Efetivo
+        fig_pizza = px.pie(pizza, names='Tipo', values='count', 
+                          title='Distribuição por Tipo de Efetivo', hole=0.3)
+        fig_pizza.update_traces(textposition='inside', textinfo='percent+label')
+        st.plotly_chart(fig_pizza, use_container_width=True)
+
+    with col2:
+        # Gráfico de Pizza - Gênero
+        if 'GENÊRO' in pizza_base.columns:
+            genero_counts = pizza_base['GENÊRO'].value_counts().reset_index()
+            genero_counts.columns = ['Gênero', 'Quantidade']
+            fig_genero = px.pie(genero_counts, names='Gênero', values='Quantidade', 
+                               title='Distribuição por Gênero', hole=0.3)
+            fig_genero.update_traces(textposition='inside', textinfo='percent+label')
+            st.plotly_chart(fig_genero, use_container_width=True)
+        else:
+            st.warning("Coluna 'GENÊRO' não encontrada nos dados")
+
+    # Análise Financeira
+    if not df_filtrado.empty:
+        st.markdown("### 💰 Análise Financeira")
+
         if analise_financeira == 'Geral':
             fig_cascata, total_ganhos, total_descontos, remuneracao_liquida = criar_grafico_cascata(df_filtrado, ganhos, descontos)
             st.plotly_chart(fig_cascata, use_container_width=True)
 
-            col1, col2, col3 = st.columns(3)
-            col1.metric("Total Ganhos", f"R$ {total_ganhos:,.2f}")
-            col2.metric("Total Descontos", f"R$ {total_descontos:,.2f}")
-            col3.metric("Remuneração Líquida", f"R$ {remuneracao_liquida:,.2f}")
+            # Resumo dos valores financeiros
+            col_fin1, col_fin2, col_fin3 = st.columns(3)
+            col_fin1.metric("💚 Total Ganhos", 
+                          f"R$ {total_ganhos:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+            col_fin2.metric("💸 Total Descontos", 
+                          f"R$ {total_descontos:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+            col_fin3.metric("💰 Remuneração Líquida", 
+                          f"R$ {remuneracao_liquida:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
 
         elif analise_financeira == 'Ganhos':
-            fig_ganhos = criar_grafico_detalhado(df_filtrado, ganhos, "Detalhamento dos Ganhos", "green")
+            fig_ganhos = criar_grafico_detalhado(
+                df_filtrado=df_filtrado,
+                colunas=ganhos,
+                titulo="Detalhamento dos Ganhos - Escritório",
+                cor="green"
+            )
             if fig_ganhos:
                 st.plotly_chart(fig_ganhos, use_container_width=True)
             else:
-                st.warning("Nenhum dado de ganhos encontrado")
+                st.warning("Nenhum dado de ganhos encontrado para os filtros selecionados.")
 
         elif analise_financeira == 'Descontos':
-            fig_descontos = criar_grafico_detalhado(df_filtrado, descontos, "Detalhamento dos Descontos", "red")
+            fig_descontos = criar_grafico_detalhado(
+                df_filtrado=df_filtrado,
+                colunas=descontos,
+                titulo="Detalhamento dos Descontos - Escritório",
+                cor="red"
+            )
             if fig_descontos:
                 st.plotly_chart(fig_descontos, use_container_width=True)
             else:
-                st.warning("Nenhum dado de descontos encontrado")
+                st.warning("Nenhum dado de descontos encontrado para os filtros selecionados.")
+
+        st.divider()
+
+    # Gráfico de Pizza - Apenas diretos e indiretos
+    pizza_base = df[df['Departamento'].isin(departamentos_selecionados)]
+    pizza_diretos_indiretos = pizza_base['Tipo'].value_counts().reset_index()
+    pizza_diretos_indiretos.columns = ['Tipo', 'count']
+
+    # Gráfico de Pizza - Gênero
+    genero_counts = pizza_base['Gênero'].value_counts().reset_index()
+    genero_counts.columns = ['Gênero', 'Quantidade']
+    fig_genero = px.pie(genero_counts, names='Gênero', values='Quantidade', title='Distribuição por Gênero (Estimado)', hole=0.3)
+    fig_genero.update_traces(textposition='inside', textinfo='percent+label')
+    st.plotly_chart(fig_genero, use_container_width=True)
+
+    fig_pizza = px.pie(
+        pizza_diretos_indiretos,
+        names='Tipo', 
+        values='count', 
+        title='Distribuição por Tipo de Efetivo (Escritório)',
+        hole=0.3
+    )
+    fig_pizza.update_traces(textposition='inside', textinfo='percent+label')
+    st.plotly_chart(fig_pizza, use_container_width=True)
+
+    # [...] (restante do código existente - ranking, gráfico por função, peso financeiro)
 
 
     # Ranking de Funcionários (ajustado para departamento)
@@ -968,5 +1008,5 @@ def main():
         st.error(f"Erro ao carregar o dashboard: {str(e)}")
         st.session_state.aba_atual = "📊"  # Volta para aba segura
 
-if __name__ == "__main__":
+if __name__ == "__main__":More actions
     main()

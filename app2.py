@@ -901,40 +901,61 @@ def criar_grafico_detalhado(df_filtrado, colunas, titulo, cor):
 # EXECUÇÃO PRINCIPAL (com a nova aba)
 # ======================================
 def main():
-    st.set_page_config(page_title="Dashboards de Obra", layout="wide")
-
-    # Cabeçalho
+    st.set_page_config(page_title="Dashboards Inteligentes", layout="wide")
+    
+    # 1. Controle de estado inteligente
+    if 'aba_atual' not in st.session_state:
+        st.session_state.aba_atual = "📊 Efetivo Obra"
+    
+    # 2. Cabeçalho
     col1, col2 = st.columns([1, 4])
     with col1:
         st.image("logotipo.png", width=400)
     with col2:
-        st.markdown("<h1 style='margin-top: 30px;'>SISTEMA DE CUSTO E PLANEJAMENTO</h1>", unsafe_allow_html=True)
-
-    # Sidebar dinâmica
+        st.markdown("<h1 style='margin-top: 30px;'>SISTEMA INTELIGENTE DE GESTÃO</h1>", unsafe_allow_html=True)
+    
+    # 3. Sidebar Reativa
     with st.sidebar:
-        st.title("🔍 Filtros Globais")
-        aba_selecionada = st.radio(
+        st.title("🎛️ Painel de Controle")
+        
+        # Selector de abas que atualiza instantaneamente
+        nova_aba = st.radio(
             "Selecione o Dashboard:",
-            ["📊 Efetivo Obra", "📈 Produtividade", "🏗️ Análise Custo", "🏢 Efetivo Escritório"],
-            key="aba_principal"
-        )
-
-    # Mostra filtros específicos para cada aba
-    if aba_selecionada == "📊 Efetivo Obra":
+            options=["📊 Efetivo Obra", "📈 Produtividade", "🏗️ Análise Custo", "🏢 Efetivo Escritório"],
+            key="seletor_abas",
+            index=["📊 Efetivo Obra", "📈 Produtividade", "🏗️ Análise Custo", "🏢 Efetivo Escritório"].index(st.session_state.aba_atual)
+        
+        # Atualiza o estado imediatamente
+        if nova_aba != st.session_state.aba_atual:
+            st.session_state.aba_atual = nova_aba
+            st.experimental_rerun()
+        
+        st.divider()
+        
+        # 4. Filtros Dinâmicos (aparecem apenas quando relevantes)
+        if st.session_state.aba_atual == "📊 Efetivo Obra":
+            st.header("⚙️ Filtros de Obra")
+            # [Adicione aqui os filtros específicos do dashboard_efetivo()]
+            
+        elif st.session_state.aba_atual == "🏢 Efetivo Escritório":
+            st.header("⚙️ Filtros de Escritório")
+            # [Adicione aqui os filtros específicos do dashboard_escritorio()]
+            
+        elif st.session_state.aba_atual == "📈 Produtividade":
+            st.header("⚙️ Filtros de Produtividade")
+            # [Adicione aqui os filtros específicos do dashboard_produtividade()]
+    
+    # 5. Renderização Dinâmica do Conteúdo
+    if st.session_state.aba_atual == "📊 Efetivo Obra":
         dashboard_efetivo()
-    elif aba_selecionada == "📈 Produtividade":
+    elif st.session_state.aba_atual == "📈 Produtividade":
         dashboard_produtividade()
-    elif aba_selecionada == "🏗️ Análise Custo":
-        st.title("🏗️ ANÁLISE CUSTO E PLANEJAMENTO")
-        st.markdown("""
-            <div style="text-align: center; margin-top: 100px;">
-                <h2>ESTAMOS EM DESENVOLVIMENTO</h2>
-                <div style="font-size: 50px; color: grey;">👷‍♂️🚧</div>
-            </div>""", 
-            unsafe_allow_html=True
-        )
-    elif aba_selecionada == "🏢 Efetivo Escritório":
+    elif st.session_state.aba_atual == "🏢 Efetivo Escritório":
         dashboard_escritorio()
+    else:
+        # Página em desenvolvimento
+        st.title("🏗️ ANÁLISE CUSTO E PLANEJAMENTO")
+        st.markdown("""...""")
 # def main():
     #st.set_page_config(page_title="Dashboards de Obra", layout="wide")
 

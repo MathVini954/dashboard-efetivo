@@ -777,12 +777,6 @@ def dashboard_escritorio():
         elif tipo_selecionado == 'TERCEIRO':
             df_filtrado = df_filtrado[0:0]  # vazio, terceiros estão em outro DF
 
-    # Cria um DataFrame filtrado APENAS para análise financeira (se função selecionada)
-    if nome_col_funcao and 'funcao_selecionada' in locals() and funcao_selecionada != "Todas":
-        df_filtrado_financeiro = df_filtrado[df_filtrado[nome_col_funcao] == funcao_selecionada]
-    else:
-        df_filtrado_financeiro = df_filtrado.copy()
-
     
     # Métricas (sem terceiros)
     direto_count = len(df_filtrado[df_filtrado['Tipo'] == 'DIRETO'])

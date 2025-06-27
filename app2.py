@@ -1008,5 +1008,5 @@ def main():
         st.error(f"Erro ao carregar o dashboard: {str(e)}")
         st.session_state.aba_atual = "📊"  # Volta para aba segura
 
-if __name__ == "__main__":More actions
+if __name__ == "__main__":
     main()

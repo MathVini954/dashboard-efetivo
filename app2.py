@@ -587,6 +587,26 @@ def dashboard_escritorio():
         st.error("Coluna 'Departamento' não encontrada!")
         return
 
+    
+    # Inferência de gênero a partir do primeiro nome
+    def inferir_genero(nome):
+        nome = str(nome).split()[0].strip().upper()
+        if nome.endswith('A'):
+            return 'Feminino'
+        else:
+            return 'Masculino'
+
+    df['Gênero'] = df['Nome do Funcionário'].apply(inferir_genero)
+
+    lista_departamentos = sorted(df['Departamento'].astype(str).unique())
+    lista_funcionarios = sorted(df['Nome do Funcionário'].unique())
+
+    ganhos, descontos = definir_colunas_ganhos_descontos()
+    df['Total Extra'] = df['Hora Extra 70% - Semana'] + df['Hora Extra 70% - Sabado']
+
+
+
+    
     lista_departamentos = sorted(df['Departamento'].astype(str).unique())
     lista_funcionarios = sorted(df['Nome do Funcionário'].unique())  # Lista para o novo filtro
     

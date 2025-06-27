@@ -590,15 +590,19 @@ def dashboard_escritorio():
     if 'Departamento' not in df.columns:
         st.error("Coluna 'Departamento' não encontrada!")
         return
+import requests
 
-    # Inferência de gênero a partir do primeiro nome
-    def inferir_genero(nome):
-        nome = str(nome).split()[0].strip().upper()
-        if nome.endswith('A'):
+   def inferir_genero(nome):
+    primeiro_nome = str(nome).split()[0]
+    response = requests.get(f"https://api.genderize.io/?name={primeiro_nome}")
+    if response.status_code == 200:
+        data = response.json()
+        if data['gender'] == 'female':
             return 'Feminino'
-        else:
+        elif data['gender'] == 'male':
             return 'Masculino'
-
+    return 'Desconhecido'
+       
     df['Gênero'] = df['Nome do Funcionário'].apply(inferir_genero)
 
     lista_departamentos = sorted(df['Departamento'].astype(str).unique())

@@ -900,35 +900,69 @@ def criar_grafico_detalhado(df_filtrado, colunas, titulo, cor):
 # ======================================
 # EXECUÇÃO PRINCIPAL (com a nova aba)
 # ======================================
-
 def main():
     st.set_page_config(page_title="Dashboards de Obra", layout="wide")
 
+    # Cabeçalho
     col1, col2 = st.columns([1, 4])
     with col1:
         st.image("logotipo.png", width=400)
     with col2:
         st.markdown("<h1 style='margin-top: 30px;'>SISTEMA DE CUSTO E PLANEJAMENTO</h1>", unsafe_allow_html=True)
 
-    st.sidebar.title("👋 Bem-vindo")
+    # Sidebar dinâmica
+    with st.sidebar:
+        st.title("🔍 Filtros Globais")
+        aba_selecionada = st.radio(
+            "Selecione o Dashboard:",
+            ["📊 Efetivo Obra", "📈 Produtividade", "🏗️ Análise Custo", "🏢 Efetivo Escritório"],
+            key="aba_principal"
+        )
+
+    # Mostra filtros específicos para cada aba
+    if aba_selecionada == "📊 Efetivo Obra":
+        dashboard_efetivo()
+    elif aba_selecionada == "📈 Produtividade":
+        dashboard_produtividade()
+    elif aba_selecionada == "🏗️ Análise Custo":
+        st.title("🏗️ ANÁLISE CUSTO E PLANEJAMENTO")
+        st.markdown("""
+            <div style="text-align: center; margin-top: 100px;">
+                <h2>ESTAMOS EM DESENVOLVIMENTO</h2>
+                <div style="font-size: 50px; color: grey;">👷‍♂️🚧</div>
+            </div>""", 
+            unsafe_allow_html=True
+        )
+    elif aba_selecionada == "🏢 Efetivo Escritório":
+        dashboard_escritorio()
+# def main():
+    #st.set_page_config(page_title="Dashboards de Obra", layout="wide")
+
+    #col1, col2 = st.columns([1, 4])
+    #with col1:
+        #(st.image("logotipo.png", width=400)
+    #with col2:
+      #  st.markdown("<h1 style='margin-top: 30px;'>SISTEMA DE CUSTO E PLANEJAMENTO</h1>", unsafe_allow_html=True)
+
+  #  st.sidebar.title("👋 Bem-vindo")
 
     # Abas incluindo a nova de Escritório
-    aba1, aba2, aba3, aba4 = st.tabs([
-        "📊 Efetivo Obra", 
-        "📈 Produtividade", 
-        "🏗️ Análise Custo e Planejamento", 
-        "🏢 Efetivo Escritório"
-    ])
+  #  aba1, aba2, aba3, aba4 = st.tabs([
+      #  "📊 Efetivo Obra", 
+      #  "📈 Produtividade", 
+     #   "🏗️ Análise Custo e Planejamento", 
+     #   "🏢 Efetivo Escritório"
+   # ])
 
-    with aba1:
-        dashboard_efetivo()  # Seu dashboard original
-    with aba2:
-        dashboard_produtividade()  # Seu dashboard original
-    with aba3:
-        st.title("🏗️ ANÁLISE CUSTO E PLANEJAMENTO")
-        st.markdown("<div style='text-align: center; margin-top: 100px;'><h2>ESTAMOS EM DESENVOLVIMENTO</h2><div style='font-size: 50px; color: grey;'>👷‍♂️🚧</div></div>", unsafe_allow_html=True)
-    with aba4:
-        dashboard_escritorio()  # Novo dashboard
+  #  with aba1:
+      #  dashboard_efetivo()  # Seu dashboard original
+    #with aba2:
+      #  dashboard_produtividade()  # Seu dashboard original
+  #  with aba3:
+    #    st.title("🏗️ ANÁLISE CUSTO E PLANEJAMENTO")
+    #    st.markdown("<div style='text-align: center; margin-top: 100px;'><h2>ESTAMOS EM DESENVOLVIMENTO</h2><div style='font-size: 50px; color: grey;'>👷‍♂️🚧</div></div>", unsafe_allow_html=True)
+  #  with aba4:
+     #   dashboard_escritorio())  # Novo dashboard
 
 if __name__ == "__main__":
     main()

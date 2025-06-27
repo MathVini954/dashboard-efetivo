@@ -8,26 +8,37 @@ import plotly.graph_objects as go
 import plotly.express as px
 
 
-def check_password():
-    """Verifica se o usuário digitou a senha correta."""
-    def password_entered():
-        # Hash da senha para comparação segura
-        if hashlib.sha256(st.session_state["password"].encode()).hexdigest() == "seu_hash_aqui":
-            st.session_state["password_correct"] = True
-            del st.session_state["password"]  # Não armazena a senha
-        else:
-            st.session_state["password_correct"] = False
+# Configuração da página (opcional)
+st.set_page_config(page_title="App Privado", layout="wide")
 
+def check_password():
+    """Verifica a senha com hash seguro"""
     if st.session_state.get("password_correct", False):
         return True
-
-    st.text_input("Senha", type="password", on_change=password_entered, key="password")
-    if "password_correct" in st.session_state:
-        st.error("😕 Senha incorreta")
+    
+    # Substitua este hash pelo que você gerou no passo 1
+    correct_hash = "aqui_vai_seu_hash_gerado_no_passo_1"
+    
+    password_placeholder = st.empty()
+    input_password = password_placeholder.text_input(
+        "Digite a senha para acessar:", 
+        type="password", 
+        key="password_input"
+    )
+    
+    if input_password:
+        input_hash = hashlib.sha256(input_password.encode()).hexdigest()
+        if hmac.compare_digest(input_hash, correct_hash):
+            st.session_state["password_correct"] = True
+            password_placeholder.empty()  # Remove o campo de senha
+            return True
+        else:
+            st.error("❌ Senha incorreta")
+            return False
     return False
 
 if not check_password():
-    st.stop()
+    st.stop() 
 
 @st.cache_data
 def carregar_dados_efetivo():

@@ -763,46 +763,57 @@ def dashboard_escritorio():
             st.plotly_chart(fig_genero, use_container_width=True)
         else:
             st.warning("Coluna 'GENÊRO' não encontrada nos dados")
-    # Análise Financeira
-    if not df_filtrado.empty:
-        st.markdown("### 💰 Análise Financeira")
 
+    # Ranking de Funcionários
+    st.divider()
+    st.header("🏆 Ranking de Funcionários")
+    
+    coluna_valor = {
+        'Produção': 'PRODUÇÃO',
+        'Hora Extra Semana': 'Hora Extra 70% - Semana',
+        'Hora Extra Sábado': 'Hora Extra 70% - Sabado'
+    }.get(tipo_analise, 'PRODUÇÃO')
+    
+    if coluna_valor in df_filtrado.columns:
+        df_ranking = df_filtrado.sort_values(by=coluna_valor, ascending=False)
+        
+        if qtd_linhas != 'Todos':
+            df_ranking = df_ranking.head(int(qtd_linhas))
+        
+        st.dataframe(
+            df_ranking[['Nome do Funcionário', 'Departamento', 'Tipo', coluna_valor]],
+            use_container_width=True
+        )
+    else:
+        st.warning(f"Coluna '{coluna_valor}' não encontrada para análise")
+
+    # Análise Financeira
+    if analise_financeira in ['Geral', 'Ganhos', 'Descontos']:
+        st.divider()
+        st.header("💰 Análise Financeira Detalhada")
+        
         if analise_financeira == 'Geral':
-            fig_cascata, total_ganhos, total_descontos, remuneracao_liquida = criar_grafico_cascata(df_filtrado, ganhos, descontos)
+            fig_cascata, total_ganhos, total_descontos, remuneracao_liquida = criar_grafico_cascata(df_filtrado_financeiro, ganhos, descontos)
             st.plotly_chart(fig_cascata, use_container_width=True)
 
-            # Resumo dos valores financeiros
-            col_fin1, col_fin2, col_fin3 = st.columns(3)
-            col_fin1.metric("💚 Total Ganhos", 
-                          f"R$ {total_ganhos:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
-            col_fin2.metric("💸 Total Descontos", 
-                          f"R$ {total_descontos:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
-            col_fin3.metric("💰 Remuneração Líquida", 
-                          f"R$ {remuneracao_liquida:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+            col1, col2, col3 = st.columns(3)
+            col1.metric("Total Ganhos", f"R$ {total_ganhos:,.2f}")
+            col2.metric("Total Descontos", f"R$ {total_descontos:,.2f}")
+            col3.metric("Remuneração Líquida", f"R$ {remuneracao_liquida:,.2f}")
 
         elif analise_financeira == 'Ganhos':
-            fig_ganhos = criar_grafico_detalhado(
-                df_filtrado=df_filtrado,
-                colunas=ganhos,
-                titulo="Detalhamento dos Ganhos - Escritório",
-                cor="green"
-            )
+            fig_ganhos = criar_grafico_detalhado(df_filtrado_financeiro, ganhos, "Detalhamento dos Ganhos", "green")
             if fig_ganhos:
                 st.plotly_chart(fig_ganhos, use_container_width=True)
             else:
-                st.warning("Nenhum dado de ganhos encontrado para os filtros selecionados.")
+                st.warning("Nenhum dado de ganhos encontrado")
 
         elif analise_financeira == 'Descontos':
-            fig_descontos = criar_grafico_detalhado(
-                df_filtrado=df_filtrado,
-                colunas=descontos,
-                titulo="Detalhamento dos Descontos - Escritório",
-                cor="red"
-            )
+            fig_descontos = criar_grafico_detalhado(df_filtrado_financeiro, descontos, "Detalhamento dos Descontos", "red")
             if fig_descontos:
                 st.plotly_chart(fig_descontos, use_container_width=True)
             else:
-                st.warning("Nenhum dado de descontos encontrado para os filtros selecionados.")
+                st.warning("Nenhum dado de descontos encontrado")
 
         st.divider()
 

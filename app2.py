@@ -596,19 +596,19 @@ def dashboard_escritorio():
     ganhos, descontos = definir_colunas_ganhos_descontos()
     df['Total Extra'] = df['Hora Extra 70% - Semana'] + df['Hora Extra 70% - Sabado']
 
-        with st.sidebar:
+    with st.sidebar:
         st.header("🔍 Filtros - Escritório")
         departamentos_selecionados = st.multiselect(
             "Departamentos:", 
             lista_departamentos, 
             default=lista_departamentos,
-            key="escritorio_deptos"  # Key única
+            key="escritorio_deptos"
         )
         tipo_selecionado = st.radio(
             "Tipo:", 
             ['Todos', 'DIRETO', 'INDIRETO', 'TERCEIRO'], 
             horizontal=True,
-            key="escritorio_tipo"  # Key única
+            key="escritorio_tipo"
         )
         tipo_analise = st.radio(
             "Tipo de Análise da Tabela:", 

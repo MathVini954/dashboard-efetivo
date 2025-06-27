@@ -765,7 +765,33 @@ def dashboard_escritorio():
         
         if funcionario_selecionado != "Todos":
             df_filtrado = df_filtrado[df_filtrado['Nome do Funcionário'] == funcionario_selecionado]
+        # Novo filtro por função APENAS para análise financeira
+        nome_col_funcao = 'Função' if 'Função' in df.columns else 'Funçao' if 'Funçao' in df.columns else None
+        if nome_col_funcao:
+            funcoes_disponiveis = sorted(df[nome_col_funcao].astype(str).unique())
+            funcao_selecionada = st.selectbox(
+                "Filtrar por Função (Análise Financeira):",
+                ["Todas"] + funcoes_disponiveis
+            )
 
+    # Filtra obras selecionadas (para todos os gráficos)
+    df_filtrado = df[df['Obra'].isin(obras_selecionadas)]
+    df_terceiros_filtrado = df_terceiros[df_terceiros['Obra'].isin(obras_selecionadas)]
+
+    # Filtra por tipo (para todos os gráficos)
+    if tipo_selecionado != 'Todos':
+        if tipo_selecionado in ['DIRETO', 'INDIRETO']:
+            df_filtrado = df_filtrado[df_filtrado['Tipo'] == tipo_selecionado]
+        elif tipo_selecionado == 'TERCEIRO':
+            df_filtrado = df_filtrado[0:0]  # vazio, terceiros estão em outro DF
+
+    # Cria um DataFrame filtrado APENAS para análise financeira (se função selecionada)
+    if nome_col_funcao and 'funcao_selecionada' in locals() and funcao_selecionada != "Todas":
+        df_filtrado_financeiro = df_filtrado[df_filtrado[nome_col_funcao] == funcao_selecionada]
+    else:
+        df_filtrado_financeiro = df_filtrado.copy()
+
+    
     # Métricas (sem terceiros)
     direto_count = len(df_filtrado[df_filtrado['Tipo'] == 'DIRETO'])
     indireto_count = len(df_filtrado[df_filtrado['Tipo'] == 'INDIRETO'])

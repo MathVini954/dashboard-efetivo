@@ -765,15 +765,7 @@ def dashboard_escritorio():
         
         if funcionario_selecionado != "Todos":
             df_filtrado = df_filtrado[df_filtrado['Nome do Funcionário'] == funcionario_selecionado]
-        # Novo filtro por função APENAS para análise financeira
-        nome_col_funcao = 'Função' if 'Função' in df.columns else 'Funçao' if 'Funçao' in df.columns else None
-        if nome_col_funcao:
-            funcoes_disponiveis = sorted(df[nome_col_funcao].astype(str).unique())
-            funcao_selecionada = st.selectbox(
-                "Filtrar por Função (Análise Financeira):",
-                ["Todas"] + funcoes_disponiveis
-            )
-
+        
     # Filtra obras selecionadas (para todos os gráficos)
     df_filtrado = df[df['Obra'].isin(obras_selecionadas)]
     df_terceiros_filtrado = df_terceiros[df_terceiros['Obra'].isin(obras_selecionadas)]

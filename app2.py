@@ -246,7 +246,6 @@ def dashboard_efetivo():
 if not df_filtrado.empty and tipo_selecionado != 'TERCEIRO':
     st.markdown("### 💰 Análise Financeira")
 
-
     aplicar_media = funcao_selecionada != "Todas"
 
     if analise_financeira == 'Geral':
@@ -274,6 +273,7 @@ if not df_filtrado.empty and tipo_selecionado != 'TERCEIRO':
             col_fin1.metric("💚 Total Ganhos", f"R$ {total_ganhos:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
             col_fin2.metric("💸 Total Descontos", f"R$ {total_descontos:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
             col_fin3.metric("💰 Remuneração Líquida", f"R$ {remuneracao_liquida:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+
 
     # Código para Ganhos e Descontos detalhados permanece igual
 

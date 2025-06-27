@@ -657,7 +657,6 @@ def dashboard_escritorio():
         st.error("Coluna 'Departamento' não encontrada!")
         return
 
-
     # Inferência de gênero a partir do primeiro nome
     def inferir_genero(nome):
         nome = str(nome).split()[0].strip().upper()
@@ -668,78 +667,59 @@ def dashboard_escritorio():
 
     df['Gênero'] = df['Nome do Funcionário'].apply(inferir_genero)
 
+    # Prepara listas para filtros
     lista_departamentos = sorted(df['Departamento'].astype(str).unique())
     lista_funcionarios = sorted(df['Nome do Funcionário'].unique())
-
     ganhos, descontos = definir_colunas_ganhos_descontos()
     df['Total Extra'] = df['Hora Extra 70% - Semana'] + df['Hora Extra 70% - Sabado']
 
-
-
-
-    lista_departamentos = sorted(df['Departamento'].astype(str).unique())
-    lista_funcionarios = sorted(df['Nome do Funcionário'].unique())  # Lista para o novo filtro
-
-    ganhos, descontos = definir_colunas_ganhos_descontos()
-    df['Total Extra'] = df['Hora Extra 70% - Semana'] + df['Hora Extra 70% - Sabado']
-
+    # Sidebar com filtros
     with st.sidebar:
         st.header("🔍 Filtros - Escritório")
         departamentos_selecionados = st.multiselect(
             "Departamentos:", 
             lista_departamentos, 
-            default=lista_departamentos,
-            key="escritorio_deptos"
+            default=lista_departamentos
         )
         tipo_selecionado = st.radio(
             "Tipo:", 
             ['Todos', 'DIRETO', 'INDIRETO'],
-            horizontal=True,
-            key="escritorio_tipo"
+            horizontal=True
         )
         tipo_analise = st.radio(
-            "Tipo de Análise da Tabela:", 
-            ['Produção', 'Hora Extra Semana', 'Hora Extra Sábado'],
-            key="escritorio_analise"
+            "Tipo de Análise:", 
+            ['Produção', 'Hora Extra Semana', 'Hora Extra Sábado']
         )
         qtd_linhas = st.radio(
-            "Qtd. de Funcionários na Tabela:", 
+            "Qtd. de Funcionários:", 
             ['5', '10', '20', 'Todos'], 
-            horizontal=True,
-            key="escritorio_qtd"
+            horizontal=True
         )
-        tipo_peso = st.radio(
-            "Tipo de Peso:", 
-            ['Peso sobre Produção', 'Peso sobre Hora Extra'],
-            key="escritorio_peso"
-        )
-
+        
         st.divider()
         st.header("💰 Análise Financeira")
         analise_financeira = st.radio(
-            "Análise:", 
-            ['Geral', 'Ganhos', 'Descontos'],
-            key="escritorio_financeira"
+            "Tipo de Análise:", 
+            ['Geral', 'Ganhos', 'Descontos']
         )
+        
+        # Filtro por funcionário apenas para análise financeira
+        if analise_financeira in ['Geral', 'Ganhos', 'Descontos']:
+            funcionario_selecionado = st.selectbox(
+                "Filtrar por funcionário:",
+                ["Todos"] + lista_funcionarios
+            )
 
-    # Filtra dados por departamento e tipo
+    # Filtra dados
     df_filtrado = df[df['Departamento'].isin(departamentos_selecionados)]
-
+    
     if tipo_selecionado != 'Todos':
         df_filtrado = df_filtrado[df_filtrado['Tipo'] == tipo_selecionado]
+    
+    if analise_financeira in ['Geral', 'Ganhos', 'Descontos'] and 'funcionario_selecionado' in locals() and funcionario_selecionado != "Todos":
+        df_filtrado = df_filtrado[df_filtrado['Nome do Funcionário'] == funcionario_selecionado]
 
-    # Novo filtro por funcionário (apenas para análise financeira)
-    if analise_financeira in ['Geral', 'Ganhos', 'Descontos']:
-        funcionario_selecionado = st.selectbox(
-            "🔎 Filtrar por funcionário (opcional):",
-            ["Todos"] + lista_funcionarios,
-            key="filtro_funcionario"
-        )
-
-        if funcionario_selecionado != "Todos":
-            df_filtrado = df_filtrado[df_filtrado['Nome do Funcionário'] == funcionario_selecionado]
-
-    # Métricas (sem terceiros)
+    # Métricas
     direto_count = len(df_filtrado[df_filtrado['Tipo'] == 'DIRETO'])
     indireto_count = len(df_filtrado[df_filtrado['Tipo'] == 'INDIRETO'])
     total_geral = direto_count + indireto_count
@@ -751,34 +731,22 @@ def dashboard_escritorio():
 
     st.divider()
 
-        # Gráficos de Pizza
-    pizza_base = df[df['Obra'].isin(obras_selecionadas)]
-    pizza_diretos_indiretos = pizza_base['Tipo'].value_counts().reset_index()
-    pizza_diretos_indiretos.columns = ['Tipo', 'count']
-    pizza_terceiros = pd.DataFrame({'Tipo': ['TERCEIRO'], 'count': [df_terceiros_filtrado['QUANTIDADE'].sum()]})
-    pizza = pd.concat([pizza_diretos_indiretos, pizza_terceiros], ignore_index=True)
-
-    # Cria colunas para os gráficos
+    # Gráficos de Pizza
     col1, col2 = st.columns(2)
-
+    
     with col1:
-        # Gráfico de Pizza - Tipo de Efetivo
-        fig_pizza = px.pie(pizza, names='Tipo', values='count', 
-                          title='Distribuição por Tipo de Efetivo', hole=0.3)
-        fig_pizza.update_traces(textposition='inside', textinfo='percent+label')
-        st.plotly_chart(fig_pizza, use_container_width=True)
-
+        # Gráfico por Tipo
+        tipo_counts = df_filtrado['Tipo'].value_counts().reset_index()
+        fig_tipo = px.pie(tipo_counts, names='Tipo', values='count', 
+                         title='Distribuição por Tipo', hole=0.3)
+        st.plotly_chart(fig_tipo, use_container_width=True)
+    
     with col2:
-        # Gráfico de Pizza - Gênero
-        if 'GENÊRO' in pizza_base.columns:
-            genero_counts = pizza_base['GENÊRO'].value_counts().reset_index()
-            genero_counts.columns = ['Gênero', 'Quantidade']
-            fig_genero = px.pie(genero_counts, names='Gênero', values='Quantidade', 
-                               title='Distribuição por Gênero', hole=0.3)
-            fig_genero.update_traces(textposition='inside', textinfo='percent+label')
-            st.plotly_chart(fig_genero, use_container_width=True)
-        else:
-            st.warning("Coluna 'GENÊRO' não encontrada nos dados")
+        # Gráfico por Gênero
+        genero_counts = df_filtrado['Gênero'].value_counts().reset_index()
+        fig_genero = px.pie(genero_counts, names='Gênero', values='count',
+                           title='Distribuição por Gênero', hole=0.3)
+        st.plotly_chart(fig_genero, use_container_width=True)
 
     # Análise Financeira
     if not df_filtrado.empty:

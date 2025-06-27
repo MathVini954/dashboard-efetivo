@@ -182,7 +182,7 @@ def criar_grafico_detalhado(df_filtrado, colunas, titulo, cor):
 # ======================================
 
 def dashboard_efetivo():
-    st.title("📊 Análise de Efetivo - Abril 2025")
+    st.title("📊 Análise de Efetivo - Obras")
 
     df = carregar_dados_efetivo()
     df_terceiros = carregar_terceiros()

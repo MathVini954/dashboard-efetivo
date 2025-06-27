@@ -577,22 +577,18 @@ def definir_colunas_ganhos_descontos():
 def dashboard_escritorio():
     st.title("🏢 Análise de Efetivo - Escritório Engenharia - Abril 2025")
 
-    # Carrega dados (funções compartilhadas)
+    # Carrega apenas os dados principais (sem terceiros)
     df = carregar_dados_efetivo()
-    df_terceiros = carregar_terceiros()
-
-    # 🔴 FILTRO INICIAL: Seleciona apenas "ESCRITÓRIO ENGENHARIA"
+    
+    # Filtra apenas escritório engenharia
     df = df[df['Obra'] == 'ESCRITÓRIO ENGENHARIA']
-    df_terceiros = df_terceiros[df_terceiros['Obra'] == 'ESCRITÓRIO ENGENHARIA']
-
-    # Verifica se a coluna 'Departamento' existe
+    
+    # Verifica se existe coluna Departamento
     if 'Departamento' not in df.columns:
-        st.error("Coluna 'Departamento' não encontrada no DataFrame!")
+        st.error("Coluna 'Departamento' não encontrada!")
         return
 
-    # Lista de departamentos disponíveis (após filtrar por Escritório Engenharia)
     lista_departamentos = sorted(df['Departamento'].astype(str).unique())
-    
     ganhos, descontos = definir_colunas_ganhos_descontos()
     df['Total Extra'] = df['Hora Extra 70% - Semana'] + df['Hora Extra 70% - Sabado']
 
@@ -606,7 +602,7 @@ def dashboard_escritorio():
         )
         tipo_selecionado = st.radio(
             "Tipo:", 
-            ['Todos', 'DIRETO', 'INDIRETO', 'TERCEIRO'], 
+            ['Todos', 'DIRETO', 'INDIRETO'],  # Removido 'TERCEIRO'
             horizontal=True,
             key="escritorio_tipo"
         )
@@ -635,28 +631,22 @@ def dashboard_escritorio():
             key="escritorio_financeira"  # Key única
         )
 
-    # Filtra departamentos selecionados
+       # Filtra dados
     df_filtrado = df[df['Departamento'].isin(departamentos_selecionados)]
-    df_terceiros_filtrado = df_terceiros[df_terceiros['Departamento'].isin(departamentos_selecionados)]
-
-    # Filtra por tipo
+    
     if tipo_selecionado != 'Todos':
-        if tipo_selecionado in ['DIRETO', 'INDIRETO']:
-            df_filtrado = df_filtrado[df_filtrado['Tipo'] == tipo_selecionado]
-        elif tipo_selecionado == 'TERCEIRO':
-            df_filtrado = df_filtrado[0:0]  # DataFrame vazio para terceiros
+        df_filtrado = df_filtrado[df_filtrado['Tipo'] == tipo_selecionado]
 
-    # Métricas principais (ajustadas para departamento)
-    direto_count = len(df[df['Departamento'].isin(departamentos_selecionados) & (df['Tipo'] == 'DIRETO')])
-    indireto_count = len(df[df['Departamento'].isin(departamentos_selecionados) & (df['Tipo'] == 'INDIRETO')])
-    total_terceiros = df_terceiros_filtrado['QUANTIDADE'].sum()
-    total_geral = direto_count + indireto_count + total_terceiros
+    # Métricas ajustadas (sem terceiros)
+    direto_count = len(df_filtrado[df_filtrado['Tipo'] == 'DIRETO'])
+    indireto_count = len(df_filtrado[df_filtrado['Tipo'] == 'INDIRETO'])
+    total_geral = direto_count + indireto_count
 
-    col1, col2, col3, col4 = st.columns(4)
+    col1, col2, col3 = st.columns(3)  # Reduzido para 3 colunas
     col1.metric("👷 Direto", direto_count)
     col2.metric("👷‍♂️ Indireto", indireto_count)
-    col3.metric("🏗️ Terceiro", total_terceiros)
-    col4.metric("👥 Total", total_geral)
+    col3.metric("👥 Total", total_geral)
+
 
     st.divider()
 

@@ -643,7 +643,7 @@ def definir_colunas_ganhos_descontos():
 # ======================================
 # Adicione esta função ao seu código existente
 
-def dashboard_escritorio():More actions
+def dashboard_escritorio():
     st.title("🏢 Análise de Efetivo - Escritório")
 
     # Carrega dados

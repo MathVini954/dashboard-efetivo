@@ -573,13 +573,8 @@ def definir_colunas_ganhos_descontos():
     ]
     return ganhos, descontos
 
-# Aplica a inferência de gênero
-df['Gênero'] = df['Nome do Funcionário'].apply(inferir_genero)
-
-# ======================================
 # DASHBOARD ESCRITÓRIO (NOVO)
-# ======================================
-# Adicione esta função ao seu código existente
+
 
 def dashboard_escritorio():
     st.title("🏢 Análise de Efetivo - Escritório")

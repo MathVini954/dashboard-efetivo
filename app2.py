@@ -515,47 +515,372 @@ def dashboard_produtividade():
     st.dataframe(df_tabela, use_container_width=True)
 
 
+@st.cache_data
+def carregar_dados_efetivo():
+    df = pd.read_excel("efetivo_abril.xlsx", sheet_name="EFETIVO", engine="openpyxl")
+    df.columns = df.columns.str.strip()
+    df = df[df['Obra'].notna()]  # Remove linhas com 'Obra' vazia/nan
+    
+    df['Hora Extra 70% - Semana'] = pd.to_numeric(df['Hora Extra 70% - Semana'], errors='coerce').fillna(0)
+    df['Hora Extra 70% - Sabado'] = pd.to_numeric(df['Hora Extra 70% - Sabado'], errors='coerce').fillna(0)
+    if 'Repouso Remunerado' not in df.columns:
+        df['Repouso Remunerado'] = 0
+    else:
+        df['Repouso Remunerado'] = pd.to_numeric(df['Repouso Remunerado'], errors='coerce').fillna(0)
+    df['Remuneração Líquida Folha'] = pd.to_numeric(df['Remuneração Líquida Folha'], errors='coerce').fillna(0)
+    df['Adiantamento'] = pd.to_numeric(df['Adiantamento'], errors='coerce').fillna(0)
+    return df
+    
 
 
-# ---------- Execução Principal ----------
+@st.cache_data
+def carregar_terceiros():
+    df_terceiros = pd.read_excel("efetivo_abril.xlsx", sheet_name="TERCEIROS", engine="openpyxl")
+    df_terceiros.columns = df_terceiros.columns.str.strip()
+    df_terceiros = df_terceiros[df_terceiros['Obra'].notna()]  # Remove linhas com 'Obra' vazia/nan
+    df_terceiros['QUANTIDADE'] = pd.to_numeric(df_terceiros['QUANTIDADE'], errors='coerce').fillna(0).astype(int)
+    return df_terceiros
+
+def definir_colunas_ganhos_descontos():
+    """Define as colunas de ganhos e descontos (compartilhada)"""
+    ganhos = [
+        'SALÁRIO', 'Periculosidade', 'Dias De Atestado', 'Gratificação', 
+        'Adicional noturno 20%', 'Ajuda De Saude', 'Auxilio Creche', 
+        'Auxilio Educacao', 'EQUIP. TRAB/FERRAMENTA', 'Auxilio Moradia',
+        'Auxilio Transporte', 'Adicional Noturno 20%', 'Dev.desc.indevido',
+        'Salário Substituiçã', 'Reflexo S/ He Produção', 'Reembolso V. Transporte',
+        'Prêmio', 'Premio-gestao Desempenho', 'Passagem Interior',
+        'Passagem Interior Adiantamento', 'Hora Extra 70% - Sabado',
+        'Hora Extra 70% - Semana', 'Salário Maternidade', 'Adicional H.e S/ Producao 70%',
+        'PRODUÇÃO', 'AJUDA DE CUSTO', 'Ajuda de Custo Combustivel', 'REFLEXO S PRODUÇÃO',
+        'Hora Extra 100%', 'Repouso Remunerado', 'Periculosidade', 'Salário Família',
+        'Insuficiência de Saldo', 'Auxilio Transporte Retroativo', 'Insuficiência de Saldo'
+    ]
+    
+    descontos = [
+        'Atrasos', 'Faltas em Dias', 'Assistencia Medica', 'Coparticipacao Dependente',
+        'Coparticipacao Titular', 'Desconto Empréstimo', 'Diferenca Plano De Saude',
+        'Desconto Ótica', 'Plano Odontologico', 'Plano Odontologico Dependente',
+        'Pensão Alimentícia  Salário Mínimo', 'Assitência Médica Dependente',
+        'Dsr sobre falta', 'INSS Folha', 'IRRF Folha', 'Pensão Alimentícia', 
+        'DESCONTO DE ALIMENTAÇÃO', 'MENSALIDADE SINDICAL', 'Vale Transporte',
+        'Correção adiantamento'
+    ]
+    return ganhos, descontos
+
+# ======================================
+# DASHBOARD ESCRITÓRIO (NOVO)
+# ======================================
+# Adicione esta função ao seu código existente
+
+def dashboard_escritorio():
+    st.title("🏢 Análise de Efetivo - Escritório")
+
+    # Carrega dados
+    df = carregar_dados_efetivo()
+    
+    # Filtra apenas escritório engenharia
+    df = df[df['Obra'] == 'ESCRITÓRIO ENGENHARIA']
+    
+    # Verifica se existe coluna Departamento
+    if 'Departamento' not in df.columns:
+        st.error("Coluna 'Departamento' não encontrada!")
+        return
+
+    lista_departamentos = sorted(df['Departamento'].astype(str).unique())
+    lista_funcionarios = sorted(df['Nome do Funcionário'].unique())  # Lista para o novo filtro
+    
+    ganhos, descontos = definir_colunas_ganhos_descontos()
+    df['Total Extra'] = df['Hora Extra 70% - Semana'] + df['Hora Extra 70% - Sabado']
+
+    with st.sidebar:
+        st.header("🔍 Filtros - Escritório")
+        departamentos_selecionados = st.multiselect(
+            "Departamentos:", 
+            lista_departamentos, 
+            default=lista_departamentos,
+            key="escritorio_deptos"
+        )
+        tipo_selecionado = st.radio(
+            "Tipo:", 
+            ['Todos', 'DIRETO', 'INDIRETO'],
+            horizontal=True,
+            key="escritorio_tipo"
+        )
+        tipo_analise = st.radio(
+            "Tipo de Análise da Tabela:", 
+            ['Produção', 'Hora Extra Semana', 'Hora Extra Sábado'],
+            key="escritorio_analise"
+        )
+        qtd_linhas = st.radio(
+            "Qtd. de Funcionários na Tabela:", 
+            ['5', '10', '20', 'Todos'], 
+            horizontal=True,
+            key="escritorio_qtd"
+        )
+        tipo_peso = st.radio(
+            "Tipo de Peso:", 
+            ['Peso sobre Produção', 'Peso sobre Hora Extra'],
+            key="escritorio_peso"
+        )
+        
+        st.divider()
+        st.header("💰 Análise Financeira")
+        analise_financeira = st.radio(
+            "Análise:", 
+            ['Geral', 'Ganhos', 'Descontos'],
+            key="escritorio_financeira"
+        )
+
+    # Filtra dados por departamento e tipo
+    df_filtrado = df[df['Departamento'].isin(departamentos_selecionados)]
+    
+    if tipo_selecionado != 'Todos':
+        df_filtrado = df_filtrado[df_filtrado['Tipo'] == tipo_selecionado]
+
+    # Novo filtro por funcionário (apenas para análise financeira)
+    if analise_financeira in ['Geral', 'Ganhos', 'Descontos']:
+        funcionario_selecionado = st.selectbox(
+            "🔎 Filtrar por funcionário (opcional):",
+            ["Todos"] + lista_funcionarios,
+            key="filtro_funcionario"
+        )
+        
+        if funcionario_selecionado != "Todos":
+            df_filtrado = df_filtrado[df_filtrado['Nome do Funcionário'] == funcionario_selecionado]
+
+    # Métricas (sem terceiros)
+    direto_count = len(df_filtrado[df_filtrado['Tipo'] == 'DIRETO'])
+    indireto_count = len(df_filtrado[df_filtrado['Tipo'] == 'INDIRETO'])
+    total_geral = direto_count + indireto_count
+
+    col1, col2, col3 = st.columns(3)
+    col1.metric("👷 Direto", direto_count)
+    col2.metric("👷‍♂️ Indireto", indireto_count)
+    col3.metric("👥 Total", total_geral)
+
+    st.divider()
+  
+    # Análise Financeira
+    if not df_filtrado.empty:
+        st.markdown("### 💰 Análise Financeira")
+        
+        if analise_financeira == 'Geral':
+            fig_cascata, total_ganhos, total_descontos, remuneracao_liquida = criar_grafico_cascata(df_filtrado, ganhos, descontos)
+            st.plotly_chart(fig_cascata, use_container_width=True)
+            
+            # Resumo dos valores financeiros
+            col_fin1, col_fin2, col_fin3 = st.columns(3)
+            col_fin1.metric("💚 Total Ganhos", 
+                          f"R$ {total_ganhos:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+            col_fin2.metric("💸 Total Descontos", 
+                          f"R$ {total_descontos:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+            col_fin3.metric("💰 Remuneração Líquida", 
+                          f"R$ {remuneracao_liquida:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+            
+        elif analise_financeira == 'Ganhos':
+            fig_ganhos = criar_grafico_detalhado(
+                df_filtrado=df_filtrado,
+                colunas=ganhos,
+                titulo="Detalhamento dos Ganhos - Escritório",
+                cor="green"
+            )
+            if fig_ganhos:
+                st.plotly_chart(fig_ganhos, use_container_width=True)
+            else:
+                st.warning("Nenhum dado de ganhos encontrado para os filtros selecionados.")
+                
+        elif analise_financeira == 'Descontos':
+            fig_descontos = criar_grafico_detalhado(
+                df_filtrado=df_filtrado,
+                colunas=descontos,
+                titulo="Detalhamento dos Descontos - Escritório",
+                cor="red"
+            )
+            if fig_descontos:
+                st.plotly_chart(fig_descontos, use_container_width=True)
+            else:
+                st.warning("Nenhum dado de descontos encontrado para os filtros selecionados.")
+        
+        st.divider()
+
+    # Gráfico de Pizza - Apenas diretos e indiretos
+    pizza_base = df[df['Departamento'].isin(departamentos_selecionados)]
+    pizza_diretos_indiretos = pizza_base['Tipo'].value_counts().reset_index()
+    pizza_diretos_indiretos.columns = ['Tipo', 'count']
+    
+    fig_pizza = px.pie(
+        pizza_diretos_indiretos,
+        names='Tipo', 
+        values='count', 
+        title='Distribuição por Tipo de Efetivo (Escritório)',
+        hole=0.3
+    )
+    fig_pizza.update_traces(textposition='inside', textinfo='percent+label')
+    st.plotly_chart(fig_pizza, use_container_width=True)
+
+    # [...] (restante do código existente - ranking, gráfico por função, peso financeiro)
+
+   
+    # Ranking de Funcionários (ajustado para departamento)
+    coluna_valor = {
+        'Produção': 'PRODUÇÃO',
+        'Hora Extra Semana': 'Hora Extra 70% - Semana',
+        'Hora Extra Sábado': 'Hora Extra 70% - Sabado'
+    }[tipo_analise]
+
+    if tipo_selecionado == 'Todos':
+        df_ranking = df_filtrado[df_filtrado['Tipo'].isin(['DIRETO', 'INDIRETO'])]
+    else:
+        df_ranking = df_filtrado
+
+    nome_col_funcao = 'Função' if 'Função' in df_ranking.columns else 'Funçao' if 'Funçao' in df_ranking.columns else None
+
+    if tipo_analise == 'Produção' and 'REFLEXO S PRODUÇÃO' in df_ranking.columns:
+        df_ranking['DSR'] = df_ranking['REFLEXO S PRODUÇÃO']
+        cols_rank = ['Nome do Funcionário', nome_col_funcao, 'Departamento', 'Tipo', 'PRODUÇÃO', 'DSR']
+        valor_coluna = 'PRODUÇÃO'
+    else:
+        cols_rank = ['Nome do Funcionário', nome_col_funcao, 'Departamento', 'Tipo', coluna_valor]
+        valor_coluna = coluna_valor
+
+    cols_rank = [c for c in cols_rank if c is not None and c in df_ranking.columns]
+    df_ranking_limp = df_ranking[cols_rank].copy()
+    df_ranking_limp = df_ranking_limp[pd.to_numeric(df_ranking_limp[valor_coluna], errors='coerce').notna()]
+    df_ranking_limp = df_ranking_limp[df_ranking_limp[valor_coluna] > 0]
+    ranking = df_ranking_limp.sort_values(by=valor_coluna, ascending=False)
+
+    valor_total = df_ranking_limp[valor_coluna].sum()
+    st.markdown(f"### 📋 Top Funcionários por **{tipo_analise}**")
+    st.markdown(f"**Total em {tipo_analise}:** R$ {valor_total:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+
+    if qtd_linhas != 'Todos':
+        ranking = ranking.head(int(qtd_linhas))
+
+    def formatar_valor(x):
+        return f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+
+    ranking[valor_coluna] = ranking[valor_coluna].apply(formatar_valor)
+    if 'DSR' in ranking.columns:
+        ranking['DSR'] = ranking['DSR'].apply(formatar_valor)
+
+    st.dataframe(ranking, use_container_width=True)
+    st.divider()
+    
+    # Gráfico por Função (se existir a coluna)
+    if nome_col_funcao and nome_col_funcao in df_ranking.columns:
+        graf_funcao = df_ranking[nome_col_funcao].value_counts().reset_index()
+        graf_funcao.columns = [nome_col_funcao, 'Qtd']
+        fig_bar = px.bar(
+            graf_funcao,
+            x=nome_col_funcao,
+            y='Qtd',
+            color='Qtd',
+            color_continuous_scale='Blues',
+            title='Quantidade por Função',
+            labels={'Qtd': 'Quantidade', nome_col_funcao: 'Função'}
+        )
+        st.plotly_chart(fig_bar, use_container_width=True)
+
+    st.divider()
+
+    # Gráfico de Peso Financeiro (ajustado para departamento)
+    todos_departamentos = sorted(df['Departamento'].astype(str).unique())
+    peso_lista = []
+    for depto in todos_departamentos:
+        df_depto = df[df['Departamento'] == depto]
+        df_direto = df_depto[df_depto['Tipo'] == 'DIRETO']
+        prod_numerador = df_direto['PRODUÇÃO'].sum() + df_direto['REFLEXO S PRODUÇÃO'].sum()
+        prod_denominador = df_direto['Remuneração Líquida Folha'].sum() + df_direto['Adiantamento'].sum()
+        df_dir_ind = df_depto[df_depto['Tipo'].isin(['DIRETO', 'INDIRETO'])]
+        total_extra = df_dir_ind['Total Extra'].sum()
+        reposo_remunerado = df_dir_ind['Repouso Remunerado'].sum()
+        hor_extra_denominador = df_dir_ind['Remuneração Líquida Folha'].sum() + df_dir_ind['Adiantamento'].sum()
+
+        if tipo_peso == 'Peso sobre Produção':
+            peso = (prod_numerador / prod_denominador) if prod_denominador > 0 else 0
+        else:
+            peso = ((total_extra + reposo_remunerado) / hor_extra_denominador) if hor_extra_denominador > 0 else 0
+
+        peso_lista.append({'Departamento': depto, 'Peso Financeiro': peso})
+
+    df_peso = pd.DataFrame(peso_lista)
+    df_peso = df_peso.sort_values(by='Peso Financeiro', ascending=False)
+    df_peso['Selecionada'] = df_peso['Departamento'].apply(lambda x: x in departamentos_selecionados)
+    colors = df_peso['Selecionada'].map({True: 'darkblue', False: 'lightblue'})
+
+        # Código anterior...
+    
+    fig_peso = px.bar(
+        df_peso,
+        x='Departamento',
+        y='Peso Financeiro',
+        title=f'Peso Financeiro por Departamento ({tipo_peso})',
+        labels={'Peso Financeiro': 'Índice', 'Departamento': 'Departamento'},
+        text=df_peso['Peso Financeiro'].apply(lambda x: f"{x:.2%}"),
+    )
+
+    fig_peso.update_traces(
+        marker_color=colors,
+        textposition='outside',
+        marker_line_color='black',
+        marker_line_width=0.5
+    )
+    
+    fig_peso.update_layout(
+        yaxis_tickformat='.0%',
+        showlegend=False,
+        xaxis={'categoryorder': 'array', 'categoryarray': df_peso['Departamento']}
+    )
+    
+    st.plotly_chart(fig_peso, use_container_width=True) 
+
+
 def main():
-    st.set_page_config(page_title="Dashboards de Obra", layout="wide")
-
+    st.set_page_config(page_title="Dashboards Inteligentes", layout="wide")
+    
+    # 1. Configuração do estado inicial
+    if 'aba_atual' not in st.session_state:
+        st.session_state.aba_atual = "📊"
+    
+    # 2. Cabeçalho
     col1, col2 = st.columns([1, 4])
-
     with col1:
         st.image("logotipo.png", width=400)
-
     with col2:
-        st.markdown(
-            "<h1 style='margin-top: 30px; vertical-align: middle;'>SISTEMA DE CUSTO E PLANEJAMENTO</h1>",
-            unsafe_allow_html=True,
-        )
-
-    st.sidebar.title("👋 Bem-vindo")
-
-    aba1, aba2, aba3, aba4 = st.tabs(["📊 Efetivo Obra", "📈 Produtividade", "🏗️ Análise Custo e Planejamento", "Efetivo Escritório"])
-
-    with aba1:
-        dashboard_efetivo()
-
-    with aba2:
-        dashboard_produtividade()
-
-    with aba3:
-        st.title("🏗️ ANÁLISE CUSTO E PLANEJAMENTO")
-        st.markdown(
-            """
-            <div style="text-align: center; margin-top: 100px;">
-                <h2>ESTAMOS EM DESENVOLVIMENTO</h2>
-                <div style="font-size: 50px; color: grey;">👷‍♂️🚧</div>
-            </div>
-            """, unsafe_allow_html=True
-        )
-
-    with aba4:
-          st.title("Efetivo Escritório")
-
+        st.markdown("<h1 style='margin-top: 30px;'>SISTEMA INTELIGENTE DE GESTÃO</h1>", unsafe_allow_html=True)
+    
+    # 3. Sidebar com navegação instantânea
+    with st.sidebar:
+        st.title("🎛️ Painel de Controle")
+        
+        # Cria botões estilo aba para melhor UX
+        opcoes_abas = {
+            "📊": "efetivo",
+            "📈": "produtividade",
+            "🏢": "escritorio"
+        }
+        
+        # Exibe como botões horizontais
+        cols = st.columns(len(opcoes_abas))
+        for idx, (nome_aba, aba_key) in enumerate(opcoes_abas.items()):
+            with cols[idx]:
+                if st.button(nome_aba, key=f"btn_{aba_key}"):
+                    st.session_state.aba_atual = nome_aba
+    
+    # 4. Renderização condicional
+    try:
+        if st.session_state.aba_atual == "📊 Efetivo Obra":
+            dashboard_efetivo()
+        elif st.session_state.aba_atual == "🏢 Efetivo Escritório":
+            dashboard_escritorio()
+        elif st.session_state.aba_atual == "📈 Produtividade":
+            dashboard_produtividade()
+        
+            
+    except Exception as e:
+        st.error(f"Erro ao carregar o dashboard: {str(e)}")
+        st.session_state.aba_atual = "📊"  # Volta para aba segura
 
 if __name__ == "__main__":
     main()

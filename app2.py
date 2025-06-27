@@ -11,26 +11,27 @@ import plotly.express as px
 
 @st.cache_data
 def carregar_dados_efetivo():
-df = pd.read_excel("efetivo_abril.xlsx", sheet_name="EFETIVO", engine="openpyxl")
-df.columns = df.columns.str.strip()
-df = df[df['Obra'].notna()]  # NOVO: Remove linhas com 'Obra' vazia/nan
+    df = pd.read_excel("efetivo_abril.xlsx", sheet_name="EFETIVO", engine="openpyxl")
+    df.columns = df.columns.str.strip()
+    df = df[df['Obra'].notna()]
+    return df  # NOVO: Remove linhas com 'Obra' vazia/nan
 
-df['Hora Extra 70% - Semana'] = pd.to_numeric(df['Hora Extra 70% - Semana'], errors='coerce').fillna(0)
-df['Hora Extra 70% - Sabado'] = pd.to_numeric(df['Hora Extra 70% - Sabado'], errors='coerce').fillna(0)
+    df['Hora Extra 70% - Semana'] = pd.to_numeric(df['Hora Extra 70% - Semana'], errors='coerce').fillna(0)
+    df['Hora Extra 70% - Sabado'] = pd.to_numeric(df['Hora Extra 70% - Sabado'], errors='coerce').fillna(0)
 if 'Repouso Remunerado' not in df.columns:
     df['Repouso Remunerado'] = 0
 else:
     df['Repouso Remunerado'] = pd.to_numeric(df['Repouso Remunerado'], errors='coerce').fillna(0)
-df['Remuneração Líquida Folha'] = pd.to_numeric(df['Remuneração Líquida Folha'], errors='coerce').fillna(0)
-df['Adiantamento'] = pd.to_numeric(df['Adiantamento'], errors='coerce').fillna(0)
+    df['Remuneração Líquida Folha'] = pd.to_numeric(df['Remuneração Líquida Folha'], errors='coerce').fillna(0)
+    df['Adiantamento'] = pd.to_numeric(df['Adiantamento'], errors='coerce').fillna(0)
 return df
 
 @st.cache_data
 def carregar_terceiros():
-df_terceiros = pd.read_excel("efetivo_abril.xlsx", sheet_name="TERCEIROS", engine="openpyxl")
-df_terceiros.columns = df_terceiros.columns.str.strip()
-df_terceiros = df_terceiros[df_terceiros['Obra'].notna()]  # NOVO: Remove linhas com 'Obra' vazia/nan
-df_terceiros['QUANTIDADE'] = pd.to_numeric(df_terceiros['QUANTIDADE'], errors='coerce').fillna(0).astype(int)
+    df_terceiros = pd.read_excel("efetivo_abril.xlsx", sheet_name="TERCEIROS", engine="openpyxl")
+    df_terceiros.columns = df_terceiros.columns.str.strip()
+    df_terceiros = df_terceiros[df_terceiros['Obra'].notna()]  # NOVO: Remove linhas com 'Obra' vazia/nan
+    df_terceiros['QUANTIDADE'] = pd.to_numeric(df_terceiros['QUANTIDADE'], errors='coerce').fillna(0).astype(int)
 return df_terceiros
 
 def definir_colunas_ganhos_descontos():

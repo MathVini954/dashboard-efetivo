@@ -918,7 +918,7 @@ def main():
     with col1:
         st.image("logotipo.png", width=400)
     with col2:
-        st.markdown("<h1 style='margin-top: 30px;'>SISTEMA INTELIGENTE DE GESTÃO</h1>", unsafe_allow_html=True)
+        st.markdown("<h1 style='margin-top: 30px;'>SISTEMA DE GESTÃO INTEGRADA</h1>", unsafe_allow_html=True)
     
     # 3. Sidebar com navegação instantânea
     with st.sidebar:

@@ -607,24 +607,73 @@ def criar_grafico_detalhado(df_filtrado, colunas, titulo, cor):
     return fig
 
 def dashboard_escritorio():
-    st.title("📊 Análise de Efetivo Escritório - Abril 2025")
+    st.title("📊 Análise de Efetivo - Escritório")
 
-    df = carregar_dados_escritorio()
+    df = carregar_dados_efetivo()
+    df = df[df['Obra'] == 'ESCRITÓRIO ENGENHARIA']
+
     ganhos, descontos = definir_colunas_ganhos_descontos()
     df['Total Extra'] = df['Hora Extra 70% - Semana'] + df['Hora Extra 70% - Sabado']
 
-    with st.sidebar:
-        st.header("🔍 Filtros - Escritório")
-        lista_departamentos = sorted(df['Departamento'].dropna().unique())
-        departamentos_selecionados = st.multiselect("Departamento:", lista_departamentos, default=lista_departamentos)
-        tipo_analise = st.radio("Tipo de Análise da Tabela:", ['Produção', 'Hora Extra Semana', 'Hora Extra Sábado'])
-        qtd_linhas = st.radio("Qtd. de Funcionários na Tabela:", ['5', '10', '20', 'Todos'], horizontal=True)
+    # Lista de departamentos para filtro
+    lista_departamentos = sorted(df['Departamento'].dropna().unique())
+    departamentos_selecionados = st.multiselect("Departamento(s):", lista_departamentos, default=lista_departamentos, key="multiselect_departamentos_escritorio")
 
-        st.divider()
-        st.header("💰 Análise Financeira")
-        analise_financeira = st.radio("Análise Financeira:", ['Geral', 'Ganhos', 'Descontos'])
+    tipo_analise = st.radio(
+        "Tipo de Análise da Tabela:",
+        ['Produção', 'Hora Extra Semana', 'Hora Extra Sábado'],
+        key="radio_tipo_analise_escritorio"
+    )
 
+    qtd_linhas = st.radio(
+        "Qtd. de Funcionários na Tabela:",
+        ['5', '10', '20', 'Todos'],
+        horizontal=True,
+        key="radio_qtd_linhas_escritorio"
+    )
+
+    tipo_peso = st.radio(
+        "Tipo de Peso (Gráficos Novos):",
+        ['Peso sobre Produção', 'Peso sobre Hora Extra'],
+        key="radio_tipo_peso_escritorio"
+    )
+
+    st.divider()
+
+    st.header("💰 Análise Financeira")
+    analise_financeira = st.radio(
+        "Análise Financeira:",
+        ['Geral', 'Ganhos', 'Descontos'],
+        key="radio_analise_financeira_escritorio"
+    )
+
+    # Filtra departamento selecionado
     df_filtrado = df[df['Departamento'].isin(departamentos_selecionados)]
+
+    # Continua o resto do processamento e exibição da análise financeira, gráficos, tabelas, etc.
+    # Por exemplo:
+
+    if not df_filtrado.empty:
+        if analise_financeira == 'Geral':
+            fig_cascata, total_ganhos, total_descontos, remuneracao_liquida = criar_grafico_cascata(df_filtrado, ganhos, descontos)
+            st.plotly_chart(fig_cascata, use_container_width=True)
+
+            col_fin1, col_fin2, col_fin3 = st.columns(3)
+            col_fin1.metric("💚 Total Ganhos", f"R$ {total_ganhos:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+            col_fin2.metric("💸 Total Descontos", f"R$ {total_descontos:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+            col_fin3.metric("💰 Remuneração Líquida", f"R$ {remuneracao_liquida:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+        elif analise_financeira == 'Ganhos':
+            fig_ganhos = criar_grafico_detalhado(df_filtrado, ganhos, "Detalhamento dos Ganhos", "green")
+            if fig_ganhos:
+                st.plotly_chart(fig_ganhos, use_container_width=True)
+            else:
+                st.warning("Nenhum dado de ganhos encontrado para os filtros selecionados.")
+        elif analise_financeira == 'Descontos':
+            fig_descontos = criar_grafico_detalhado(df_filtrado, descontos, "Detalhamento dos Descontos", "red")
+            if fig_descontos:
+                st.plotly_chart(fig_descontos, use_container_width=True)
+            else:
+                st.warning("Nenhum dado de descontos encontrado para os filtros selecionados.")
 
     # Métricas principais
     total_funcionarios = len(df_filtrado)

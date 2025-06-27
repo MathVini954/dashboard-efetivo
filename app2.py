@@ -3,6 +3,7 @@ import pandas as pd
 import plotly.graph_objects as go
 import plotly.express as px
 import hashlib
+import hmac
 # Imports necessários (adicione no início do seu arquivo)
 import plotly.graph_objects as go
 import plotly.express as px

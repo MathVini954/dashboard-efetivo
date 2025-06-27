@@ -2,7 +2,8 @@ import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
 import plotly.express as px
-import time    
+import time 
+import requests
 
 # Imports necessários (adicione no início do seu arquivo)
 import plotly.graph_objects as go
@@ -590,7 +591,7 @@ def dashboard_escritorio():
     if 'Departamento' not in df.columns:
         st.error("Coluna 'Departamento' não encontrada!")
         return
-import requests
+
 
 def inferir_genero(nome):
     primeiro_nome = str(nome).split()[0]

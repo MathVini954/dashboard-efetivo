@@ -657,8 +657,6 @@ def dashboard_escritorio():
         st.error("Coluna 'Departamento' não encontrada!")
         return
 
-    df['Gênero'] = df['GENÊRO'].apply(inferir_genero)
-
     lista_departamentos = sorted(df['Departamento'].astype(str).unique())
     lista_funcionarios = sorted(df['Nome do Funcionário'].unique())
 
@@ -785,29 +783,7 @@ def dashboard_escritorio():
 
         st.divider()
 
-    # Gráfico de Pizza - Apenas diretos e indiretos
-    pizza_base = df[df['Departamento'].isin(departamentos_selecionados)]
-    pizza_diretos_indiretos = pizza_base['Tipo'].value_counts().reset_index()
-    pizza_diretos_indiretos.columns = ['Tipo', 'count']
 
-    # Gráfico de Pizza - Gênero
-    genero_counts = pizza_base['Gênero'].value_counts().reset_index()
-    genero_counts.columns = ['Gênero', 'Quantidade']
-    fig_genero = px.pie(genero_counts, names='Gênero', values='Quantidade', title='Distribuição por Gênero', hole=0.3)
-    fig_genero.update_traces(textposition='inside', textinfo='percent+label')
-    st.plotly_chart(fig_genero, use_container_width=True)
-
-    fig_pizza = px.pie(
-        pizza_diretos_indiretos,
-        names='Tipo', 
-        values='count', 
-        title='Distribuição por Tipo de Efetivo (Escritório)',
-        hole=0.3
-    )
-    fig_pizza.update_traces(textposition='inside', textinfo='percent+label')
-    st.plotly_chart(fig_pizza, use_container_width=True)
-
-    # [...] (restante do código existente - ranking, gráfico por função, peso financeiro)
 
 
     # Ranking de Funcionários (ajustado para departamento)

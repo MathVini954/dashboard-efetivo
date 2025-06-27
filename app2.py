@@ -249,49 +249,47 @@ if not df_filtrado.empty and tipo_selecionado != 'TERCEIRO':
     aplicar_media = funcao_selecionada != "Todas"
 
     if analise_financeira == 'Geral':
-        if aplicar_media:
-            # Calcula médias ao invés de totais
-            total_ganhos = df_filtrado[ganhos].sum(axis=1).mean()
-            total_descontos = df_filtrado[descontos].sum(axis=1).mean()
-            remuneracao_liquida = df_filtrado['Remuneração Líquida Folha'].mean()
+    if aplicar_media:
+        # Calcula médias ao invés de totais
+        total_ganhos = df_filtrado[ganhos].sum(axis=1).mean()
+        total_descontos = df_filtrado[descontos].sum(axis=1).mean()
+        remuneracao_liquida = df_filtrado['Remuneração Líquida Folha'].mean()
 
-            # Criar gráfico cascata manualmente com médias
-            fig_cascata = criar_grafico_cascata_media(total_ganhos, total_descontos, remuneracao_liquida)
-        else:
-            # Comportamento normal, totais e gráfico normal
-            fig_cascata, total_ganhos, total_descontos, remuneracao_liquida = criar_grafico_cascata(df_filtrado, ganhos, descontos)
-        
-        st.plotly_chart(fig_cascata, use_container_width=True)
+        # Criar gráfico cascata manualmente com médias
+        fig_cascata = criar_grafico_cascata_media(total_ganhos, total_descontos, remuneracao_liquida)
+    else:
+        # Comportamento normal, totais e gráfico normal
+        fig_cascata, total_ganhos, total_descontos, remuneracao_liquida = criar_grafico_cascata(df_filtrado, ganhos, descontos)
+    
+    st.plotly_chart(fig_cascata, use_container_width=True)
 
-        # Métricas no topo
-        col_fin1, col_fin2, col_fin3 = st.columns(3)
-        if aplicar_media:
-            col_fin1.metric("💚 Média Ganhos", f"R$ {total_ganhos:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
-            col_fin2.metric("💸 Média Descontos", f"R$ {total_descontos:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
-            col_fin3.metric("💰 Média Remuneração Líquida", f"R$ {remuneracao_liquida:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
-        else:
-            col_fin1.metric("💚 Total Ganhos", f"R$ {total_ganhos:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
-            col_fin2.metric("💸 Total Descontos", f"R$ {total_descontos:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
-            col_fin3.metric("💰 Remuneração Líquida", f"R$ {remuneracao_liquida:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+    # Métricas no topo
+    col_fin1, col_fin2, col_fin3 = st.columns(3)
+    if aplicar_media:
+        col_fin1.metric("💚 Média Ganhos", f"R$ {total_ganhos:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+        col_fin2.metric("💸 Média Descontos", f"R$ {total_descontos:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+        col_fin3.metric("💰 Média Remuneração Líquida", f"R$ {remuneracao_liquida:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+    else:
+        col_fin1.metric("💚 Total Ganhos", f"R$ {total_ganhos:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+        col_fin2.metric("💸 Total Descontos", f"R$ {total_descontos:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+        col_fin3.metric("💰 Remuneração Líquida", f"R$ {remuneracao_liquida:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
 
+elif analise_financeira == 'Ganhos':
+    fig_ganhos = criar_grafico_detalhado(df_filtrado, ganhos, "Detalhamento dos Ganhos", "green")
+    if fig_ganhos:
+        st.plotly_chart(fig_ganhos, use_container_width=True)
+    else:
+        st.warning("Nenhum dado de ganhos encontrado para os filtros selecionados.")
 
-    # Código para Ganhos e Descontos detalhados permanece igual
+elif analise_financeira == 'Descontos':
+    fig_descontos = criar_grafico_detalhado(df_filtrado, descontos, "Detalhamento dos Descontos", "red")
+    if fig_descontos:
+        st.plotly_chart(fig_descontos, use_container_width=True)
+    else:
+        st.warning("Nenhum dado de descontos encontrado para os filtros selecionados.")
 
-         elif analise_financeira == 'Ganhos':
-            fig_ganhos = criar_grafico_detalhado(df_filtrado, ganhos, "Detalhamento dos Ganhos", "green")
-            if fig_ganhos:
-                st.plotly_chart(fig_ganhos, use_container_width=True)
-            else:
-                st.warning("Nenhum dado de ganhos encontrado para os filtros selecionados.")
+st.divider()
 
-        elif analise_financeira == 'Descontos':
-            fig_descontos = criar_grafico_detalhado(df_filtrado, descontos, "Detalhamento dos Descontos", "red")
-            if fig_descontos:
-                st.plotly_chart(fig_descontos, use_container_width=True)
-            else:
-                st.warning("Nenhum dado de descontos encontrado para os filtros selecionados.")
-
-        st.divider()
 
     # Pizza - Distribuição por tipo
     pizza_base = df[df['Obra'].isin(obras_selecionadas)]

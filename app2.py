@@ -673,9 +673,11 @@ def dashboard_escritorio():
     ganhos, descontos = definir_colunas_ganhos_descontos()
     df['Total Extra'] = df['Hora Extra 70% - Semana'] + df['Hora Extra 70% - Sabado']
 
-    # Inicializa variáveis de controle
-    analise_financeira = None
+    # Inicializa todas as variáveis de controle
+    analise_financeira = 'Nenhuma'
+    tipo_analise = 'Produção'  # Valor padrão
     funcionario_selecionado = "Todos"
+    qtd_linhas = '10'  # Valor padrão
 
     # Sidebar com filtros
     with st.sidebar:
@@ -691,18 +693,35 @@ def dashboard_escritorio():
             horizontal=True
         )
         
+        # Seção de análise de ranking
+        st.divider()
+        st.header("📊 Análise de Desempenho")
+        tipo_analise = st.radio(
+            "Tipo de Análise:", 
+            ['Produção', 'Hora Extra Semana', 'Hora Extra Sábado'],
+            key='tipo_analise_escritorio'
+        )
+        qtd_linhas = st.radio(
+            "Qtd. de Funcionários na Tabela:", 
+            ['5', '10', '20', 'Todos'], 
+            horizontal=True,
+            key='qtd_linhas_escritorio'
+        )
+        
         # Seção de análise financeira
         st.divider()
         st.header("💰 Análise Financeira")
         analise_financeira = st.radio(
             "Tipo de Análise:", 
-            ['Nenhuma', 'Geral', 'Ganhos', 'Descontos']
+            ['Nenhuma', 'Geral', 'Ganhos', 'Descontos'],
+            key='analise_fin_escritorio'
         )
         
         if analise_financeira != 'Nenhuma':
             funcionario_selecionado = st.selectbox(
                 "Filtrar por funcionário:",
-                ["Todos"] + lista_funcionarios
+                ["Todos"] + lista_funcionarios,
+                key='func_escritorio'
             )
 
     # Filtra os dados
@@ -737,8 +756,31 @@ def dashboard_escritorio():
                            title='Distribuição por Gênero', hole=0.3)
         st.plotly_chart(fig_genero, use_container_width=True)
 
+    # Seção de Ranking de Funcionários
+    st.divider()
+    st.header("🏆 Ranking de Funcionários")
+    
+    coluna_valor = {
+        'Produção': 'PRODUÇÃO',
+        'Hora Extra Semana': 'Hora Extra 70% - Semana',
+        'Hora Extra Sábado': 'Hora Extra 70% - Sabado'
+    }.get(tipo_analise, 'PRODUÇÃO')  # Default para produção
+    
+    if coluna_valor in df_filtrado.columns:
+        df_ranking = df_filtrado.sort_values(by=coluna_valor, ascending=False)
+        
+        if qtd_linhas != 'Todos':
+            df_ranking = df_ranking.head(int(qtd_linhas))
+        
+        st.dataframe(
+            df_ranking[['Nome do Funcionário', 'Departamento', 'Tipo', coluna_valor]],
+            use_container_width=True
+        )
+    else:
+        st.warning(f"Coluna '{coluna_valor}' não encontrada para análise de desempenho")
+
     # Análise Financeira (só executa se selecionado)
-    if analise_financeira and analise_financeira != 'Nenhuma':
+    if analise_financeira != 'Nenhuma':
         st.divider()
         st.header("💰 Análise Financeira Detalhada")
         
@@ -764,9 +806,6 @@ def dashboard_escritorio():
                 st.plotly_chart(fig_descontos, use_container_width=True)
             else:
                 st.warning("Nenhum dado de descontos encontrado")
-
-        st.divider()
-
 
 
     # Ranking de Funcionários (ajustado para departamento)

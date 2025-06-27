@@ -673,6 +673,10 @@ def dashboard_escritorio():
     ganhos, descontos = definir_colunas_ganhos_descontos()
     df['Total Extra'] = df['Hora Extra 70% - Semana'] + df['Hora Extra 70% - Sabado']
 
+    # Inicializa variáveis de controle
+    analise_financeira = None
+    funcionario_selecionado = "Todos"
+
     # Sidebar com filtros
     with st.sidebar:
         st.header("🔍 Filtros - Escritório")
@@ -687,19 +691,27 @@ def dashboard_escritorio():
             horizontal=True
         )
         
-        # Filtro por funcionário
-        funcionario_selecionado = st.selectbox(
-            "Filtrar por funcionário:",
-            ["Todos"] + lista_funcionarios
+        # Seção de análise financeira
+        st.divider()
+        st.header("💰 Análise Financeira")
+        analise_financeira = st.radio(
+            "Tipo de Análise:", 
+            ['Nenhuma', 'Geral', 'Ganhos', 'Descontos']
         )
+        
+        if analise_financeira != 'Nenhuma':
+            funcionario_selecionado = st.selectbox(
+                "Filtrar por funcionário:",
+                ["Todos"] + lista_funcionarios
+            )
 
-    # FILTRA OS DADOS (definindo df_filtrado antes de usar)
+    # Filtra os dados
     df_filtrado = df[df['Departamento'].isin(departamentos_selecionados)]
     
     if tipo_selecionado != 'Todos':
         df_filtrado = df_filtrado[df_filtrado['Tipo'] == tipo_selecionado]
     
-    if funcionario_selecionado != "Todos":
+    if analise_financeira != 'Nenhuma' and funcionario_selecionado != "Todos":
         df_filtrado = df_filtrado[df_filtrado['Nome do Funcionário'] == funcionario_selecionado]
 
     # Métricas
@@ -714,61 +726,44 @@ def dashboard_escritorio():
     col1, col2 = st.columns(2)
     
     with col1:
-        # Gráfico por Tipo
         tipo_counts = df_filtrado['Tipo'].value_counts().reset_index()
         fig_tipo = px.pie(tipo_counts, names='Tipo', values='count', 
                          title='Distribuição por Tipo', hole=0.3)
         st.plotly_chart(fig_tipo, use_container_width=True)
     
     with col2:
-        # Gráfico por Gênero (usando GENÊRO)
         genero_counts = df_filtrado['GENÊRO'].value_counts().reset_index()
         fig_genero = px.pie(genero_counts, names='GENÊRO', values='count',
                            title='Distribuição por Gênero', hole=0.3)
         st.plotly_chart(fig_genero, use_container_width=True)
 
-    # ... [adicione aqui o restante das análises financeiras] ...
-
-    # Análise Financeira
-    if not df_filtrado.empty:
-        st.markdown("### 💰 Análise Financeira")
-
+    # Análise Financeira (só executa se selecionado)
+    if analise_financeira and analise_financeira != 'Nenhuma':
+        st.divider()
+        st.header("💰 Análise Financeira Detalhada")
+        
         if analise_financeira == 'Geral':
             fig_cascata, total_ganhos, total_descontos, remuneracao_liquida = criar_grafico_cascata(df_filtrado, ganhos, descontos)
             st.plotly_chart(fig_cascata, use_container_width=True)
 
-            # Resumo dos valores financeiros
-            col_fin1, col_fin2, col_fin3 = st.columns(3)
-            col_fin1.metric("💚 Total Ganhos", 
-                          f"R$ {total_ganhos:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
-            col_fin2.metric("💸 Total Descontos", 
-                          f"R$ {total_descontos:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
-            col_fin3.metric("💰 Remuneração Líquida", 
-                          f"R$ {remuneracao_liquida:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+            col1, col2, col3 = st.columns(3)
+            col1.metric("Total Ganhos", f"R$ {total_ganhos:,.2f}")
+            col2.metric("Total Descontos", f"R$ {total_descontos:,.2f}")
+            col3.metric("Remuneração Líquida", f"R$ {remuneracao_liquida:,.2f}")
 
         elif analise_financeira == 'Ganhos':
-            fig_ganhos = criar_grafico_detalhado(
-                df_filtrado=df_filtrado,
-                colunas=ganhos,
-                titulo="Detalhamento dos Ganhos - Escritório",
-                cor="green"
-            )
+            fig_ganhos = criar_grafico_detalhado(df_filtrado, ganhos, "Detalhamento dos Ganhos", "green")
             if fig_ganhos:
                 st.plotly_chart(fig_ganhos, use_container_width=True)
             else:
-                st.warning("Nenhum dado de ganhos encontrado para os filtros selecionados.")
+                st.warning("Nenhum dado de ganhos encontrado")
 
         elif analise_financeira == 'Descontos':
-            fig_descontos = criar_grafico_detalhado(
-                df_filtrado=df_filtrado,
-                colunas=descontos,
-                titulo="Detalhamento dos Descontos - Escritório",
-                cor="red"
-            )
+            fig_descontos = criar_grafico_detalhado(df_filtrado, descontos, "Detalhamento dos Descontos", "red")
             if fig_descontos:
                 st.plotly_chart(fig_descontos, use_container_width=True)
             else:
-                st.warning("Nenhum dado de descontos encontrado para os filtros selecionados.")
+                st.warning("Nenhum dado de descontos encontrado")
 
         st.divider()
 

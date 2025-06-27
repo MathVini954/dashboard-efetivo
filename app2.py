@@ -650,7 +650,7 @@ def dashboard_escritorio():
 
     st.divider()
 
-    Seção de Análise Financeira - VERIFIQUE A INDENTAÇÃO
+   # Seção de Análise Financeira - VERIFIQUE A INDENTAÇÃO
     if not df_filtrado.empty:
         st.markdown("### 💰 Análise Financeira")
         

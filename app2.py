@@ -589,7 +589,7 @@ def dashboard_escritorio():
 
     
     # Inferência de gênero a partir do primeiro nome
-def inferir_genero(nome):
+    def inferir_genero(nome):
         nome = str(nome).split()[0].strip().upper()
         if nome.endswith('A'):
             return 'Feminino'

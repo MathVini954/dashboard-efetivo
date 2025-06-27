@@ -515,47 +515,374 @@ def dashboard_produtividade():
     st.dataframe(df_tabela, use_container_width=True)
 
 
+# ======================================
+# FUNÇÕES DE CARREGAMENTO DE DADOS (COMPARTILHADAS)
+# ======================================
 
+@st.cache_data
+def carregar_dados_efetivo():
+    df = pd.read_excel("efetivo_abril.xlsx", sheet_name="EFETIVO", engine="openpyxl")
+    df.columns = df.columns.str.strip()
+    df = df[df['Obra'].notna()]  # Remove linhas com 'Obra' vazia/nan
+    
+    df['Hora Extra 70% - Semana'] = pd.to_numeric(df['Hora Extra 70% - Semana'], errors='coerce').fillna(0)
+    df['Hora Extra 70% - Sabado'] = pd.to_numeric(df['Hora Extra 70% - Sabado'], errors='coerce').fillna(0)
+    if 'Repouso Remunerado' not in df.columns:
+        df['Repouso Remunerado'] = 0
+    else:
+        df['Repouso Remunerado'] = pd.to_numeric(df['Repouso Remunerado'], errors='coerce').fillna(0)
+    df['Remuneração Líquida Folha'] = pd.to_numeric(df['Remuneração Líquida Folha'], errors='coerce').fillna(0)
+    df['Adiantamento'] = pd.to_numeric(df['Adiantamento'], errors='coerce').fillna(0)
+    return df
 
-# ---------- Execução Principal ----------
+@st.cache_data
+def carregar_terceiros():
+    df_terceiros = pd.read_excel("efetivo_abril.xlsx", sheet_name="TERCEIROS", engine="openpyxl")
+    df_terceiros.columns = df_terceiros.columns.str.strip()
+    df_terceiros = df_terceiros[df_terceiros['Obra'].notna()]  # Remove linhas com 'Obra' vazia/nan
+    df_terceiros['QUANTIDADE'] = pd.to_numeric(df_terceiros['QUANTIDADE'], errors='coerce').fillna(0).astype(int)
+    return df_terceiros
+
+def definir_colunas_ganhos_descontos():
+    """Define as colunas de ganhos e descontos (compartilhada)"""
+    ganhos = [
+        'SALÁRIO', 'Periculosidade', 'Dias De Atestado', 'Gratificação', 
+        'Adicional noturno 20%', 'Ajuda De Saude', 'Auxilio Creche', 
+        'Auxilio Educacao', 'EQUIP. TRAB/FERRAMENTA', 'Auxilio Moradia',
+        'Auxilio Transporte', 'Adicional Noturno 20%', 'Dev.desc.indevido',
+        'Salário Substituiçã', 'Reflexo S/ He Produção', 'Reembolso V. Transporte',
+        'Prêmio', 'Premio-gestao Desempenho', 'Passagem Interior',
+        'Passagem Interior Adiantamento', 'Hora Extra 70% - Sabado',
+        'Hora Extra 70% - Semana', 'Salário Maternidade', 'Adicional H.e S/ Producao 70%',
+        'PRODUÇÃO', 'AJUDA DE CUSTO', 'Ajuda de Custo Combustivel', 'REFLEXO S PRODUÇÃO',
+        'Hora Extra 100%', 'Repouso Remunerado', 'Periculosidade', 'Salário Família',
+        'Insuficiência de Saldo', 'Auxilio Transporte Retroativo', 'Insuficiência de Saldo'
+    ]
+    
+    descontos = [
+        'Atrasos', 'Faltas em Dias', 'Assistencia Medica', 'Coparticipacao Dependente',
+        'Coparticipacao Titular', 'Desconto Empréstimo', 'Diferenca Plano De Saude',
+        'Desconto Ótica', 'Plano Odontologico', 'Plano Odontologico Dependente',
+        'Pensão Alimentícia  Salário Mínimo', 'Assitência Médica Dependente',
+        'Dsr sobre falta', 'INSS Folha', 'IRRF Folha', 'Pensão Alimentícia', 
+        'DESCONTO DE ALIMENTAÇÃO', 'MENSALIDADE SINDICAL', 'Vale Transporte',
+        'Correção adiantamento'
+    ]
+    return ganhos, descontos
+
+# ======================================
+# DASHBOARD ESCRITÓRIO (NOVO)
+# ======================================
+
+def dashboard_escritorio():
+    st.title("🏢 Análise de Efetivo - Escritório Engenharia - Abril 2025")
+
+    # Carrega dados (funções compartilhadas)
+    df = carregar_dados_efetivo()
+    df_terceiros = carregar_terceiros()
+
+    # 🔴 FILTRO INICIAL: Seleciona apenas "ESCRITÓRIO ENGENHARIA"
+    df = df[df['Obra'] == 'ESCRITÓRIO ENGENHARIA']
+    df_terceiros = df_terceiros[df_terceiros['Obra'] == 'ESCRITÓRIO ENGENHARIA']
+
+    # Verifica se a coluna 'Departamento' existe
+    if 'Departamento' not in df.columns:
+        st.error("Coluna 'Departamento' não encontrada no DataFrame!")
+        return
+
+    # Lista de departamentos disponíveis (após filtrar por Escritório Engenharia)
+    lista_departamentos = sorted(df['Departamento'].astype(str).unique())
+    
+    ganhos, descontos = definir_colunas_ganhos_descontos()
+    df['Total Extra'] = df['Hora Extra 70% - Semana'] + df['Hora Extra 70% - Sabado']
+
+    with st.sidebar:
+        st.header("🔍 Filtros - Escritório")
+        departamentos_selecionados = st.multiselect(
+            "Departamentos:", 
+            lista_departamentos, 
+            default=lista_departamentos
+        )
+        tipo_selecionado = st.radio("Tipo:", ['Todos', 'DIRETO', 'INDIRETO', 'TERCEIRO'], horizontal=True)
+        tipo_analise = st.radio("Tipo de Análise da Tabela:", ['Produção', 'Hora Extra Semana', 'Hora Extra Sábado'])
+        qtd_linhas = st.radio("Qtd. de Funcionários na Tabela:", ['5', '10', '20', 'Todos'], horizontal=True)
+        tipo_peso = st.radio("Tipo de Peso:", ['Peso sobre Produção', 'Peso sobre Hora Extra'])
+        
+        st.divider()
+        st.header("💰 Análise Financeira")
+        analise_financeira = st.radio("Análise:", ['Geral', 'Ganhos', 'Descontos'])
+
+    # Filtra departamentos selecionados
+    df_filtrado = df[df['Departamento'].isin(departamentos_selecionados)]
+    df_terceiros_filtrado = df_terceiros[df_terceiros['Departamento'].isin(departamentos_selecionados)]
+
+    # Filtra por tipo
+    if tipo_selecionado != 'Todos':
+        if tipo_selecionado in ['DIRETO', 'INDIRETO']:
+            df_filtrado = df_filtrado[df_filtrado['Tipo'] == tipo_selecionado]
+        elif tipo_selecionado == 'TERCEIRO':
+            df_filtrado = df_filtrado[0:0]  # DataFrame vazio para terceiros
+
+    # Métricas principais (ajustadas para departamento)
+    direto_count = len(df[df['Departamento'].isin(departamentos_selecionados) & (df['Tipo'] == 'DIRETO')])
+    indireto_count = len(df[df['Departamento'].isin(departamentos_selecionados) & (df['Tipo'] == 'INDIRETO')])
+    total_terceiros = df_terceiros_filtrado['QUANTIDADE'].sum()
+    total_geral = direto_count + indireto_count + total_terceiros
+
+    col1, col2, col3, col4 = st.columns(4)
+    col1.metric("👷 Direto", direto_count)
+    col2.metric("👷‍♂️ Indireto", indireto_count)
+    col3.metric("🏗️ Terceiro", total_terceiros)
+    col4.metric("👥 Total", total_geral)
+
+    st.divider()
+
+    # Análise Financeira (idêntica ao dashboard efetivo)
+    if not df_filtrado.empty and tipo_selecionado != 'TERCEIRO':
+        st.markdown("### 💰 Análise Financeira")
+        
+        if analise_financeira == 'Geral':
+            fig_cascata, total_ganhos, total_descontos, remuneracao_liquida = criar_grafico_cascata(df_filtrado, ganhos, descontos)
+            st.plotly_chart(fig_cascata, use_container_width=True)
+            
+            col_fin1, col_fin2, col_fin3 = st.columns(3)
+            col_fin1.metric("💚 Total Ganhos", f"R$ {total_ganhos:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+            col_fin2.metric("💸 Total Descontos", f"R$ {total_descontos:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+            col_fin3.metric("💰 Remuneração Líquida", f"R$ {remuneracao_liquida:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+            
+        elif analise_financeira == 'Ganhos':
+            fig_ganhos = criar_grafico_detalhado(df_filtrado, ganhos, "Detalhamento dos Ganhos", "green")
+            if fig_ganhos:
+                st.plotly_chart(fig_ganhos, use_container_width=True)
+            else:
+                st.warning("Nenhum dado de ganhos encontrado para os filtros selecionados.")
+                
+        elif analise_financeira == 'Descontos':
+            fig_descontos = criar_grafico_detalhado(df_filtrado, descontos, "Detalhamento dos Descontos", "red")
+            if fig_descontos:
+                st.plotly_chart(fig_descontos, use_container_width=True)
+            else:
+                st.warning("Nenhum dado de descontos encontrado para os filtros selecionados.")
+        
+        st.divider()
+
+    # Gráfico de Pizza - Distribuição por tipo
+    pizza_base = df[df['Departamento'].isin(departamentos_selecionados)]
+    pizza_diretos_indiretos = pizza_base['Tipo'].value_counts().reset_index()
+    pizza_diretos_indiretos.columns = ['Tipo', 'count']
+    pizza_terceiros = pd.DataFrame({'Tipo': ['TERCEIRO'], 'count': [total_terceiros]})
+    pizza = pd.concat([pizza_diretos_indiretos, pizza_terceiros], ignore_index=True)
+
+    fig_pizza = px.pie(pizza, names='Tipo', values='count', title='Distribuição por Tipo de Efetivo', hole=0.3)
+    fig_pizza.update_traces(textposition='inside', textinfo='percent+label')
+    st.plotly_chart(fig_pizza, use_container_width=True)
+
+    # Seção para Terceiros
+    if tipo_selecionado == 'TERCEIRO':
+        st.divider()
+        st.markdown("### 🏗️ Funcionários Terceirizados por Empresa e Departamento")
+        tabela_terceiros = df_terceiros_filtrado.groupby(['Departamento', 'EMPRESA'])['QUANTIDADE'].sum().reset_index()
+        st.dataframe(tabela_terceiros, use_container_width=True)
+        return
+
+    # Ranking de Funcionários (ajustado para departamento)
+    coluna_valor = {
+        'Produção': 'PRODUÇÃO',
+        'Hora Extra Semana': 'Hora Extra 70% - Semana',
+        'Hora Extra Sábado': 'Hora Extra 70% - Sabado'
+    }[tipo_analise]
+
+    if tipo_selecionado == 'Todos':
+        df_ranking = df_filtrado[df_filtrado['Tipo'].isin(['DIRETO', 'INDIRETO'])]
+    else:
+        df_ranking = df_filtrado
+
+    nome_col_funcao = 'Função' if 'Função' in df_ranking.columns else 'Funçao' if 'Funçao' in df_ranking.columns else None
+
+    if tipo_analise == 'Produção' and 'REFLEXO S PRODUÇÃO' in df_ranking.columns:
+        df_ranking['DSR'] = df_ranking['REFLEXO S PRODUÇÃO']
+        cols_rank = ['Nome do Funcionário', nome_col_funcao, 'Departamento', 'Tipo', 'PRODUÇÃO', 'DSR']
+        valor_coluna = 'PRODUÇÃO'
+    else:
+        cols_rank = ['Nome do Funcionário', nome_col_funcao, 'Departamento', 'Tipo', coluna_valor]
+        valor_coluna = coluna_valor
+
+    cols_rank = [c for c in cols_rank if c is not None and c in df_ranking.columns]
+    df_ranking_limp = df_ranking[cols_rank].copy()
+    df_ranking_limp = df_ranking_limp[pd.to_numeric(df_ranking_limp[valor_coluna], errors='coerce').notna()]
+    df_ranking_limp = df_ranking_limp[df_ranking_limp[valor_coluna] > 0]
+    ranking = df_ranking_limp.sort_values(by=valor_coluna, ascending=False)
+
+    valor_total = df_ranking_limp[valor_coluna].sum()
+    st.markdown(f"### 📋 Top Funcionários por **{tipo_analise}**")
+    st.markdown(f"**Total em {tipo_analise}:** R$ {valor_total:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+
+    if qtd_linhas != 'Todos':
+        ranking = ranking.head(int(qtd_linhas))
+
+    def formatar_valor(x):
+        return f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+
+    ranking[valor_coluna] = ranking[valor_coluna].apply(formatar_valor)
+    if 'DSR' in ranking.columns:
+        ranking['DSR'] = ranking['DSR'].apply(formatar_valor)
+
+    st.dataframe(ranking, use_container_width=True)
+    st.divider()
+    
+    # Gráfico por Função (se existir a coluna)
+    if nome_col_funcao and nome_col_funcao in df_ranking.columns:
+        graf_funcao = df_ranking[nome_col_funcao].value_counts().reset_index()
+        graf_funcao.columns = [nome_col_funcao, 'Qtd']
+        fig_bar = px.bar(
+            graf_funcao,
+            x=nome_col_funcao,
+            y='Qtd',
+            color='Qtd',
+            color_continuous_scale='Blues',
+            title='Quantidade por Função',
+            labels={'Qtd': 'Quantidade', nome_col_funcao: 'Função'}
+        )
+        st.plotly_chart(fig_bar, use_container_width=True)
+
+    st.divider()
+
+    # Gráfico de Peso Financeiro (ajustado para departamento)
+    todos_departamentos = sorted(df['Departamento'].astype(str).unique())
+    peso_lista = []
+    for depto in todos_departamentos:
+        df_depto = df[df['Departamento'] == depto]
+        df_direto = df_depto[df_depto['Tipo'] == 'DIRETO']
+        prod_numerador = df_direto['PRODUÇÃO'].sum() + df_direto['REFLEXO S PRODUÇÃO'].sum()
+        prod_denominador = df_direto['Remuneração Líquida Folha'].sum() + df_direto['Adiantamento'].sum()
+        df_dir_ind = df_depto[df_depto['Tipo'].isin(['DIRETO', 'INDIRETO'])]
+        total_extra = df_dir_ind['Total Extra'].sum()
+        reposo_remunerado = df_dir_ind['Repouso Remunerado'].sum()
+        hor_extra_denominador = df_dir_ind['Remuneração Líquida Folha'].sum() + df_dir_ind['Adiantamento'].sum()
+
+        if tipo_peso == 'Peso sobre Produção':
+            peso = (prod_numerador / prod_denominador) if prod_denominador > 0 else 0
+        else:
+            peso = ((total_extra + reposo_remunerado) / hor_extra_denominador) if hor_extra_denominador > 0 else 0
+
+        peso_lista.append({'Departamento': depto, 'Peso Financeiro': peso})
+
+    df_peso = pd.DataFrame(peso_lista)
+    df_peso = df_peso.sort_values(by='Peso Financeiro', ascending=False)
+    df_peso['Selecionada'] = df_peso['Departamento'].apply(lambda x: x in departamentos_selecionados)
+    colors = df_peso['Selecionada'].map({True: 'darkblue', False: 'lightblue'})
+
+    fig_peso = px.bar(
+        df_peso,
+        x='Departamento',
+        y='Peso Financeiro',
+        title=f'Peso Financeiro por Departamento ({tipo_peso})',
+        labels={'Peso Financeiro': 'Índice', 'Departamento': 'Departamento'},
+        text=df_peso['Peso Financeiro'].apply(lambda x: f"{x:.2%}"),
+    )
+
+    fig_peso.update_traces(
+        marker_color=colors,
+        textposition='outside',
+        marker_line_color='black',
+        marker_line_width=0.5
+    )
+    
+    fig_peso.update_layout(
+        yaxis_tickformat='.0%',
+        showlegend=False,
+        xaxis={'categoryorder': 'array', 'categoryarray': df_peso['Departamento']}
+    )
+
+    st.plotly_chart(fig_peso, use_container_width=True)
+
+# ======================================
+# FUNÇÕES COMPARTILHADAS (dos outros dashboards)
+# ======================================
+
+def criar_grafico_cascata(df_filtrado, ganhos, descontos):
+    """Cria o gráfico de cascata (compartilhado)"""
+    total_ganhos = sum(pd.to_numeric(df_filtrado[col], errors='coerce').fillna(0).sum() for col in ganhos if col in df_filtrado.columns)
+    total_descontos = sum(pd.to_numeric(df_filtrado[col], errors='coerce').fillna(0).sum() for col in descontos if col in df_filtrado.columns)
+    remuneracao_liquida = total_ganhos - total_descontos
+
+    fig = go.Figure(go.Waterfall(
+        name="Fluxo Financeiro",
+        orientation="v",
+        measure=["relative", "relative", "total"],
+        x=['Ganhos', 'Descontos', 'Remuneração Líquida'],
+        text=[f"R$ {v:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".") for v in [total_ganhos, total_descontos, remuneracao_liquida]],
+        y=[total_ganhos, -total_descontos, 0],
+        connector={"line": {"color": "rgb(63, 63, 63)"}},
+        increasing={"marker": {"color": "green"}},
+        decreasing={"marker": {"color": "red"}},
+        totals={"marker": {"color": "blue"}}
+    ))
+
+    fig.update_layout(
+        title="Análise Financeira - Ganhos vs Descontos",
+        showlegend=False,
+        yaxis_title="Valor (R$)",
+        xaxis_title="Categoria"
+    )
+    
+    return fig, total_ganhos, total_descontos, remuneracao_liquida
+
+def criar_grafico_detalhado(df_filtrado, colunas, titulo, cor):
+    """Cria gráfico de colunas detalhado (compartilhado)"""
+    dados = [{'Categoria': col, 'Valor': pd.to_numeric(df_filtrado[col], errors='coerce').fillna(0).sum()} 
+             for col in colunas if col in df_filtrado.columns]
+    dados = [d for d in dados if d['Valor'] != 0]
+    
+    if not dados:
+        return None
+    
+    df = pd.DataFrame(dados).sort_values('Valor', ascending=False)
+    fig = px.bar(
+        df,
+        x='Categoria',
+        y='Valor',
+        title=titulo,
+        color_discrete_sequence=[cor],
+        text=df['Valor'].apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+    
+    fig.update_traces(textposition='outside')
+    fig.update_layout(xaxis_tickangle=-45)
+    return fig
+
+# ======================================
+# EXECUÇÃO PRINCIPAL (com a nova aba)
+# ======================================
+
 def main():
     st.set_page_config(page_title="Dashboards de Obra", layout="wide")
 
     col1, col2 = st.columns([1, 4])
-
     with col1:
         st.image("logotipo.png", width=400)
-
     with col2:
-        st.markdown(
-            "<h1 style='margin-top: 30px; vertical-align: middle;'>SISTEMA DE CUSTO E PLANEJAMENTO</h1>",
-            unsafe_allow_html=True,
-        )
+        st.markdown("<h1 style='margin-top: 30px;'>SISTEMA DE CUSTO E PLANEJAMENTO</h1>", unsafe_allow_html=True)
 
     st.sidebar.title("👋 Bem-vindo")
 
-    aba1, aba2, aba3, aba4 = st.tabs(["📊 Efetivo Obra", "📈 Produtividade", "🏗️ Análise Custo e Planejamento", "Efetivo Escritório"])
+    # Abas incluindo a nova de Escritório
+    aba1, aba2, aba3, aba4 = st.tabs([
+        "📊 Efetivo Obra", 
+        "📈 Produtividade", 
+        "🏗️ Análise Custo e Planejamento", 
+        "🏢 Efetivo Escritório"
+    ])
 
     with aba1:
-        dashboard_efetivo()
-
+        dashboard_efetivo()  # Seu dashboard original
     with aba2:
-        dashboard_produtividade()
-
+        dashboard_produtividade()  # Seu dashboard original
     with aba3:
         st.title("🏗️ ANÁLISE CUSTO E PLANEJAMENTO")
-        st.markdown(
-            """
-            <div style="text-align: center; margin-top: 100px;">
-                <h2>ESTAMOS EM DESENVOLVIMENTO</h2>
-                <div style="font-size: 50px; color: grey;">👷‍♂️🚧</div>
-            </div>
-            """, unsafe_allow_html=True
-        )
-
+        st.markdown("<div style='text-align: center; margin-top: 100px;'><h2>ESTAMOS EM DESENVOLVIMENTO</h2><div style='font-size: 50px; color: grey;'>👷‍♂️🚧</div></div>", unsafe_allow_html=True)
     with aba4:
-          st.title("Efetivo Escritório")
-
+        dashboard_escritorio()  # Novo dashboard
 
 if __name__ == "__main__":
-    main() 
+    main()
+

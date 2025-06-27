@@ -277,7 +277,7 @@ if not df_filtrado.empty and tipo_selecionado != 'TERCEIRO':
 
     # Código para Ganhos e Descontos detalhados permanece igual
 
-        elif analise_financeira == 'Ganhos':
+         if analise_financeira == 'Ganhos':
             fig_ganhos = criar_grafico_detalhado(df_filtrado, ganhos, "Detalhamento dos Ganhos", "green")
             if fig_ganhos:
                 st.plotly_chart(fig_ganhos, use_container_width=True)

@@ -243,8 +243,9 @@ def dashboard_efetivo():
     st.divider()
 
     # Análise Financeira
-    if not df_filtrado.empty and tipo_selecionado != 'TERCEIRO':
+if not df_filtrado.empty and tipo_selecionado != 'TERCEIRO':
     st.markdown("### 💰 Análise Financeira")
+
 
     aplicar_media = funcao_selecionada != "Todas"
 

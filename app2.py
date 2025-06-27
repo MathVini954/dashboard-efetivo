@@ -3,11 +3,18 @@ import pandas as pd
 import plotly.graph_objects as go
 import plotly.express as px
 import hashlib
-import hmac
+import time
 
 # Imports necessários (adicione no início do seu arquivo)
 import plotly.graph_objects as go
 import plotly.express as px
+
+placeholder = st.empty()
+
+while True:
+    with placeholder.container():
+        st.write(f"Última atualização: {time.ctime()}")
+        time.sleep(30)  # Atualiza a cada 30 segundos
 
 
 # Configuração da senha (altere para a senha que desejar)

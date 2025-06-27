@@ -838,14 +838,14 @@ def criar_grafico_detalhado(df_filtrado, colunas, titulo, cor):
         return None
     
     df = pd.DataFrame(dados).sort_values('Valor', ascending=False)
-    fig = px.bar(
-        df,
-        x='Categoria',
-        y='Valor',
-        title=titulo,
-        color_discrete_sequence=[cor],
-        text=df['Valor'].apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
-    
+  fig_peso = px.bar(
+    df_peso,
+    x='Departamento',
+    y='Peso Financeiro',
+    title=f'Peso Financeiro por Departamento ({tipo_peso})',
+    labels={'Peso Financeiro': 'Índice', 'Departamento': 'Departamento'},
+    text=df_peso['Peso Financeiro'].apply(lambda x: f"{x:.2%}"),
+)
     fig.update_traces(textposition='outside')
     fig.update_layout(xaxis_tickangle=-45)
     return fig

@@ -923,10 +923,10 @@ def main():
         
         # Cria botões estilo aba para melhor UX
         opcoes_abas = {
-            "📊 Efetivo Obra": "efetivo",
-            "📈 Produtividade": "produtividade",
-            "🏗️ Análise Custo": "custo",
-            "🏢 Efetivo Escritório": "escritorio"
+            "📊": "efetivo",
+            "📈": "produtividade",
+            "🏗️": "custo",
+            "🏢": "escritorio"
         }
         
         # Exibe como botões horizontais

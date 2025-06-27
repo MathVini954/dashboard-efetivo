@@ -535,6 +535,13 @@ def carregar_dados_efetivo():
     df['Remuneração Líquida Folha'] = pd.to_numeric(df['Remuneração Líquida Folha'], errors='coerce').fillna(0)
     df['Adiantamento'] = pd.to_numeric(df['Adiantamento'], errors='coerce').fillna(0)
     return df
+    
+def detectar_genero(nome):
+    d = Detector()
+    primeiro_nome = nome.split()[0].title()
+    genero = d.get_gender(primeiro_nome)
+    return 'Feminino' if genero in ['female', 'mostly_female'] else 'Masculino'
+
 
 @st.cache_data
 def carregar_terceiros():
@@ -574,7 +581,30 @@ def definir_colunas_ganhos_descontos():
 # ======================================
 # DASHBOARD ESCRITÓRIO (NOVO)
 # ======================================
-
+# Adicione esta função ao seu código existente
+def criar_grafico_genero(df):
+    """Cria gráfico de pizza com distribuição por gênero"""
+    # Aplica detecção de gênero
+    df['Gênero'] = df['Nome do Funcionário'].apply(detectar_genero)
+    
+    # Contagem por gênero
+    contagem = df['Gênero'].value_counts().reset_index()
+    contagem.columns = ['Gênero', 'Quantidade']
+    
+    # Cria o gráfico
+    fig = px.pie(contagem, 
+                 values='Quantidade', 
+                 names='Gênero',
+                 title='Distribuição por Gênero',
+                 color='Gênero',
+                 color_discrete_map={'Masculino':'#1f77b4', 'Feminino':'#ff7f0e'},
+                 hole=0.3)
+    
+    fig.update_traces(textposition='inside', 
+                     textinfo='percent+label',
+                     hovertemplate="<b>%{label}</b><br>Quantidade: %{value}")
+    
+    return fig
 def dashboard_escritorio():
     st.title("🏢 Análise de Efetivo - Escritório")
 
@@ -662,7 +692,21 @@ def dashboard_escritorio():
     col3.metric("👥 Total", total_geral)
 
     st.divider()
-
+    # Adicione esta seção após as métricas principais
+    st.divider()
+    st.markdown("### 👥 Distribuição por Gênero")
+    
+    # Gráfico de gênero
+    fig_genero = criar_grafico_genero(df_filtrado)
+    st.plotly_chart(fig_genero, use_container_width=True)
+    
+    # Tabela detalhada (opcional)
+    with st.expander("🔍 Ver detalhes por gênero"):
+        st.dataframe(
+            df_filtrado[['Nome do Funcionário', 'Gênero', 'Departamento']]
+            .sort_values('Gênero'),
+            hide_index=True
+        )
     # Análise Financeira
     if not df_filtrado.empty:
         st.markdown("### 💰 Análise Financeira")

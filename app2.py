@@ -596,21 +596,44 @@ def dashboard_escritorio():
     ganhos, descontos = definir_colunas_ganhos_descontos()
     df['Total Extra'] = df['Hora Extra 70% - Semana'] + df['Hora Extra 70% - Sabado']
 
-    with st.sidebar:
+        with st.sidebar:
         st.header("🔍 Filtros - Escritório")
         departamentos_selecionados = st.multiselect(
             "Departamentos:", 
             lista_departamentos, 
-            default=lista_departamentos
+            default=lista_departamentos,
+            key="escritorio_deptos"  # Key única
         )
-        tipo_selecionado = st.radio("Tipo:", ['Todos', 'DIRETO', 'INDIRETO', 'TERCEIRO'], horizontal=True)
-        tipo_analise = st.radio("Tipo de Análise da Tabela:", ['Produção', 'Hora Extra Semana', 'Hora Extra Sábado'])
-        qtd_linhas = st.radio("Qtd. de Funcionários na Tabela:", ['5', '10', '20', 'Todos'], horizontal=True)
-        tipo_peso = st.radio("Tipo de Peso:", ['Peso sobre Produção', 'Peso sobre Hora Extra'])
+        tipo_selecionado = st.radio(
+            "Tipo:", 
+            ['Todos', 'DIRETO', 'INDIRETO', 'TERCEIRO'], 
+            horizontal=True,
+            key="escritorio_tipo"  # Key única
+        )
+        tipo_analise = st.radio(
+            "Tipo de Análise da Tabela:", 
+            ['Produção', 'Hora Extra Semana', 'Hora Extra Sábado'],
+            key="escritorio_analise"  # Key única
+        )
+        qtd_linhas = st.radio(
+            "Qtd. de Funcionários na Tabela:", 
+            ['5', '10', '20', 'Todos'], 
+            horizontal=True,
+            key="escritorio_qtd"  # Key única
+        )
+        tipo_peso = st.radio(
+            "Tipo de Peso:", 
+            ['Peso sobre Produção', 'Peso sobre Hora Extra'],
+            key="escritorio_peso"  # Key única
+        )
         
         st.divider()
         st.header("💰 Análise Financeira")
-        analise_financeira = st.radio("Análise:", ['Geral', 'Ganhos', 'Descontos'])
+        analise_financeira = st.radio(
+            "Análise:", 
+            ['Geral', 'Ganhos', 'Descontos'],
+            key="escritorio_financeira"  # Key única
+        )
 
     # Filtra departamentos selecionados
     df_filtrado = df[df['Departamento'].isin(departamentos_selecionados)]

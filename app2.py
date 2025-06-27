@@ -772,6 +772,8 @@ def dashboard_escritorio():
     df_peso['Selecionada'] = df_peso['Departamento'].apply(lambda x: x in departamentos_selecionados)
     colors = df_peso['Selecionada'].map({True: 'darkblue', False: 'lightblue'})
 
+        # Código anterior...
+    
     fig_peso = px.bar(
         df_peso,
         x='Departamento',
@@ -793,9 +795,8 @@ def dashboard_escritorio():
         showlegend=False,
         xaxis={'categoryorder': 'array', 'categoryarray': df_peso['Departamento']}
     )
-
+    
     st.plotly_chart(fig_peso, use_container_width=True)
-
 # ======================================
 # FUNÇÕES COMPARTILHADAS (dos outros dashboards)
 # ======================================

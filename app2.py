@@ -183,7 +183,7 @@ def criar_grafico_detalhado(df_filtrado, colunas, titulo, cor):
 # ======================================
 
 def dashboard_efetivo():
-    st.title("📊 Análise de Efetivo - Abril 2025")
+    st.title("📊 Análise de Efetivo - Obra")
 
     df = carregar_dados_efetivo()
     df_terceiros = carregar_terceiros()
@@ -576,7 +576,7 @@ def definir_colunas_ganhos_descontos():
 # ======================================
 
 def dashboard_escritorio():
-    st.title("🏢 Análise de Efetivo - Escritório Engenharia - Abril 2025")
+    st.title("🏢 Análise de Efetivo - Escritório")
 
     # Carrega dados
     df = carregar_dados_efetivo()

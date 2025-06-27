@@ -945,12 +945,12 @@ def main():
         elif st.session_state.aba_atual == "📈":
             dashboard_produtividade()
         else:
-            st.title("🏗️")
+            st.title("🏗️ ANÁLISE CUSTO E PLANEJAMENTO")
             st.markdown("""...""")
             
     except Exception as e:
         st.error(f"Erro ao carregar o dashboard: {str(e)}")
-        st.session_state.aba_atual = "📊 Efetivo Obra"  # Volta para aba segura
+        st.session_state.aba_atual = "📊"  # Volta para aba segura
 
 if __name__ == "__main__":
     main()

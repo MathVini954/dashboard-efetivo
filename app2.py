@@ -902,40 +902,39 @@ def criar_grafico_detalhado(df_filtrado, colunas, titulo, cor):
 # EXECUÇÃO PRINCIPAL (com a nova aba)
 # ======================================
 
+
 def main():
     st.set_page_config(page_title="Dashboards Inteligentes", layout="wide")
     
-    # 1. Controle de estado seguro
+    # Estado inicial seguro
     if 'aba_atual' not in st.session_state:
         st.session_state.aba_atual = "📊 Efetivo Obra"
-        st.session_state.aba_anterior = None
     
-    # 2. Cabeçalho
+    # Cabeçalho
     col1, col2 = st.columns([1, 4])
     with col1:
         st.image("logotipo.png", width=400)
     with col2:
         st.markdown("<h1 style='margin-top: 30px;'>SISTEMA INTELIGENTE DE GESTÃO</h1>", unsafe_allow_html=True)
     
-    # 3. Sidebar com controle de transição
+    # Sidebar com navegação persistente
     with st.sidebar:
         st.title("🎛️ Painel de Controle")
         
-        nova_aba = st.radio(
+        # Usamos st.selectbox em vez de st.radio para melhor controle
+        nova_aba = st.selectbox(
             "Selecione o Dashboard:",
             options=["📊 Efetivo Obra", "📈 Produtividade", "🏗️ Análise Custo", "🏢 Efetivo Escritório"],
+            index=["📊 Efetivo Obra", "📈 Produtividade", "🏗️ Análise Custo", "🏢 Efetivo Escritório"].index(
+                st.session_state.get('aba_atual', "📊 Efetivo Obra")
+            ),
             key="seletor_abas"
         )
         
-        # Verifica se houve mudança de aba
-        if nova_aba != st.session_state.aba_atual:
-            st.session_state.aba_anterior = st.session_state.aba_atual
-            st.session_state.aba_atual = nova_aba
-            
-            # Força renderização da nova aba
-            st.experimental_rerun()
+        # Atualiza o estado sem rerun
+        st.session_state.aba_atual = nova_aba
     
-    # 4. Renderização condicional com tratamento de erros
+    # Renderização condicional com tratamento de erros
     try:
         if st.session_state.aba_atual == "📊 Efetivo Obra":
             dashboard_efetivo()
@@ -946,43 +945,15 @@ def main():
         else:
             st.title("🏗️ ANÁLISE CUSTO E PLANEJAMENTO")
             st.markdown("""...""")
-    
+            
     except Exception as e:
-        st.error(f"Erro ao carregar {st.session_state.aba_atual}: {str(e)}")
-        
-        # Volta para aba anterior se houver erro
-        if st.session_state.aba_anterior:
-            st.session_state.aba_atual = st.session_state.aba_anterior
-            st.experimental_rerun()
-# def main():
-    #st.set_page_config(page_title="Dashboards de Obra", layout="wide")
+        st.error(f"Erro ao carregar o dashboard: {str(e)}")
+        st.session_state.aba_atual = "📊 Efetivo Obra"  # Volta para aba segura
+        st.warning("Retornando para o Dashboard Principal")
 
-    #col1, col2 = st.columns([1, 4])
-    #with col1:
-        #(st.image("logotipo.png", width=400)
-    #with col2:
-      #  st.markdown("<h1 style='margin-top: 30px;'>SISTEMA DE CUSTO E PLANEJAMENTO</h1>", unsafe_allow_html=True)
-
-  #  st.sidebar.title("👋 Bem-vindo")
-
-    # Abas incluindo a nova de Escritório
-  #  aba1, aba2, aba3, aba4 = st.tabs([
-      #  "📊 Efetivo Obra", 
-      #  "📈 Produtividade", 
-     #   "🏗️ Análise Custo e Planejamento", 
-     #   "🏢 Efetivo Escritório"
-   # ])
-
-  #  with aba1:
-      #  dashboard_efetivo()  # Seu dashboard original
-    #with aba2:
-      #  dashboard_produtividade()  # Seu dashboard original
-  #  with aba3:
-    #    st.title("🏗️ ANÁLISE CUSTO E PLANEJAMENTO")
-    #    st.markdown("<div style='text-align: center; margin-top: 100px;'><h2>ESTAMOS EM DESENVOLVIMENTO</h2><div style='font-size: 50px; color: grey;'>👷‍♂️🚧</div></div>", unsafe_allow_html=True)
-  #  with aba4:
-     #   dashboard_escritorio())  # Novo dashboard
-
+# Chamada principal
 if __name__ == "__main__":
     main()
+
+
 

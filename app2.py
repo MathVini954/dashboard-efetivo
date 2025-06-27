@@ -650,28 +650,39 @@ def dashboard_escritorio():
 
     st.divider()
 
-    # Análise Financeira (idêntica ao dashboard efetivo)
-    if not df_filtrado.empty and tipo_selecionado != 'TERCEIRO':
+    Seção de Análise Financeira - VERIFIQUE A INDENTAÇÃO
+    if not df_filtrado.empty:
         st.markdown("### 💰 Análise Financeira")
         
-            if analise_financeira == 'Ganhos':
-        fig_ganhos = criar_grafico_detalhado(
-            df_filtrado=df_filtrado,  # DataFrame já filtrado por departamento/tipo
-            colunas=ganhos,          # Lista de colunas de ganhos que você definiu
-            titulo="Detalhamento dos Ganhos - Escritório",
-            cor="green"
-        )
-        if fig_ganhos:
-            st.plotly_chart(fig_ganhos, use_container_width=True)
-        else:
-            st.warning("Nenhum dado de ganhos encontrado para os filtros selecionados.")
+        if analise_financeira == 'Geral':  # Nível correto: 4 espaços a partir do if anterior
+            fig_cascata, total_ganhos, total_descontos, remuneracao_liquida = criar_grafico_cascata(df_filtrado, ganhos, descontos)
+            st.plotly_chart(fig_cascata, use_container_width=True)
+            
+            # [...] (métricas financeiras)
+            
+        elif analise_financeira == 'Ganhos':  # Mesmo nível que o 'if analise_financeira == 'Geral''
+            fig_ganhos = criar_grafico_detalhado(
+                df_filtrado=df_filtrado,
+                colunas=ganhos,
+                titulo="Detalhamento dos Ganhos - Escritório",
+                cor="green"
+            )
+            if fig_ganhos:
+                st.plotly_chart(fig_ganhos, use_container_width=True)
+            else:
+                st.warning("Nenhum dado de ganhos encontrado.")
                 
-        elif analise_financeira == 'Descontos':
-            fig_descontos = criar_grafico_detalhado(df_filtrado, descontos, "Detalhamento dos Descontos", "red")
+        elif analise_financeira == 'Descontos':  # Mesmo nível
+            fig_descontos = criar_grafico_detalhado(
+                df_filtrado=df_filtrado,
+                colunas=descontos,
+                titulo="Detalhamento dos Descontos - Escritório",
+                cor="red"
+            )
             if fig_descontos:
                 st.plotly_chart(fig_descontos, use_container_width=True)
             else:
-                st.warning("Nenhum dado de descontos encontrado para os filtros selecionados.")
+                st.warning("Nenhum dado de descontos encontrado.")
         
         st.divider()
 

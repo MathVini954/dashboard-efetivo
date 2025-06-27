@@ -676,21 +676,7 @@ def dashboard_escritorio():
     col3.metric("👥 Total", total_geral)
 
     st.divider()
-  # Gráfico de Pizza por Gênero
-df_genero = df[df['Departamento'].isin(departamentos_selecionados)]
-genero_counts = df_genero['Gênero'].value_counts().reset_index()
-genero_counts.columns = ['Gênero', 'Quantidade']
 
-fig_genero = px.pie(
-    genero_counts,
-    names='Gênero',
-    values='Quantidade',
-    title='Distribuição por Gênero (Estimado)',
-    hole=0.3
-)
-fig_genero.update_traces(textposition='inside', textinfo='percent+label')
-
-st.plotly_chart(fig_genero, use_container_width=True)
 
     # Análise Financeira
     if not df_filtrado.empty:
@@ -751,7 +737,21 @@ st.plotly_chart(fig_genero, use_container_width=True)
     st.plotly_chart(fig_pizza, use_container_width=True)
 
     # [...] (restante do código existente - ranking, gráfico por função, peso financeiro)
+  # Gráfico de Pizza por Gênero
+df_genero = df[df['Departamento'].isin(departamentos_selecionados)]
+genero_counts = df_genero['Gênero'].value_counts().reset_index()
+genero_counts.columns = ['Gênero', 'Quantidade']
 
+fig_genero = px.pie(
+    genero_counts,
+    names='Gênero',
+    values='Quantidade',
+    title='Distribuição por Gênero (Estimado)',
+    hole=0.3
+)
+fig_genero.update_traces(textposition='inside', textinfo='percent+label')
+
+st.plotly_chart(fig_genero, use_container_width=True)
    
     # Ranking de Funcionários (ajustado para departamento)
     coluna_valor = {

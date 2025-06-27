@@ -2,10 +2,32 @@ import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
 import plotly.express as px
-
+import hashlib
 # Imports necessários (adicione no início do seu arquivo)
 import plotly.graph_objects as go
 import plotly.express as px
+
+
+def check_password():
+    """Verifica se o usuário digitou a senha correta."""
+    def password_entered():
+        # Hash da senha para comparação segura
+        if hashlib.sha256(st.session_state["password"].encode()).hexdigest() == "seu_hash_aqui":
+            st.session_state["password_correct"] = True
+            del st.session_state["password"]  # Não armazena a senha
+        else:
+            st.session_state["password_correct"] = False
+
+    if st.session_state.get("password_correct", False):
+        return True
+
+    st.text_input("Senha", type="password", on_change=password_entered, key="password")
+    if "password_correct" in st.session_state:
+        st.error("😕 Senha incorreta")
+    return False
+
+if not check_password():
+    st.stop()
 
 @st.cache_data
 def carregar_dados_efetivo():

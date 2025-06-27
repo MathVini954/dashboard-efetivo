@@ -3,19 +3,58 @@ import pandas as pd
 import plotly.graph_objects as go
 import plotly.express as px
 import hashlib
-import time
-
-# Imports necessários (adicione no início do seu arquivo)
 import plotly.graph_objects as go
 import plotly.express as px
+from streamlit.components.v1 import html
+import time
+import requests
 
-placeholder = st.empty()
+# Configuração de keep-alive e verificação de atualizações
+def check_github_updates():
+    try:
+        # Substitua pela URL do seu repositório
+        response = requests.get("https://github.com/MathVini954/dashboard-efetivo/edit/main/app2.py")
+        latest_commit = response.json()[0]['sha']
+        return latest_commit
+    except:
+        return None
 
-while True:
-    with placeholder.container():
-        st.write(f"Última atualização: {time.ctime()}")
-        time.sleep(30)  # Atualiza a cada 30 segundos
+# Inicializar variável de sessão para o último commit conhecido
+if 'last_commit' not in st.session_state:
+    st.session_state.last_commit = check_github_updates()
 
+# JavaScript para manter a conexão ativa e verificar atualizações
+keep_alive_js = """
+<script>
+function keepAliveAndCheck() {
+    // Ping para manter a conexão
+    fetch(window.location.href, {method: 'HEAD', cache: 'no-store'});
+    
+    // Verificar atualizações a cada 30 segundos
+    setTimeout(() => {
+        fetch(window.location.href, {method: 'GET'})
+            .then(response => response.text())
+            .then(text => {
+                if (text.includes('new-version-detected')) {
+                    window.location.reload(true);
+                }
+            });
+    }, 30000);
+}
+setInterval(keepAliveAndCheck, 30000);
+</script>
+"""
+
+# Injetar o JavaScript
+html(keep_alive_js)
+
+# Verificação de atualizações no lado do servidor
+if st.session_state.last_commit:
+    current_commit = check_github_updates()
+    if current_commit and current_commit != st.session_state.last_commit:
+        st.markdown('<div id="new-version-detected"></div>', unsafe_allow_html=True)
+        st.session_state.last_commit = current_commit
+        st.experimental_rerun()
 
 # Configuração da senha (altere para a senha que desejar)
 SENHA_CORRETA = "RioAve2025"  # 👈 Modifique aqui!

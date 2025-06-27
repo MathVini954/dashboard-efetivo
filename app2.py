@@ -589,24 +589,12 @@ def dashboard_escritorio():
 
     
     # Inferência de gênero a partir do primeiro nome
-def inferir_genero(nome):
-    if not nome or not isinstance(nome, str):
-        return "Desconhecido"
-
-    primeiro_nome = nome.strip().split()[0].upper()
-
-    # Terminações muito comuns de nomes femininos
-    sufixos_femininos = ("A", "IA", "INA", "ARA", "ELA", "ISA", "EZA", "EIA", "ARA", "ITA")
-    
-    # Terminações muito comuns de nomes masculinos
-    sufixos_masculinos = ("O", "IO", "IEL", "EL", "IR", "OR", "ER", "US", "ES")
-
-    if primeiro_nome.endswith(sufixos_femininos):
-        return "Feminino"
-    elif primeiro_nome.endswith(sufixos_masculinos):
-        return "Masculino"
-    else:
-        return "Desconhecido"
+  def inferir_genero(nome):
+        nome = str(nome).split()[0].strip().upper()
+        if nome.endswith('A'):
+            return 'Feminino'
+        else:
+            return 'Masculino'
 
     df['Gênero'] = df['Nome do Funcionário'].apply(inferir_genero)
 

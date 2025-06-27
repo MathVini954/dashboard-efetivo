@@ -643,7 +643,7 @@ def definir_colunas_ganhos_descontos():
 # ======================================
 # Adicione esta função ao seu código existente
 
-def dashboard_escritorio():
+def dashboard_escritorio():More actions
     st.title("🏢 Análise de Efetivo - Escritório")
 
     # Carrega dados
@@ -750,35 +750,6 @@ def dashboard_escritorio():
     col3.metric("👥 Total", total_geral)
 
     st.divider()
-
-        # Gráficos de Pizza
-    pizza_base = df[df['Obra'].isin(obras_selecionadas)]
-    pizza_diretos_indiretos = pizza_base['Tipo'].value_counts().reset_index()
-    pizza_diretos_indiretos.columns = ['Tipo', 'count']
-    pizza_terceiros = pd.DataFrame({'Tipo': ['TERCEIRO'], 'count': [df_terceiros_filtrado['QUANTIDADE'].sum()]})
-    pizza = pd.concat([pizza_diretos_indiretos, pizza_terceiros], ignore_index=True)
-
-    # Cria colunas para os gráficos
-    col1, col2 = st.columns(2)
-
-    with col1:
-        # Gráfico de Pizza - Tipo de Efetivo
-        fig_pizza = px.pie(pizza, names='Tipo', values='count', 
-                          title='Distribuição por Tipo de Efetivo', hole=0.3)
-        fig_pizza.update_traces(textposition='inside', textinfo='percent+label')
-        st.plotly_chart(fig_pizza, use_container_width=True)
-
-    with col2:
-        # Gráfico de Pizza - Gênero
-        if 'GENÊRO' in pizza_base.columns:
-            genero_counts = pizza_base['GENÊRO'].value_counts().reset_index()
-            genero_counts.columns = ['Gênero', 'Quantidade']
-            fig_genero = px.pie(genero_counts, names='Gênero', values='Quantidade', 
-                               title='Distribuição por Gênero', hole=0.3)
-            fig_genero.update_traces(textposition='inside', textinfo='percent+label')
-            st.plotly_chart(fig_genero, use_container_width=True)
-        else:
-            st.warning("Coluna 'GENÊRO' não encontrada nos dados")
 
     # Análise Financeira
     if not df_filtrado.empty:

@@ -754,7 +754,7 @@ fig_genero.update_traces(textposition='inside', textinfo='percent+label')
 st.plotly_chart(fig_genero, use_container_width=True)
    
     # Ranking de Funcionários (ajustado para departamento)
-    coluna_valor = {
+   coluna_valor = {
         'Produção': 'PRODUÇÃO',
         'Hora Extra Semana': 'Hora Extra 70% - Semana',
         'Hora Extra Sábado': 'Hora Extra 70% - Sabado'

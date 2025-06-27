@@ -923,10 +923,10 @@ def main():
         
         # Cria botões estilo aba para melhor UX
         opcoes_abas = {
-            "📊 Efetivo Obra": "efetivo",
-            "📈 Produtividade": "produtividade",
-            "🏗️ Análise Custo": "custo",
-            "🏢 Efetivo Escritório": "escritorio"
+            "📊": "efetivo",
+            "📈": "produtividade",
+            "🏗️": "custo",
+            "🏢": "escritorio"
         }
         
         # Exibe como botões horizontais
@@ -938,14 +938,14 @@ def main():
     
     # 4. Renderização condicional
     try:
-        if st.session_state.aba_atual == "📊 Efetivo Obra":
+        if st.session_state.aba_atual == "📊":
             dashboard_efetivo()
-        elif st.session_state.aba_atual == "🏢 Efetivo Escritório":
+        elif st.session_state.aba_atual == "🏢":
             dashboard_escritorio()
-        elif st.session_state.aba_atual == "📈 Produtividade":
+        elif st.session_state.aba_atual == "📈":
             dashboard_produtividade()
         else:
-            st.title("🏗️ ANÁLISE CUSTO E PLANEJAMENTO")
+            st.title("🏗️")
             st.markdown("""...""")
             
     except Exception as e:

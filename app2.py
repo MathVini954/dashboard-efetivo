@@ -594,16 +594,12 @@ def dashboard_escritorio():
 
 
 def inferir_genero(nome):
-    primeiro_nome = str(nome).split()[0]
-    response = requests.get(f"https://api.genderize.io/?name={primeiro_nome}")
-    if response.status_code == 200:
-        data = response.json()
-        if data['gender'] == 'female':
-            return 'Feminino'
-        elif data['gender'] == 'male':
-            return 'Masculino'
-    return 'Desconhecido'
-       
+    nome = str(nome).split()[0].strip().upper()
+    if nome.endswith('A'):
+        return 'Feminino'
+    else:
+        return 'Masculino'
+        
     df['Gênero'] = df['Nome do Funcionário'].apply(inferir_genero)
 
     lista_departamentos = sorted(df['Departamento'].astype(str).unique())

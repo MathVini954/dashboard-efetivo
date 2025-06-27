@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
 import plotly.express as px
+import time    
 
 # Imports necessários (adicione no início do seu arquivo)
 import plotly.graph_objects as go
@@ -911,47 +912,52 @@ if st.session_state.rerun_count < config["max_reruns"]:
     time.sleep(config["timeout"])
     st.experimental_rerun()
     
-def main():
+ef main():
     st.set_page_config(page_title="Dashboards Inteligentes", layout="wide")
     
     # Estado da aplicação
     if 'aba_atual' not in st.session_state:
-        st.session_state.aba_atual = "📊 Efetivo Obra"
-        st.session_state.rerun_count = 0  # Contador de reruns
+        st.session_state.update({
+            'aba_atual': "📊 Efetivo Obra",
+            'rerun_count': 0,
+            'last_rerun': time.time()
+        })
     
-    # Cabeçalho
+    # Cabeçalho (mantido igual)
     col1, col2 = st.columns([1, 4])
     with col1:
         st.image("logotipo.png", width=400)
     with col2:
         st.markdown("<h1 style='margin-top: 30px;'>SISTEMA INTELIGENTE DE GESTÃO</h1>", unsafe_allow_html=True)
     
-    # Sidebar inteligente
+    # Sidebar inteligente com controle de tempo
     with st.sidebar:
         st.title("🎛️ Painel de Controle")
         
         nova_aba = st.radio(
             "Selecione o Dashboard:",
             options=["📊 Efetivo Obra", "📈 Produtividade", "🏗️ Análise Custo", "🏢 Efetivo Escritório"],
-            key="seletor_abas",
-            index=["📊 Efetivo Obra", "📈 Produtividade", "🏗️ Análise Custo", "🏢 Efetivo Escritório"].index(
-                st.session_state.aba_atual
-            )
+            key="seletor_abas"
         )
         
-        # Controle de mudança de aba com segurança
+        # Controle avançado de mudança de aba
+        current_time = time.time()
         if nova_aba != st.session_state.aba_atual:
-            st.session_state.aba_atual = nova_aba
-            st.session_state.rerun_count += 1
-            
-            # Previne loops infinitos
-            if st.session_state.rerun_count < 3:  # Número máximo de reruns
-                st.experimental_rerun()
+            # Verifica se passou tempo suficiente desde o último rerun
+            if current_time - st.session_state.last_rerun > 1.0:  # 1 segundo de intervalo
+                st.session_state.aba_atual = nova_aba
+                st.session_state.last_rerun = current_time
+                st.session_state.rerun_count += 1
+                
+                if st.session_state.rerun_count < 5:  # Máximo de 5 tentativas
+                    st.experimental_rerun()
+                else:
+                    st.error("⚠️ Sistema estabilizando... Tente novamente em alguns instantes.")
+                    st.session_state.rerun_count = 0
             else:
-                st.error("Muitas tentativas de recarregamento. Reinicie a aplicação.")
-                st.session_state.rerun_count = 0
+                st.warning("Aguarde um momento antes de mudar novamente...")
     
-    # Renderização condicional segura
+    # Renderização condicional com tratamento robusto
     try:
         if st.session_state.aba_atual == "📊 Efetivo Obra":
             dashboard_efetivo()
@@ -962,13 +968,15 @@ def main():
         else:
             st.title("🏗️ ANÁLISE CUSTO E PLANEJAMENTO")
             st.markdown("""...""")
-            
-        # Reset do contador após renderização bem-sucedida
+        
+        # Reset do contador após sucesso
         st.session_state.rerun_count = 0
         
     except Exception as e:
         st.error(f"Erro ao carregar o dashboard: {str(e)}")
         st.session_state.rerun_count = 0
+        time.sleep(1)  # Pausa antes de recarregar
+        st.experimental_rerun()
 # def main():
     #st.set_page_config(page_title="Dashboards de Obra", layout="wide")
 

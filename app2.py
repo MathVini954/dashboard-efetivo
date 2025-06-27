@@ -923,10 +923,10 @@ def main():
         
         # Cria botões estilo aba para melhor UX
         opcoes_abas = {
-            "📊": "efetivo",
-            "📈": "produtividade",
-            "🏗️": "custo",
-            "🏢": "escritorio"
+            "📊 Efetivo Obra": "efetivo",
+            "📈 Produtividade": "produtividade",
+            "🏗️ Análise Custo": "custo",
+            "🏢 Efetivo Escritório": "escritorio"
         }
         
         # Exibe como botões horizontais
@@ -954,5 +954,4 @@ def main():
 
 if __name__ == "__main__":
     main()
-
 

@@ -577,7 +577,7 @@ def definir_colunas_ganhos_descontos():
 
 # DASHBOARD ESCRITÓRIO (NOVO)
 
-vdef dashboard_escritorio():
+def dashboard_escritorio():
     st.title("🏢 Análise de Efetivo - Escritório")
 
     # Carrega dados

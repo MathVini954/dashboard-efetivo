@@ -313,9 +313,8 @@ def dashboard_efetivo():
 
         st.divider()
 
-    # Todos os outros gráficos usam df_filtrado (sem filtro de função)
-    # Pizza - Distribuição por tipo
-    # Pizza - Distribuição por tipo
+   
+# Pizza - Distribuição por tipo
 pizza_base = df[df['Obra'].isin(obras_selecionadas)]
 pizza_diretos_indiretos = pizza_base['Tipo'].value_counts().reset_index()
 pizza_diretos_indiretos.columns = ['Tipo', 'count']
@@ -345,9 +344,10 @@ with col1:
         textinfo='percent+label',
         textfont_size=12,
         marker=dict(line=dict(color='#FFFFFF', width=1))
+    )
     fig_pizza.update_layout(showlegend=True)
     st.plotly_chart(fig_pizza, use_container_width=True)
-    )
+
 with col2:
     # Gráfico de Pizza - Gênero (usando GENÊRO)
     if 'GENÊRO' in pizza_base.columns:

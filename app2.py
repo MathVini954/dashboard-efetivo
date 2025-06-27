@@ -4,116 +4,32 @@ import plotly.graph_objects as go
 import plotly.express as px
 import hashlib
 import hmac
-from PIL import Image
-import time
+
 # Imports necessários (adicione no início do seu arquivo)
 import plotly.graph_objects as go
 import plotly.express as px
 
 
+# Configuração da senha (altere para a senha que desejar)
+SENHA_CORRETA = "sua_senha_secreta_123"  # 👈 Modifique aqui!
 
-# Configuração da página
-st.set_page_config(
-    page_title="Acesso Restrito",
-    page_icon="🔒",
-    layout="centered",
-    initial_sidebar_state="collapsed"
-)
-
-# CSS personalizado
-st.markdown("""
-    <style>
-        .login-container {
-            max-width: 400px;
-            margin: 0 auto;
-            padding: 2rem;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            background-color: white;
-        }
-        .stTextInput input {
-            border-radius: 8px;
-            padding: 12px;
-            font-size: 16px;
-            margin-bottom: 1rem;
-        }
-        .stButton button {
-            width: 100%;
-            border-radius: 8px;
-            padding: 12px;
-            background-color: #4CAF50;
-            color: white;
-            font-weight: bold;
-            border: none;
-            transition: all 0.3s;
-        }
-        .stButton button:hover {
-            background-color: #45a049;
-            transform: scale(1.02);
-        }
-        .logo-container {
-            text-align: center;
-            margin-bottom: 2rem;
-        }
-        .logo-img {
-            max-width: 200px;
-            margin-bottom: 1rem;
-        }
-    </style>
-""", unsafe_allow_html=True)
-
-# Verificação de autenticação
-if 'autenticado' not in st.session_state:
-    st.session_state.autenticado = False
-
-# Carrega a logo
-try:
-    logo = Image.open('logotipo.png')
-except FileNotFoundError:
-    st.error("Arquivo logotipo.png não encontrado")
-    logo = None
-
-# Container principal
-with st.container():
-    st.markdown('<div class="login-container">', unsafe_allow_html=True)
-    
-    # Exibe a logo
-    if logo:
-        st.markdown('<div class="logo-container">', unsafe_allow_html=True)
-        st.image(logo, use_column_width=True, output_format='PNG')
-        st.markdown('</div>', unsafe_allow_html=True)
-    else:
-        st.title("🔒 Acesso Restrito")
-    
-    # Formulário de login
-    if not st.session_state.autenticado:
-        senha = st.text_input("Digite sua senha de acesso:", type="password")
-        
-        col1, col2 = st.columns([1, 1])
-        with col1:
-            if st.button("Acessar", key="login_btn"):
-                if senha == "S3nh@F0rt3!2024":  # Substitua pela sua senha
-                    st.session_state.autenticado = True
-                    with st.spinner("Verificando credenciais..."):
-                        time.sleep(1.5)
-                    st.rerun()
-                else:
-                    st.error("Senha incorreta. Tente novamente.")
-        with col2:
-            if st.button("Esqueci a senha", key="forgot_btn"):
-                st.warning("Entre em contato com o administrador do sistema.")
-    
-    st.markdown('</div>', unsafe_allow_html=True)
-
-# Se autenticado, mostra o app principal
-if st.session_state.autenticado:
-    st.success("✅ Login realizado com sucesso!")
-    st.title("Bem-vindo ao Painel Administrativo")
-    st.write("Conteúdo protegido aqui...")
-    
-    if st.sidebar.button("Logout"):
+# Sistema de autenticação
+def verificar_senha():
+    if "autenticado" not in st.session_state:
         st.session_state.autenticado = False
-        st.rerun()
+    
+    if not st.session_state.autenticado:
+        senha = st.text_input("Digite a senha de acesso:", type="password", key="senha_input")
+        if senha:
+            if senha == SENHA_CORRETA:
+                st.session_state.autenticado = True
+                st.rerun()  # Recarrega o app após autenticação
+            else:
+                st.error("Senha incorreta! Tente novamente.")
+        st.stop()  # Impede o acesso ao restante do app
+
+# Verifica a senha
+verificar_senha()
 
 @st.cache_data
 def carregar_dados_efetivo():

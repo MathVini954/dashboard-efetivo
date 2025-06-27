@@ -573,14 +573,6 @@ def definir_colunas_ganhos_descontos():
     ]
     return ganhos, descontos
 
-# Função simples para inferir gênero com base no primeiro nome
-def inferir_genero(nome):
-    nome = str(nome).split()[0].strip().upper()
-    if nome.endswith('A'):
-        return 'Feminino'
-    else:
-        return 'Masculino'
-
 # Aplica a inferência de gênero
 df['Gênero'] = df['Nome do Funcionário'].apply(inferir_genero)
 

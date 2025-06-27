@@ -839,7 +839,7 @@ def criar_grafico_detalhado(df_filtrado, colunas, titulo, cor):
         return None
     
     df = pd.DataFrame(dados).sort_values('Valor', ascending=False)
-  fig_peso = px.bar(
+    fig_peso = px.bar(
     df_peso,
     x='Departamento',
     y='Peso Financeiro',

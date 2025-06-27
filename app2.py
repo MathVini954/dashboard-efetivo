@@ -906,35 +906,37 @@ def criar_grafico_detalhado(df_filtrado, colunas, titulo, cor):
 def main():
     st.set_page_config(page_title="Dashboards Inteligentes", layout="wide")
     
-    # Estado inicial seguro
+    # 1. Configuração do estado inicial
     if 'aba_atual' not in st.session_state:
         st.session_state.aba_atual = "📊 Efetivo Obra"
     
-    # Cabeçalho
+    # 2. Cabeçalho
     col1, col2 = st.columns([1, 4])
     with col1:
         st.image("logotipo.png", width=400)
     with col2:
         st.markdown("<h1 style='margin-top: 30px;'>SISTEMA INTELIGENTE DE GESTÃO</h1>", unsafe_allow_html=True)
     
-    # Sidebar com navegação persistente
+    # 3. Sidebar com navegação instantânea
     with st.sidebar:
         st.title("🎛️ Painel de Controle")
         
-        # Usamos st.selectbox em vez de st.radio para melhor controle
-        nova_aba = st.selectbox(
-            "Selecione o Dashboard:",
-            options=["📊 Efetivo Obra", "📈 Produtividade", "🏗️ Análise Custo", "🏢 Efetivo Escritório"],
-            index=["📊 Efetivo Obra", "📈 Produtividade", "🏗️ Análise Custo", "🏢 Efetivo Escritório"].index(
-                st.session_state.get('aba_atual', "📊 Efetivo Obra")
-            ),
-            key="seletor_abas"
-        )
+        # Cria botões estilo aba para melhor UX
+        opcoes_abas = {
+            "📊 Efetivo Obra": "efetivo",
+            "📈 Produtividade": "produtividade",
+            "🏗️ Análise Custo": "custo",
+            "🏢 Efetivo Escritório": "escritorio"
+        }
         
-        # Atualiza o estado sem rerun
-        st.session_state.aba_atual = nova_aba
+        # Exibe como botões horizontais
+        cols = st.columns(len(opcoes_abas))
+        for idx, (nome_aba, aba_key) in enumerate(opcoes_abas.items()):
+            with cols[idx]:
+                if st.button(nome_aba, key=f"btn_{aba_key}"):
+                    st.session_state.aba_atual = nome_aba
     
-    # Renderização condicional com tratamento de erros
+    # 4. Renderização condicional
     try:
         if st.session_state.aba_atual == "📊 Efetivo Obra":
             dashboard_efetivo()
@@ -949,11 +951,8 @@ def main():
     except Exception as e:
         st.error(f"Erro ao carregar o dashboard: {str(e)}")
         st.session_state.aba_atual = "📊 Efetivo Obra"  # Volta para aba segura
-        st.warning("Retornando para o Dashboard Principal")
 
-# Chamada principal
 if __name__ == "__main__":
     main()
-
 
 

@@ -391,66 +391,50 @@ def dashboard_efetivo():
 
     st.divider()
 
-    todas_obras = sorted(df['Obra'].astype(str).unique())
-    peso_lista = []
-    for obra in todas_obras:
-        df_obra = df[df['Obra'] == obra]
-        df_direto = df_obra[df_obra['Tipo'] == 'DIRETO']
-        prod_numerador = df_direto['PRODUÇÃO'].sum() + df_direto['REFLEXO S PRODUÇÃO'].sum()
-        prod_denominador = df_direto['Remuneração Líquida Folha'].sum() + df_direto['Adiantamento'].sum()
-        df_dir_ind = df_obra[df_obra['Tipo'].isin(['DIRETO', 'INDIRETO'])]
-        total_extra = df_dir_ind['Total Extra'].sum()
-        reposo_remunerado = df_dir_ind['Repouso Remunerado'].sum()
-        hor_extra_denominador = df_dir_ind['Remuneração Líquida Folha'].sum() + df_dir_ind['Adiantamento'].sum()
+   todas_obras = sorted(df['Obra'].astype(str).unique())
+peso_lista = []
 
-        if tipo_peso == 'Peso sobre Produção':
-            peso = (prod_numerador / prod_denominador) if prod_denominador > 0 else 0
-       elif:
-            peso = ((total_extra + reposo_remunerado) / hor_extra_denominador) if hor_extra_denominador > 0 else 0
-               else tipo_peso == 'Peso do Custo Real':
-        colunas_ganhos = ['SALÁRIO',
-    'Periculosidade',
-    'Dias De Atestado',
-    'Gratificação',
-    'Adicional noturno 20%',
-    'Ajuda De Saude',
-    'Auxilio Creche',
-    'Auxilio Educacao',
-    'EQUIP. TRAB/FERRAMENTA',
-    'Auxilio Moradia',
-    'Auxilio Transporte',
-    'Adicional Noturno 20%',
-    'Dev.desc.indevido',
-    'Salário Substituiçã',
-    'Reflexo S/ He Produção',
-    'Reembolso V. Transporte',
-    'Prêmio',
-    'Premio-gestao Desempenho',
-    'Passagem Interior',
-    'Passagem Interior Adiantamento',
-    'Hora Extra 70% - Sabado',
-    'Hora Extra 70% - Semana',
-    'Salário Maternidade',
-    'Adicional H.e S/ Producao 70%',
-    'PRODUÇÃO',
-    'AJUDA DE CUSTO',
-    'Ajuda de Custo Combustivel',
-    'REFLEXO S PRODUÇÃO',
-    'Hora Extra 100%',
-    'Repouso Remunerado',
-    'Periculosidade',
-    'Salário Família',
-    'Insuficiência de Saldo',
-    'Auxilio Transporte Retroativo',
-    'Insuficiência de Saldo']  # coloque aqui as colunas de ganhos
-        colunas_descontos = [  'Atrasos', 'Assistencia Medica', 'Coparticipacao Dependente',
-    'Coparticipacao Titular', 'Desconto Empréstimo', 'Diferenca Plano De Saude',
-    'Desconto Ótica', 'Plano Odontologico', 'Plano Odontologico Dependente',
-    'Pensão Alimentícia  Salário Mínimo', 'Assitência Médica Dependente',
-    'INSS Folha', 'IRRF Folha', 'Pensão Alimentícia',
-    'MENSALIDADE SINDICAL', 'Vale Transporte', 'Correção adiantamento']  # e aqui as de descontos
+for obra in todas_obras:
+    df_obra = df[df['Obra'] == obra]
+    df_direto = df_obra[df_obra['Tipo'] == 'DIRETO']
+    df_dir_ind = df_obra[df_obra['Tipo'].isin(['DIRETO', 'INDIRETO'])]
 
-        df_obra = df[df['Obra'] == obra]
+    prod_numerador = df_direto['PRODUÇÃO'].sum() + df_direto['REFLEXO S PRODUÇÃO'].sum()
+    prod_denominador = df_direto['Remuneração Líquida Folha'].sum() + df_direto['Adiantamento'].sum()
+
+    total_extra = df_dir_ind['Total Extra'].sum()
+    reposo_remunerado = df_dir_ind['Repouso Remunerado'].sum()
+    hor_extra_denominador = df_dir_ind['Remuneração Líquida Folha'].sum() + df_dir_ind['Adiantamento'].sum()
+
+    if tipo_peso == 'Peso sobre Produção':
+        peso = (prod_numerador / prod_denominador) if prod_denominador > 0 else 0
+
+    elif tipo_peso == 'Peso sobre Hora Extra':
+        peso = ((total_extra + reposo_remunerado) / hor_extra_denominador) if hor_extra_denominador > 0 else 0
+
+    elif tipo_peso == 'Peso do Custo Real':
+        colunas_ganhos = [
+            'SALÁRIO', 'Periculosidade', 'Dias De Atestado', 'Gratificação',
+            'Adicional noturno 20%', 'Ajuda De Saude', 'Auxilio Creche', 'Auxilio Educacao',
+            'EQUIP. TRAB/FERRAMENTA', 'Auxilio Moradia', 'Auxilio Transporte',
+            'Adicional Noturno 20%', 'Dev.desc.indevido', 'Salário Substituiçã',
+            'Reflexo S/ He Produção', 'Reembolso V. Transporte', 'Prêmio',
+            'Premio-gestao Desempenho', 'Passagem Interior', 'Passagem Interior Adiantamento',
+            'Hora Extra 70% - Sabado', 'Hora Extra 70% - Semana', 'Salário Maternidade',
+            'Adicional H.e S/ Producao 70%', 'PRODUÇÃO', 'AJUDA DE CUSTO',
+            'Ajuda de Custo Combustivel', 'REFLEXO S PRODUÇÃO', 'Hora Extra 100%',
+            'Repouso Remunerado', 'Periculosidade', 'Salário Família',
+            'Insuficiência de Saldo', 'Auxilio Transporte Retroativo', 'Insuficiência de Saldo'
+        ]
+
+        colunas_descontos = [
+            'Atrasos', 'Assistencia Medica', 'Coparticipacao Dependente',
+            'Coparticipacao Titular', 'Desconto Empréstimo', 'Diferenca Plano De Saude',
+            'Desconto Ótica', 'Plano Odontologico', 'Plano Odontologico Dependente',
+            'Pensão Alimentícia  Salário Mínimo', 'Assitência Médica Dependente',
+            'INSS Folha', 'IRRF Folha', 'Pensão Alimentícia',
+            'MENSALIDADE SINDICAL', 'Vale Transporte', 'Correção adiantamento'
+        ]
 
         ganhos = df_obra[colunas_ganhos].apply(pd.to_numeric, errors='coerce').fillna(0).sum().sum()
         descontos = df_obra[colunas_descontos].apply(pd.to_numeric, errors='coerce').fillna(0).abs().sum().sum()
@@ -460,36 +444,40 @@ def dashboard_efetivo():
         numerador = ganhos + descontos + fgts
         peso = numerador / salario_base if salario_base > 0 else 0
 
-        peso_lista.append({'Obra': obra, 'Peso Financeiro': peso})
+    else:
+        peso = 0
 
-    df_peso = pd.DataFrame(peso_lista)
-    df_peso = df_peso.sort_values(by='Peso Financeiro', ascending=False)
-    df_peso['Selecionada'] = df_peso['Obra'].apply(lambda x: x in obras_selecionadas)
-    colors = df_peso['Selecionada'].map({True: 'darkblue', False: 'lightblue'})
+    peso_lista.append({'Obra': obra, 'Peso Financeiro': peso})
 
-    fig_peso = px.bar(
-        df_peso,
-        x='Obra',
-        y='Peso Financeiro',
-        title=f'Peso Financeiro por Obra ({tipo_peso})',
-        labels={'Peso Financeiro': 'Índice', 'Obra': 'Obra'},
-        text=df_peso['Peso Financeiro'].apply(lambda x: f"{x:.2%}"),
-    )
+df_peso = pd.DataFrame(peso_lista)
+df_peso = df_peso.sort_values(by='Peso Financeiro', ascending=False)
+df_peso['Selecionada'] = df_peso['Obra'].apply(lambda x: x in obras_selecionadas)
+colors = df_peso['Selecionada'].map({True: 'darkblue', False: 'lightblue'})
 
-    fig_peso.update_traces(
-        marker_color=colors,
-        textposition='outside',
-        marker_line_color='black',
-        marker_line_width=0.5
-    )
+fig_peso = px.bar(
+    df_peso,
+    x='Obra',
+    y='Peso Financeiro',
+    title=f'Peso Financeiro por Obra ({tipo_peso})',
+    labels={'Peso Financeiro': 'Índice', 'Obra': 'Obra'},
+    text=df_peso['Peso Financeiro'].apply(lambda x: f"{x:.2%}"),
+)
 
-    fig_peso.update_layout(
-        yaxis_tickformat='.0%',
-        showlegend=False,
-        xaxis={'categoryorder': 'array', 'categoryarray': df_peso['Obra']}
-    )
+fig_peso.update_traces(
+    marker_color=colors,
+    textposition='outside',
+    marker_line_color='black',
+    marker_line_width=0.5
+)
 
-    st.plotly_chart(fig_peso, use_container_width=True)
+fig_peso.update_layout(
+    yaxis_tickformat='.0%',
+    showlegend=False,
+    xaxis={'categoryorder': 'array', 'categoryarray': df_peso['Obra']}
+)
+
+st.plotly_chart(fig_peso, use_container_width=True)
+
 
 
 # Dicionário para mapear meses em inglês para abreviações em português

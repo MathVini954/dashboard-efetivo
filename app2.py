@@ -654,21 +654,17 @@ def dashboard_escritorio():
     if not df_filtrado.empty and tipo_selecionado != 'TERCEIRO':
         st.markdown("### 💰 Análise Financeira")
         
-        if analise_financeira == 'Geral':
-            fig_cascata, total_ganhos, total_descontos, remuneracao_liquida = criar_grafico_cascata(df_filtrado, ganhos, descontos)
-            st.plotly_chart(fig_cascata, use_container_width=True)
-            
-            col_fin1, col_fin2, col_fin3 = st.columns(3)
-            col_fin1.metric("💚 Total Ganhos", f"R$ {total_ganhos:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
-            col_fin2.metric("💸 Total Descontos", f"R$ {total_descontos:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
-            col_fin3.metric("💰 Remuneração Líquida", f"R$ {remuneracao_liquida:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
-            
-        elif analise_financeira == 'Ganhos':
-            fig_ganhos = criar_grafico_detalhado(df_filtrado, ganhos, "Detalhamento dos Ganhos", "green")
-            if fig_ganhos:
-                st.plotly_chart(fig_ganhos, use_container_width=True)
-            else:
-                st.warning("Nenhum dado de ganhos encontrado para os filtros selecionados.")
+            if analise_financeira == 'Ganhos':
+        fig_ganhos = criar_grafico_detalhado(
+            df_filtrado=df_filtrado,  # DataFrame já filtrado por departamento/tipo
+            colunas=ganhos,          # Lista de colunas de ganhos que você definiu
+            titulo="Detalhamento dos Ganhos - Escritório",
+            cor="green"
+        )
+        if fig_ganhos:
+            st.plotly_chart(fig_ganhos, use_container_width=True)
+        else:
+            st.warning("Nenhum dado de ganhos encontrado para os filtros selecionados.")
                 
         elif analise_financeira == 'Descontos':
             fig_descontos = criar_grafico_detalhado(df_filtrado, descontos, "Detalhamento dos Descontos", "red")
@@ -843,26 +839,34 @@ def criar_grafico_cascata(df_filtrado, ganhos, descontos):
     return fig, total_ganhos, total_descontos, remuneracao_liquida
 
 def criar_grafico_detalhado(df_filtrado, colunas, titulo, cor):
-    """Cria gráfico de colunas detalhado (compartilhado)"""
-    dados = [{'Categoria': col, 'Valor': pd.to_numeric(df_filtrado[col], errors='coerce').fillna(0).sum()} 
-             for col in colunas if col in df_filtrado.columns]
-    dados = [d for d in dados if d['Valor'] != 0]
+    """Função corrigida - remove referência a df_peso"""
+    dados_detalhados = []
     
-    if not dados:
+    for col in colunas:
+        if col in df_filtrado.columns:
+            valor = pd.to_numeric(df_filtrado[col], errors='coerce').fillna(0).sum()
+            if valor != 0:
+                dados_detalhados.append({'Categoria': col, 'Valor': valor})
+    
+    if not dados_detalhados:
         return None
     
-    df = pd.DataFrame(dados).sort_values('Valor', ascending=False)
-    fig_peso = px.bar(
-    df_peso,
-    x='Departamento',
-    y='Peso Financeiro',
-    title=f'Peso Financeiro por Departamento ({tipo_peso})',
-    labels={'Peso Financeiro': 'Índice', 'Departamento': 'Departamento'},
-    text=df_peso['Peso Financeiro'].apply(lambda x: f"{x:.2%}"),
-)
-    fig.update_traces(textposition='outside')
-    fig.update_layout(xaxis_tickangle=-45)
-    return fig
+    df_detalhado = pd.DataFrame(dados_detalhados)
+    df_detalhado = df_detalhado.sort_values('Valor', ascending=False)
+    
+    fig_detalhado = px.bar(
+        df_detalhado,
+        x='Categoria',
+        y='Valor',
+        title=titulo,
+        color_discrete_sequence=[cor],
+        text=df_detalhado['Valor'].apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+    )
+    
+    fig_detalhado.update_traces(textposition='outside')
+    fig_detalhado.update_layout(xaxis_tickangle=-45)
+    
+    return fig_detalhado
 
 # ======================================
 # EXECUÇÃO PRINCIPAL (com a nova aba)

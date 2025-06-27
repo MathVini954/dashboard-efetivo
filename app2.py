@@ -225,7 +225,8 @@ def dashboard_efetivo():
         tipo_selecionado = st.radio("Tipo:", ['Todos', 'DIRETO', 'INDIRETO', 'TERCEIRO'], horizontal=True)
         tipo_analise = st.radio("Tipo de Análise da Tabela:", ['Produção', 'Hora Extra Semana', 'Hora Extra Sábado'])
         qtd_linhas = st.radio("Qtd. de Funcionários na Tabela:", ['5', '10', '20', 'Todos'], horizontal=True)
-        tipo_peso = st.radio("Tipo de Peso (Gráficos Novos):", ['Peso sobre Produção', 'Peso sobre Hora Extra'])
+        tipo_peso = st.radio("Tipo de Peso (Gráficos Novos):", ['Peso sobre Produção', 'Peso sobre Hora Extra', 'Peso do Custo Real'])
+
 
         st.divider()
         st.header("💰 Análise Financeira")
@@ -404,8 +405,21 @@ def dashboard_efetivo():
 
         if tipo_peso == 'Peso sobre Produção':
             peso = (prod_numerador / prod_denominador) if prod_denominador > 0 else 0
-        else:
+       elif:
             peso = ((total_extra + reposo_remunerado) / hor_extra_denominador) if hor_extra_denominador > 0 else 0
+               elif tipo_peso == 'Peso do Custo Real':
+        colunas_ganhos = [...]  # coloque aqui as colunas de ganhos
+        colunas_descontos = [...]  # e aqui as de descontos
+
+        df_obra = df[df['Obra'] == obra]
+
+        ganhos = df_obra[colunas_ganhos].apply(pd.to_numeric, errors='coerce').fillna(0).sum().sum()
+        descontos = df_obra[colunas_descontos].apply(pd.to_numeric, errors='coerce').fillna(0).abs().sum().sum()
+        fgts = df_obra[['FGTS em Férias', 'FGTS em Folha']].apply(pd.to_numeric, errors='coerce').fillna(0).sum().sum()
+        salario_base = df_obra['Salário Base Mês'].apply(pd.to_numeric, errors='coerce').fillna(0).sum()
+
+        numerador = ganhos + descontos + fgts
+        peso = numerador / salario_base if salario_base > 0 else 0
 
         peso_lista.append({'Obra': obra, 'Peso Financeiro': peso})
 

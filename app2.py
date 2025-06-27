@@ -870,11 +870,11 @@ def main():
     
     # 4. Renderização condicional
     try:
-        if st.session_state.aba_atual == "📊 Efetivo Obra":
+        if st.session_state.aba_atual == "📊":
             dashboard_efetivo()
-        elif st.session_state.aba_atual == "🏢 Efetivo Escritório":
+        elif st.session_state.aba_atual == "🏢":
             dashboard_escritorio()
-        elif st.session_state.aba_atual == "📈 Produtividade":
+        elif st.session_state.aba_atual == "📈":
             dashboard_produtividade()
         
             

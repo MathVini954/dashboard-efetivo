@@ -728,6 +728,13 @@ def dashboard_escritorio():
     pizza_base = df[df['Departamento'].isin(departamentos_selecionados)]
     pizza_diretos_indiretos = pizza_base['Tipo'].value_counts().reset_index()
     pizza_diretos_indiretos.columns = ['Tipo', 'count']
+
+    # Gráfico de Pizza - Gênero
+    genero_counts = pizza_base['Gênero'].value_counts().reset_index()
+    genero_counts.columns = ['Gênero', 'Quantidade']
+    fig_genero = px.pie(genero_counts, names='Gênero', values='Quantidade', title='Distribuição por Gênero (Estimado)', hole=0.3)
+    fig_genero.update_traces(textposition='inside', textinfo='percent+label')
+    st.plotly_chart(fig_genero, use_container_width=True)
     
     fig_pizza = px.pie(
         pizza_diretos_indiretos,

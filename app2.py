@@ -67,18 +67,18 @@ SENHA_CORRETA = "RioAve2025"  # 👈 Modifique aqui!
 
 # Sistema de autenticação
 def verificar_senha():
-if "autenticado" not in st.session_state:
-st.session_state.autenticado = False
+   if "autenticado" not in st.session_state:
+   st.session_state.autenticado = False
 
-if not st.session_state.autenticado:
-senha = st.text_input("Digite a senha de acesso:", type="password", key="senha_input")
-if senha:
-if senha == SENHA_CORRETA:
-st.session_state.autenticado = True
-st.rerun()  # Recarrega o app após autenticação
-else:
-st.error("Senha incorreta! Tente novamente.")
-st.stop()  # Impede o acesso ao restante do app
+   if not st.session_state.autenticado:
+   senha = st.text_input("Digite a senha de acesso:", type="password", key="senha_input")
+   if senha:
+   if senha == SENHA_CORRETA:
+   st.session_state.autenticado = True
+   st.rerun()  # Recarrega o app após autenticação
+   else:
+   st.error("Senha incorreta! Tente novamente.")
+   st.stop()  # Impede o acesso ao restante do app
 
 # Verifica a senha
 verificar_senha()

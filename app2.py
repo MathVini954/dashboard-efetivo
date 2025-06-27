@@ -902,52 +902,40 @@ def criar_grafico_detalhado(df_filtrado, colunas, titulo, cor):
 # EXECUÇÃO PRINCIPAL (com a nova aba)
 # ======================================
 
-
-    
 def main():
     st.set_page_config(page_title="Dashboards Inteligentes", layout="wide")
     
-    # Inicialização segura do session_state
-    if not hasattr(st.session_state, 'initialized'):
-        st.session_state.initialized = True
+    # 1. Controle de estado seguro
+    if 'aba_atual' not in st.session_state:
         st.session_state.aba_atual = "📊 Efetivo Obra"
-        st.session_state.rerun_count = 0
-        st.session_state.last_rerun = time.time()
+        st.session_state.aba_anterior = None
     
-    # Cabeçalho
+    # 2. Cabeçalho
     col1, col2 = st.columns([1, 4])
     with col1:
         st.image("logotipo.png", width=400)
     with col2:
         st.markdown("<h1 style='margin-top: 30px;'>SISTEMA INTELIGENTE DE GESTÃO</h1>", unsafe_allow_html=True)
     
-    # Sidebar com controle de estado
+    # 3. Sidebar com controle de transição
     with st.sidebar:
         st.title("🎛️ Painel de Controle")
         
         nova_aba = st.radio(
             "Selecione o Dashboard:",
             options=["📊 Efetivo Obra", "📈 Produtividade", "🏗️ Análise Custo", "🏢 Efetivo Escritório"],
-            index=["📊 Efetivo Obra", "📈 Produtividade", "🏗️ Análise Custo", "🏢 Efetivo Escritório"].index(
-                st.session_state.aba_atual
-            ),
             key="seletor_abas"
         )
         
-        # Controle de mudança de aba
+        # Verifica se houve mudança de aba
         if nova_aba != st.session_state.aba_atual:
-            current_time = time.time()
-            time_since_last = current_time - st.session_state.last_rerun
+            st.session_state.aba_anterior = st.session_state.aba_atual
+            st.session_state.aba_atual = nova_aba
             
-            if time_since_last > 1.0:  # Espera 1 segundo entre mudanças
-                st.session_state.aba_atual = nova_aba
-                st.session_state.last_rerun = current_time
-                st.session_state.rerun_count = 0
-                st.experimental_rerun()
-            else:
-                st.warning(f"Aguarde {1.0-time_since_last:.1f} segundos para mudar novamente")
+            # Força renderização da nova aba
+            st.experimental_rerun()
     
-    # Renderização condicional
+    # 4. Renderização condicional com tratamento de erros
     try:
         if st.session_state.aba_atual == "📊 Efetivo Obra":
             dashboard_efetivo()
@@ -958,15 +946,14 @@ def main():
         else:
             st.title("🏗️ ANÁLISE CUSTO E PLANEJAMENTO")
             st.markdown("""...""")
-            
+    
     except Exception as e:
-        st.error(f"Erro ao carregar o dashboard: {str(e)}")
-        if st.session_state.rerun_count < 3:
-            st.session_state.rerun_count += 1
-            time.sleep(1)
+        st.error(f"Erro ao carregar {st.session_state.aba_atual}: {str(e)}")
+        
+        # Volta para aba anterior se houver erro
+        if st.session_state.aba_anterior:
+            st.session_state.aba_atual = st.session_state.aba_anterior
             st.experimental_rerun()
-        else:
-            st.session_state.rerun_count = 0
 # def main():
     #st.set_page_config(page_title="Dashboards de Obra", layout="wide")
 

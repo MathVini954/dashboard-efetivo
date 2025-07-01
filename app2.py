@@ -272,17 +272,17 @@ def dashboard_efetivo():
 
     st.divider()
 
-# Gráficos de Pizza
-pizza_base = df[df['Obra'].isin(obras_selecionadas)]
-pizza_diretos_indiretos = pizza_base['Tipo'].value_counts().reset_index()
-pizza_diretos_indiretos.columns = ['Tipo', 'count']
-pizza_terceiros = pd.DataFrame({'Tipo': ['TERCEIRO'], 'count': [df_terceiros_filtrado['QUANTIDADE'].sum()]})
-pizza = pd.concat([pizza_diretos_indiretos, pizza_terceiros], ignore_index=True)
+   # Gráficos de Pizza
+    pizza_base = df[df['Obra'].isin(obras_selecionadas)]
+    pizza_diretos_indiretos = pizza_base['Tipo'].value_counts().reset_index()
+    pizza_diretos_indiretos.columns = ['Tipo', 'count']
+    pizza_terceiros = pd.DataFrame({'Tipo': ['TERCEIRO'], 'count': [df_terceiros_filtrado['QUANTIDADE'].sum()]})
+    pizza = pd.concat([pizza_diretos_indiretos, pizza_terceiros], ignore_index=True)
 
-# Cria colunas para os gráficos
-col1, col2 = st.columns(2)
+    # Cria colunas para os gráficos
+    col1, col2 = st.columns(2)
 
-with col1:
+    with col1:
     # Gráfico de Pizza - Tipo de Efetivo
     fig_pizza = px.pie(
         pizza,
@@ -300,7 +300,7 @@ with col1:
     fig_pizza.update_traces(textposition='inside', textinfo='percent+label')
     st.plotly_chart(fig_pizza, use_container_width=True)
 
-with col2:
+    with col2:
     # Gráfico de Pizza - Gênero
     if 'GENÊRO' in pizza_base.columns:
         genero_counts = pizza_base['GENÊRO'].value_counts().reset_index()

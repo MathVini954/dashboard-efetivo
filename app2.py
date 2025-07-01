@@ -291,6 +291,18 @@ def dashboard_efetivo():
     with col2:
         if 'GENÊRO' in pizza_base.columns:
             genero_counts = pizza_base['GENÊRO'].value_counts().reset_index()
+            # Padroniza os valores da coluna Gênero
+            genero_counts['Gênero'] = genero_counts['Gênero'].str.upper().str.strip()
+
+             # Corrige variações comuns
+            genero_counts['Gênero'] = genero_counts['Gênero'].replace({
+            'MASC': 'MASCULINO',
+            'FEM': 'FEMININO',
+            'FEMINO': 'FEMININO',
+            'M': 'MASCULINO',
+            'F': 'FEMININO'
+            })
+
             genero_counts.columns = ['Gênero', 'Quantidade']
             fig_genero = px.pie(
                 genero_counts,

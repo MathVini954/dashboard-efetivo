@@ -282,7 +282,7 @@ def dashboard_efetivo():
             color_discrete_map={
                 'DIRETO': 'Blue',
                 'INDIRETO': 'Green',
-                'TERCEIRO': '#E67E22'
+                'TERCEIRO': 'Orange'
             }
         )
         fig_pizza.update_traces(textposition='inside', textinfo='percent+label')
@@ -300,8 +300,8 @@ def dashboard_efetivo():
                 hole=0.3,
                 color='Gênero',
                 color_discrete_map={
-                    'MASCULINO' : '#3498DB',
-                    'FEMININO' : '#E67E22'
+                    'MASCULINO' : 'Blue',
+                    'FEMININO' : 'Red'
                 }
             )
             fig_genero.update_traces(textposition='inside', textinfo='percent+label')

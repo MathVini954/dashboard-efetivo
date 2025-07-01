@@ -792,7 +792,6 @@ def dashboard_escritorio():
                     title='Distribuição por Gênero',
                     hole=0.3,
                     color='Gênero',
-                    color_discrete_map={'MASCULINO':'Blue', 'FEMININO':'#FFC0CB'}
                     color_discrete_map={'MASCULINO':'Blue', 'FEMININO':'Red'}
                 )
                 fig_pizza_genero.update_traces(

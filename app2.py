@@ -300,8 +300,8 @@ def dashboard_efetivo():
                 hole=0.3,
                 color='Gênero',
                 color_discrete_map={
-                    'MASCULINO': '#3498DB',
-                    'FEMININO': '#E91E63'
+                    'MASCULINO': 'Blue',
+                    'FEMININO': 'Red'
                 }
             )
             fig_genero.update_traces(textposition='inside', textinfo='percent+label')

@@ -289,42 +289,55 @@ def dashboard_efetivo():
         st.plotly_chart(fig_pizza, use_container_width=True)
 
     with col2:
-        if 'GENÊRO' in df.columns or 'GÊNERO' in df.columns:
-            coluna_genero = 'GENÊRO' if 'GENÊRO' in df.columns else 'GÊNERO'
-            pizza_genero = pizza_base.copy()
-            pizza_genero['Gênero'] = pizza_genero[coluna_genero].str.upper().str.strip()
-            pizza_genero['Gênero'] = pizza_genero['Gênero'].replace({
-                'FEMINO': 'FEMININO',
-                'MASC': 'MASCULINO',
-                'F': 'FEMININO',
-                'M': 'MASCULINO'
-            })
-            pizza_genero = pizza_genero[pizza_genero['Gênero'].isin(['FEMININO', 'MASCULINO'])]
-            if not pizza_genero.empty:
-                pizza_genero = pizza_genero['Gênero'].value_counts().reset_index()
-                pizza_genero.columns = ['Gênero', 'count']
-                fig_pizza_genero = px.pie(
-                    pizza_genero,
-                    names='Gênero',
-                    values='count',
-                    title='Distribuição por Gênero',
-                    hole=0.3,
-                    color='Gênero',
-                    color_discrete_map={
-                        'MASCULINO': 'Blue',
-                        'FEMININO': 'Red'
-                    }
-                )
-                fig_pizza_genero.update_traces(
-                    textposition='inside',
-                    textinfo='percent+label',
-                    textfont_size=14
-                )
-                st.plotly_chart(fig_pizza_genero, use_container_width=True)
-            else:
-                st.warning("Dados de gênero não encontrados (valores devem ser 'Feminino' ou 'Masculino')")
+    # Novo Gráfico de Pizza - Gênero
+    if 'GENÊRO' in df.columns or 'GÊNERO' in df.columns:
+        coluna_genero = 'GENÊRO' if 'GENÊRO' in df.columns else 'GÊNERO'
+        pizza_genero = pizza_base.copy()
+        pizza_genero['Gênero'] = pizza_genero[coluna_genero].str.upper().str.strip()
+        pizza_genero['Gênero'] = pizza_genero['Gênero'].replace({
+            'FEMINO': 'FEMININO',
+            'MASC': 'MASCULINO',
+            'F': 'FEMININO',
+            'M': 'MASCULINO'
+        })
+        pizza_genero = pizza_genero[pizza_genero['Gênero'].isin(['FEMININO', 'MASCULINO'])]
+
+        if not pizza_genero.empty:
+            genero_counts = pizza_genero['Gênero'].value_counts().reset_index()
+            genero_counts.columns = ['Gênero', 'count']
+
+            # Gráfico
+            fig_pizza_genero = px.pie(
+                genero_counts,
+                names='Gênero',
+                values='count',
+                title='Distribuição por Gênero',
+                hole=0.3,
+                color='Gênero',
+                color_discrete_map={
+                    'MASCULINO': 'Blue',
+                    'FEMININO': 'Red'
+                }
+            )
+            fig_pizza_genero.update_traces(
+                textposition='inside',
+                textinfo='percent+label',
+                textfont_size=14
+            )
+            st.plotly_chart(fig_pizza_genero, use_container_width=True)
+
+            # Legenda personalizada com ícones
+            legenda = ""
+            for _, row in genero_counts.iterrows():
+                simbolo = '♂️' if row['Gênero'] == 'MASCULINO' else '♀️'
+                cor = '🔵' if row['Gênero'] == 'MASCULINO' else '🔴'
+                legenda += f"{cor} **{row['Gênero'].capitalize()}** {simbolo}: {row['count']}<br>"
+
+            st.markdown(f"**Legenda:**  <br>{legenda}", unsafe_allow_html=True)
         else:
-            st.warning("Coluna de gênero não encontrada (procura por 'GENÊRO' ou 'GÊNERO')")
+            st.warning("Dados de gênero não encontrados (valores devem ser 'Feminino' ou 'Masculino')")
+    else:
+        st.warning("Coluna de gênero não encontrada (procura por 'GENÊRO' ou 'GÊNERO')")
 
 
     # Análise Financeira (usa df_filtrado_financeiro - com filtro de função se aplicável)

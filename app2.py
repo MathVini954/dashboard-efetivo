@@ -300,12 +300,13 @@ def dashboard_efetivo():
                 hole=0.3,
                 color='Gênero',
                 color_discrete_map={
-                    'MASCULINO': 'Blue',
-                    'FEMININO': 'Red'
+                    'MASCULINO' : BLue,
+                    'FEMININO' : 'Red'
                 }
             )
             fig_genero.update_traces(textposition='inside', textinfo='percent+label')
             st.plotly_chart(fig_genero, use_container_width=True)
+            
         else:
             st.warning("Coluna 'GENÊRO' não encontrada nos dados")
 

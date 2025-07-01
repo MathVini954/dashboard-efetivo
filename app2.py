@@ -760,7 +760,7 @@ def dashboard_escritorio():
             title='Distribuição por Tipo de Efetivo',
             hole=0.3,
             color='Tipo',
-            color_discrete_map={'DIRETO':'#636EFA', 'INDIRETO':'#EF553B'}
+            color_discrete_map={'DIRETO':'Blue', 'INDIRETO':'Green'}
         )
         fig_pizza_tipo.update_traces(
             textposition='inside', 

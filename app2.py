@@ -657,14 +657,6 @@ def dashboard_escritorio():
         st.error("Coluna 'Departamento' não encontrada!")
         return
 
-        # 3. Verifica colunas de gênero (com tratamento de erro)
-    coluna_genero = None
-    possiveis_colunas = ['GÊNERO', 'GENÊRO', 'GENERO', 'SEXO']  # Todas variações possíveis
-    
-    for col in possiveis_colunas:
-        if col in df.columns:
-            coluna_genero = col
-            break
 
     lista_departamentos = sorted(df['Departamento'].astype(str).unique())
     lista_funcionarios = sorted(df['Nome do Funcionário'].unique())
@@ -788,66 +780,6 @@ def dashboard_escritorio():
                 st.warning("Nenhum dado de descontos encontrado para os filtros selecionados.")
 
         st.divider()
-
-    # No início da função (após carregar os dados), verifique se a coluna de gênero existe:
-if 'GENÊRO' not in df.columns and 'GÊNERO' not in df.columns:
-    st.warning("Coluna de gênero não encontrada! Verifique se o nome da coluna é 'GENÊRO' ou 'GÊNERO'")
-else:
-    # Use qualquer variação do nome da coluna que existir
-    coluna_genero = 'GENÊRO' if 'GENÊRO' in df.columns else 'GÊNERO'
-
-# Substitua a seção do gráfico de pizza existente por este código:
-st.markdown("### 📊 Distribuição por Tipo e Gênero")
-
-col1, col2 = st.columns(2)
-
-with col1:
-    # Gráfico de Pizza - Diretos/Indiretos (existente)
-    pizza_base = df[df['Departamento'].isin(departamentos_selecionados)]
-    pizza_diretos_indiretos = pizza_base['Tipo'].value_counts().reset_index()
-    pizza_diretos_indiretos.columns = ['Tipo', 'count']
-
-    fig_pizza_tipo = px.pie(
-        pizza_diretos_indiretos,
-        names='Tipo', 
-        values='count', 
-        title='Distribuição por Tipo de Efetivo',
-        hole=0.3
-    )
-    fig_pizza_tipo.update_traces(textposition='inside', textinfo='percent+label')
-    st.plotly_chart(fig_pizza_tipo, use_container_width=True)
-
-with col2:
-    # Novo Gráfico de Pizza - Gênero
-    if 'coluna_genero' in locals():
-        pizza_genero = pizza_base[coluna_genero].value_counts().reset_index()
-        pizza_genero.columns = ['Gênero', 'count']
-        
-        # Padroniza os valores de gênero (caso tenha variações como M/F, Masculino/Feminino, etc)
-        pizza_genero['Gênero'] = pizza_genero['Gênero'].str.upper()
-        pizza_genero['Gênero'] = pizza_genero['Gênero'].replace({
-            'M': 'MASCULINO',
-            'F': 'FEMININO',
-            'MASC': 'MASCULINO',
-            'FEM': 'FEMININO'
-        })
-
-        fig_pizza_genero = px.pie(
-            pizza_genero,
-            names='Gênero',
-            values='count',
-            title='Distribuição por Gênero',
-            hole=0.3,
-            color='Gênero',
-            color_discrete_map={'MASCULINO':'lightblue','FEMININO':'pink'}
-        )
-        fig_pizza_genero.update_traces(textposition='inside', textinfo='percent+label')
-        st.plotly_chart(fig_pizza_genero, use_container_width=True)
-    else:
-        st.warning("Dados de gênero não disponíveis para visualização")
-
-   
-
 
     # Ranking de Funcionários (ajustado para departamento)
     coluna_valor = {

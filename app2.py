@@ -578,6 +578,17 @@ def dashboard_produtividade():
             ticktext=df_mensal_renomeado['DATA_FORMATADA_PT']
         )
 
+        # Posicionar a legenda abaixo do gráfico
+        fig.update_layout(
+            legend=dict(
+                orientation="h",           # horizontal
+                yanchor="top",             # ancorar no topo da legenda
+                y=-0.3,                    # posição vertical (mais baixo = mais longe do gráfico)
+                xanchor="center",          # centralizar
+                x=0.5                      # posição horizontal central
+            )
+        )
+
         return fig, df_mensal
 
     df = carregar_dados()

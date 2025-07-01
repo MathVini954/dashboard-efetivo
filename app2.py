@@ -657,6 +657,15 @@ def dashboard_escritorio():
         st.error("Coluna 'Departamento' não encontrada!")
         return
 
+        # 3. Verifica colunas de gênero (com tratamento de erro)
+    coluna_genero = None
+    possiveis_colunas = ['GÊNERO', 'GENÊRO', 'GENERO', 'SEXO']  # Todas variações possíveis
+    
+    for col in possiveis_colunas:
+        if col in df.columns:
+            coluna_genero = col
+            break
+
     lista_departamentos = sorted(df['Departamento'].astype(str).unique())
     lista_funcionarios = sorted(df['Nome do Funcionário'].unique())
 

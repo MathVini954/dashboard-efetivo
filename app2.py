@@ -280,8 +280,8 @@ def dashboard_efetivo():
             hole=0.3,
             color='Tipo',
             color_discrete_map={
-                'DIRETO': '#3498DB',
-                'INDIRETO': '#2ECC71',
+                'DIRETO': 'Blue',
+                'INDIRETO': 'Green',
                 'TERCEIRO': '#E67E22'
             }
         )

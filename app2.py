@@ -738,6 +738,8 @@ def dashboard_escritorio():
     col3.metric("👥 Total", total_geral)
 
     st.divider()
+    # Gráficos de Pizza - Apenas diretos e indiretos (MODIFICADO para incluir gênero)
+    st.markdown("### 📊 Distribuição por Tipo e Gênero")
 
     # Cria colunas lado a lado
     col1, col2 = st.columns(2)

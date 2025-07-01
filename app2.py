@@ -269,66 +269,62 @@ def dashboard_efetivo():
     pizza_terceiros = pd.DataFrame({'Tipo': ['TERCEIRO'], 'count': [df_terceiros_filtrado['QUANTIDADE'].sum()]})
     pizza = pd.concat([pizza_diretos_indiretos, pizza_terceiros], ignore_index=True)
 
-    # Cria colunas para os gráficos
-col1, col2 = st.columns(2)
+    col1, col2 = st.columns(2)
 
-with col1:
-    fig_pizza = px.pie(
-        pizza,
-        names='Tipo',
-        values='count',
-        title='Distribuição por Tipo de Efetivo',
-        hole=0.3,
-        color='Tipo',
-        color_discrete_map={
-            'DIRETO': 'Blue',
-            'INDIRETO': 'Green',
-            'TERCEIRO': 'Orange'
-        }
-    )
-    fig_pizza.update_traces(textposition='inside', textinfo='percent+label')
-    st.plotly_chart(fig_pizza, use_container_width=True)
+    with col1:
+        fig_pizza = px.pie(
+            pizza,
+            names='Tipo',
+            values='count',
+            title='Distribuição por Tipo de Efetivo',
+            hole=0.3,
+            color='Tipo',
+            color_discrete_map={
+                'DIRETO': 'Blue',
+                'INDIRETO': 'Green',
+                'TERCEIRO': 'Orange'
+            }
+        )
+        fig_pizza.update_traces(textposition='inside', textinfo='percent+label')
+        st.plotly_chart(fig_pizza, use_container_width=True)
 
-with col2:
-    # Novo Gráfico de Pizza - Gênero
-    if 'GENÊRO' in df.columns or 'GÊNERO' in df.columns:
-        coluna_genero = 'GENÊRO' if 'GENÊRO' in df.columns else 'GÊNERO'
-        pizza_genero = pizza_base.copy()
-        pizza_genero['Gênero'] = pizza_genero[coluna_genero].str.upper().str.strip()
-        pizza_genero['Gênero'] = pizza_genero['Gênero'].replace({
-            'FEMINO': 'FEMININO',
-            'MASC': 'MASCULINO',
-            'F': 'FEMININO',
-            'M': 'MASCULINO'
-        })
-        pizza_genero = pizza_genero[pizza_genero['Gênero'].isin(['FEMININO', 'MASCULINO'])]
-        if not pizza_genero.empty:
-            pizza_genero = pizza_genero['Gênero'].value_counts().reset_index()
-            pizza_genero.columns = ['Gênero', 'count']
-            fig_pizza_genero = px.pie(
-                pizza_genero,
-                names='Gênero',
-                values='count',
-                title='Distribuição por Gênero',
-                hole=0.3,
-                color='Gênero',
-                color_discrete_map={
-                    'MASCULINO': 'Blue',
-                    'FEMININO': 'Red'
-                }
-            )
-            fig_pizza_genero.update_traces(
-                textposition='inside',
-                textinfo='percent+label',
-                textfont_size=14
-            )
-            st.plotly_chart(fig_pizza_genero, use_container_width=True)
+    with col2:
+        if 'GENÊRO' in df.columns or 'GÊNERO' in df.columns:
+            coluna_genero = 'GENÊRO' if 'GENÊRO' in df.columns else 'GÊNERO'
+            pizza_genero = pizza_base.copy()
+            pizza_genero['Gênero'] = pizza_genero[coluna_genero].str.upper().str.strip()
+            pizza_genero['Gênero'] = pizza_genero['Gênero'].replace({
+                'FEMINO': 'FEMININO',
+                'MASC': 'MASCULINO',
+                'F': 'FEMININO',
+                'M': 'MASCULINO'
+            })
+            pizza_genero = pizza_genero[pizza_genero['Gênero'].isin(['FEMININO', 'MASCULINO'])]
+            if not pizza_genero.empty:
+                pizza_genero = pizza_genero['Gênero'].value_counts().reset_index()
+                pizza_genero.columns = ['Gênero', 'count']
+                fig_pizza_genero = px.pie(
+                    pizza_genero,
+                    names='Gênero',
+                    values='count',
+                    title='Distribuição por Gênero',
+                    hole=0.3,
+                    color='Gênero',
+                    color_discrete_map={
+                        'MASCULINO': 'Blue',
+                        'FEMININO': 'Red'
+                    }
+                )
+                fig_pizza_genero.update_traces(
+                    textposition='inside',
+                    textinfo='percent+label',
+                    textfont_size=14
+                )
+                st.plotly_chart(fig_pizza_genero, use_container_width=True)
+            else:
+                st.warning("Dados de gênero não encontrados (valores devem ser 'Feminino' ou 'Masculino')")
         else:
-            st.warning("Dados de gênero não encontrados (valores devem ser 'Feminino' ou 'Masculino')")
-    else:
-        st.warning("Coluna de gênero não encontrada (procura por 'GENÊRO' ou 'GÊNERO')")
-
-
+            st.warning("Coluna de gênero não encontrada (procura por 'GENÊRO' ou 'GÊNERO')")
 
 
     # Análise Financeira (usa df_filtrado_financeiro - com filtro de função se aplicável)

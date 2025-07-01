@@ -726,17 +726,6 @@ def dashboard_escritorio():
         if funcionario_selecionado != "Todos":
             df_filtrado = df_filtrado[df_filtrado['Nome do Funcionário'] == funcionario_selecionado]
 
-     # VERIFICAÇÃO CRÍTICA (solução definitiva para o erro)
-    if not departamentos_selecionados:  # Se nenhum selecionado, usa todos
-        departamentos_selecionados = lista_departamentos
-        st.warning("Nenhum departamento selecionado - mostrando todos")
-
-    # Garante que o filtro será aplicado corretamente
-    try:
-        pizza_base = df[df['Departamento'].isin(departamentos_selecionados)].copy()
-    except Exception as e:
-        st.error(f"Erro ao filtrar departamentos: {str(e)}")
-        return
 
     # Métricas (sem terceiros)
     direto_count = len(df_filtrado[df_filtrado['Tipo'] == 'DIRETO'])
@@ -750,13 +739,10 @@ def dashboard_escritorio():
 
     st.divider()
 
-    # Gráficos de Pizza - Apenas diretos e indiretos (MODIFICADO para incluir gênero)
-st.markdown("### 📊 Distribuição por Tipo e Gênero")
+    # Cria colunas lado a lado
+    col1, col2 = st.columns(2)
 
-# Cria colunas lado a lado
-col1, col2 = st.columns(2)
-
-with col1:
+    with col1:
     # Gráfico de Pizza - Tipo (existente)
     pizza_base = df[df['Departamento'].isin(departamentos_selecionados)]
     pizza_diretos_indiretos = pizza_base['Tipo'].value_counts().reset_index()
@@ -778,7 +764,7 @@ with col1:
     )
     st.plotly_chart(fig_pizza_tipo, use_container_width=True)
 
-with col2:
+    with col2:
     # Novo Gráfico de Pizza - Gênero
     if 'GENÊRO' in df.columns or 'GÊNERO' in df.columns:
         # Padroniza o nome da coluna
@@ -820,7 +806,7 @@ with col2:
             st.plotly_chart(fig_pizza_genero, use_container_width=True)
         else:
             st.warning("Dados de gênero não encontrados (valores devem ser 'Feminino' ou 'Masculino')")
-    else:
+       else:
         st.warning("Coluna de gênero não encontrada (procura por 'GENÊRO' ou 'GÊNERO')")
 
     # Análise Financeira

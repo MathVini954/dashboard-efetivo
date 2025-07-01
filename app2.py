@@ -657,15 +657,8 @@ def dashboard_escritorio():
         st.error("Coluna 'Departamento' não encontrada!")
         return
 
-
     lista_departamentos = sorted(df['Departamento'].astype(str).unique())
     lista_funcionarios = sorted(df['Nome do Funcionário'].unique())
-
-    ganhos, descontos = definir_colunas_ganhos_descontos()
-    df['Total Extra'] = df['Hora Extra 70% - Semana'] + df['Hora Extra 70% - Sabado']
-
-    lista_departamentos = sorted(df['Departamento'].astype(str).unique())
-    lista_funcionarios = sorted(df['Nome do Funcionário'].unique())  # Lista para o novo filtro
 
     ganhos, descontos = definir_colunas_ganhos_descontos()
     df['Total Extra'] = df['Hora Extra 70% - Semana'] + df['Hora Extra 70% - Sabado']
@@ -726,7 +719,6 @@ def dashboard_escritorio():
         if funcionario_selecionado != "Todos":
             df_filtrado = df_filtrado[df_filtrado['Nome do Funcionário'] == funcionario_selecionado]
 
-
     # Métricas (sem terceiros)
     direto_count = len(df_filtrado[df_filtrado['Tipo'] == 'DIRETO'])
     indireto_count = len(df_filtrado[df_filtrado['Tipo'] == 'INDIRETO'])
@@ -738,6 +730,7 @@ def dashboard_escritorio():
     col3.metric("👥 Total", total_geral)
 
     st.divider()
+
     # Gráficos de Pizza - Apenas diretos e indiretos (MODIFICADO para incluir gênero)
     st.markdown("### 📊 Distribuição por Tipo e Gênero")
 
@@ -745,108 +738,83 @@ def dashboard_escritorio():
     col1, col2 = st.columns(2)
 
     with col1:
-    # Gráfico de Pizza - Tipo (existente)
-    pizza_base = df[df['Departamento'].isin(departamentos_selecionados)]
-    pizza_diretos_indiretos = pizza_base['Tipo'].value_counts().reset_index()
-    pizza_diretos_indiretos.columns = ['Tipo', 'count']
+        # Gráfico de Pizza - Tipo (existente)
+        pizza_base = df[df['Departamento'].isin(departamentos_selecionados)]
+        pizza_diretos_indiretos = pizza_base['Tipo'].value_counts().reset_index()
+        pizza_diretos_indiretos.columns = ['Tipo', 'count']
 
-    fig_pizza_tipo = px.pie(
-        pizza_diretos_indiretos,
-        names='Tipo', 
-        values='count', 
-        title='Distribuição por Tipo de Efetivo',
-        hole=0.3,
-        color='Tipo',
-        color_discrete_map={'DIRETO':'#636EFA', 'INDIRETO':'#EF553B'}
-    )
-    fig_pizza_tipo.update_traces(
-        textposition='inside', 
-        textinfo='percent+label',
-        textfont_size=14
-    )
-    st.plotly_chart(fig_pizza_tipo, use_container_width=True)
+        fig_pizza_tipo = px.pie(
+            pizza_diretos_indiretos,
+            names='Tipo', 
+            values='count', 
+            title='Distribuição por Tipo de Efetivo',
+            hole=0.3,
+            color='Tipo',
+            color_discrete_map={'DIRETO':'#636EFA', 'INDIRETO':'#EF553B'}
+        )
+        fig_pizza_tipo.update_traces(
+            textposition='inside', 
+            textinfo='percent+label',
+            textfont_size=14
+        )
+        st.plotly_chart(fig_pizza_tipo, use_container_width=True)
 
     with col2:
-    # Novo Gráfico de Pizza - Gênero
-    if 'GENÊRO' in df.columns or 'GÊNERO' in df.columns:
-        # Padroniza o nome da coluna
-        coluna_genero = 'GENÊRO' if 'GENÊRO' in df.columns else 'GÊNERO'
-        
-        # Filtra e padroniza os valores
-        pizza_genero = pizza_base.copy()
-        pizza_genero['Gênero'] = pizza_genero[coluna_genero].str.upper().str.strip()
-        
-        # Corrige possíveis variações
-        pizza_genero['Gênero'] = pizza_genero['Gênero'].replace({
-            'FEMINO': 'FEMININO',
-            'MASC': 'MASCULINO',
-            'F': 'FEMININO',
-            'M': 'MASCULINO'
-        })
-        
-        # Filtra apenas valores válidos
-        pizza_genero = pizza_genero[pizza_genero['Gênero'].isin(['FEMININO', 'MASCULINO'])]
-        
-        if not pizza_genero.empty:
-            pizza_genero = pizza_genero['Gênero'].value_counts().reset_index()
-            pizza_genero.columns = ['Gênero', 'count']
-            
-            fig_pizza_genero = px.pie(
-                pizza_genero,
-                names='Gênero', 
-                values='count', 
-                title='Distribuição por Gênero',
-                hole=0.3,
-                color='Gênero',
-                color_discrete_map={'MASCULINO':'#1F77B4', 'FEMININO':'#FF7F0E'}
-            )
-            fig_pizza_genero.update_traces(
-                textposition='inside', 
-                textinfo='percent+label',
-                textfont_size=14
-            )
-            st.plotly_chart(fig_pizza_genero, use_container_width=True)
+        # Novo Gráfico de Pizza - Gênero
+        if 'GENÊRO' in df.columns or 'GÊNERO' in df.columns:
+            coluna_genero = 'GENÊRO' if 'GENÊRO' in df.columns else 'GÊNERO'
+            pizza_genero = pizza_base.copy()
+            pizza_genero['Gênero'] = pizza_genero[coluna_genero].str.upper().str.strip()
+            pizza_genero['Gênero'] = pizza_genero['Gênero'].replace({
+                'FEMINO': 'FEMININO',
+                'MASC': 'MASCULINO',
+                'F': 'FEMININO',
+                'M': 'MASCULINO'
+            })
+            pizza_genero = pizza_genero[pizza_genero['Gênero'].isin(['FEMININO', 'MASCULINO'])]
+            if not pizza_genero.empty:
+                pizza_genero = pizza_genero['Gênero'].value_counts().reset_index()
+                pizza_genero.columns = ['Gênero', 'count']
+                fig_pizza_genero = px.pie(
+                    pizza_genero,
+                    names='Gênero', 
+                    values='count', 
+                    title='Distribuição por Gênero',
+                    hole=0.3,
+                    color='Gênero',
+                    color_discrete_map={'MASCULINO':'#1F77B4', 'FEMININO':'#FF7F0E'}
+                )
+                fig_pizza_genero.update_traces(
+                    textposition='inside', 
+                    textinfo='percent+label',
+                    textfont_size=14
+                )
+                st.plotly_chart(fig_pizza_genero, use_container_width=True)
+            else:
+                st.warning("Dados de gênero não encontrados (valores devem ser 'Feminino' ou 'Masculino')")
         else:
-            st.warning("Dados de gênero não encontrados (valores devem ser 'Feminino' ou 'Masculino')")
-       else:
-        st.warning("Coluna de gênero não encontrada (procura por 'GENÊRO' ou 'GÊNERO')")
+            st.warning("Coluna de gênero não encontrada (procura por 'GENÊRO' ou 'GÊNERO')")
 
-    # Análise Financeira
     if not df_filtrado.empty:
         st.markdown("### 💰 Análise Financeira")
 
         if analise_financeira == 'Geral':
             fig_cascata, total_ganhos, total_descontos, remuneracao_liquida = criar_grafico_cascata(df_filtrado, ganhos, descontos)
             st.plotly_chart(fig_cascata, use_container_width=True)
-
-            # Resumo dos valores financeiros
             col_fin1, col_fin2, col_fin3 = st.columns(3)
-            col_fin1.metric("💚 Total Ganhos", 
-                          f"R$ {total_ganhos:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
-            col_fin2.metric("💸 Total Descontos", 
-                          f"R$ {total_descontos:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
-            col_fin3.metric("💰 Remuneração Líquida", 
-                          f"R$ {remuneracao_liquida:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+            col_fin1.metric("💚 Total Ganhos", f"R$ {total_ganhos:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+            col_fin2.metric("💸 Total Descontos", f"R$ {total_descontos:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+            col_fin3.metric("💰 Remuneração Líquida", f"R$ {remuneracao_liquida:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
 
         elif analise_financeira == 'Ganhos':
-            fig_ganhos = criar_grafico_detalhado(
-                df_filtrado=df_filtrado,
-                colunas=ganhos,
-                titulo="Detalhamento dos Ganhos - Escritório",
-                cor="green"
-            )
+            fig_ganhos = criar_grafico_detalhado(df_filtrado, ganhos, "Detalhamento dos Ganhos - Escritório", "green")
             if fig_ganhos:
                 st.plotly_chart(fig_ganhos, use_container_width=True)
             else:
                 st.warning("Nenhum dado de ganhos encontrado para os filtros selecionados.")
 
         elif analise_financeira == 'Descontos':
-            fig_descontos = criar_grafico_detalhado(
-                df_filtrado=df_filtrado,
-                colunas=descontos,
-                titulo="Detalhamento dos Descontos - Escritório",
-                cor="red"
-            )
+            fig_descontos = criar_grafico_detalhado(df_filtrado, descontos, "Detalhamento dos Descontos - Escritório", "red")
             if fig_descontos:
                 st.plotly_chart(fig_descontos, use_container_width=True)
             else:
@@ -854,7 +822,6 @@ def dashboard_escritorio():
 
         st.divider()
 
-    # Ranking de Funcionários (ajustado para departamento)
     coluna_valor = {
         'Produção': 'PRODUÇÃO',
         'Hora Extra Semana': 'Hora Extra 70% - Semana',
@@ -899,7 +866,6 @@ def dashboard_escritorio():
     st.dataframe(ranking, use_container_width=True)
     st.divider()
 
-    # Gráfico por Função (se existir a coluna)
     if nome_col_funcao and nome_col_funcao in df_ranking.columns:
         graf_funcao = df_ranking[nome_col_funcao].value_counts().reset_index()
         graf_funcao.columns = [nome_col_funcao, 'Qtd']
@@ -916,7 +882,6 @@ def dashboard_escritorio():
 
     st.divider()
 
-    # Gráfico de Peso Financeiro (ajustado para departamento)
     todos_departamentos = sorted(df['Departamento'].astype(str).unique())
     peso_lista = []
     for depto in todos_departamentos:
@@ -941,8 +906,6 @@ def dashboard_escritorio():
     df_peso['Selecionada'] = df_peso['Departamento'].apply(lambda x: x in departamentos_selecionados)
     colors = df_peso['Selecionada'].map({True: 'darkblue', False: 'lightblue'})
 
-        
-
     fig_peso = px.bar(
         df_peso,
         x='Departamento',
@@ -965,7 +928,8 @@ def dashboard_escritorio():
         xaxis={'categoryorder': 'array', 'categoryarray': df_peso['Departamento']}
     )
 
-    st.plotly_chart(fig_peso, use_container_width=True) 
+    st.plotly_chart(fig_peso, use_container_width=True)
+
 
 
 def main():

@@ -726,6 +726,18 @@ def dashboard_escritorio():
         if funcionario_selecionado != "Todos":
             df_filtrado = df_filtrado[df_filtrado['Nome do Funcionário'] == funcionario_selecionado]
 
+     # VERIFICAÇÃO CRÍTICA (solução definitiva para o erro)
+    if not departamentos_selecionados:  # Se nenhum selecionado, usa todos
+        departamentos_selecionados = lista_departamentos
+        st.warning("Nenhum departamento selecionado - mostrando todos")
+
+    # Garante que o filtro será aplicado corretamente
+    try:
+        pizza_base = df[df['Departamento'].isin(departamentos_selecionados)].copy()
+    except Exception as e:
+        st.error(f"Erro ao filtrar departamentos: {str(e)}")
+        return
+
     # Métricas (sem terceiros)
     direto_count = len(df_filtrado[df_filtrado['Tipo'] == 'DIRETO'])
     indireto_count = len(df_filtrado[df_filtrado['Tipo'] == 'INDIRETO'])

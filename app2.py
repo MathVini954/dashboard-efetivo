@@ -1,4 +1,4 @@
-import streamlit as st 
+import streamlit as st More actions
 import pandas as pd
 import plotly.graph_objects as go
 import plotly.express as px
@@ -292,19 +292,21 @@ def dashboard_efetivo():
         if 'GENÊRO' in pizza_base.columns:
             genero_counts = pizza_base['GENÊRO'].value_counts().reset_index()
             genero_counts.columns = ['Gênero', 'Quantidade']
-                fig_pizza_genero = px.pie(
-                    pizza_genero,
-                    names='Gênero', 
-                    values='count', 
-                    title='Distribuição por Gênero',
-                    hole=0.3,
-                    color='Gênero',
-                    color_discrete_map={'MASCULINO':'Blue', 'FEMININO':'Red'}
-                )
+            fig_genero = px.pie(
+                genero_counts,
+                names='Gênero',
+                values='Quantidade',
+                title='Distribuição por Gênero',
+                hole=0.3,
+                color='Gênero',
+                color_discrete_map={
+                    'MASCULINO' : '#3498DB',
+                    'FEMININO' : '#E67E22'
+                }
             )
             fig_genero.update_traces(textposition='inside', textinfo='percent+label')
             st.plotly_chart(fig_genero, use_container_width=True)
-            
+
         else:
             st.warning("Coluna 'GENÊRO' não encontrada nos dados")
 
@@ -790,6 +792,7 @@ def dashboard_escritorio():
                     title='Distribuição por Gênero',
                     hole=0.3,
                     color='Gênero',
+                    color_discrete_map={'MASCULINO':'Blue', 'FEMININO':'#FFC0CB'}
                     color_discrete_map={'MASCULINO':'Blue', 'FEMININO':'Red'}
                 )
                 fig_pizza_genero.update_traces(
@@ -985,6 +988,6 @@ def main():
     except Exception as e:
         st.error(f"Erro ao carregar o dashboard: {str(e)}")
         st.session_state.aba_atual = "📊"  # Volta para aba segura
-
+More actions
 if __name__ == "__main__":
     main()

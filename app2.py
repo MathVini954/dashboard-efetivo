@@ -31,6 +31,8 @@ def verificar_senha():
 # Verifica a senha
 verificar_senha()
 
+import streamlit as st
+
 # Botão para alternar entre claro e escuro
 modo_escuro = st.toggle("🌙 Modo escuro")
 
@@ -38,29 +40,39 @@ modo_escuro = st.toggle("🌙 Modo escuro")
 if modo_escuro:
     st.markdown("""
         <style>
-            body {
-                background-color: #1e1e1e;
+            body, .stApp {
+                background-color: #0e1117;
                 color: white;
             }
-            .stApp {
-                background-color: #1e1e1e;
-                color: white;
+
+            /* Força o texto do toggle a ficar branco */
+            label[data-testid="stToggleLabel"] {
+                color: white !important;
+            }
+
+            /* Corrige fundo de caixas padrão do Streamlit */
+            .css-1v0mbdj, .css-18ni7ap {
+                background-color: #0e1117;
             }
         </style>
     """, unsafe_allow_html=True)
 else:
     st.markdown("""
         <style>
-            body {
+            body, .stApp {
                 background-color: white;
                 color: black;
             }
-            .stApp {
-                background-color: white;
-                color: black;
+
+            /* Força o texto do toggle a ficar preto */
+            label[data-testid="stToggleLabel"] {
+                color: black !important;
             }
         </style>
     """, unsafe_allow_html=True)
+
+st.title("Dashboard com Modo Escuro 🌗")
+
 
 @st.cache_data
 def carregar_dados_efetivo():

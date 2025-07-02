@@ -33,10 +33,8 @@ verificar_senha()
 
 import streamlit as st
 
-# Botão para alternar entre claro e escuro
 modo_escuro = st.toggle("🌙 Modo escuro")
 
-# Aplica o tema com base no botão
 if modo_escuro:
     st.markdown("""
         <style>
@@ -45,14 +43,14 @@ if modo_escuro:
                 color: white;
             }
 
-            /* Força o texto do toggle a ficar branco */
-            label[data-testid="stToggleLabel"] {
+            /* Força cor dos textos padrão */
+            .stMarkdown, .element-container, p, span, h1, h2, h3, h4, h5, h6 {
                 color: white !important;
             }
 
-            /* Corrige fundo de caixas padrão do Streamlit */
-            .css-1v0mbdj, .css-18ni7ap {
-                background-color: #0e1117;
+            /* Texto do toggle */
+            label[data-testid="stToggleLabel"] {
+                color: white !important;
             }
         </style>
     """, unsafe_allow_html=True)
@@ -64,12 +62,18 @@ else:
                 color: black;
             }
 
-            /* Força o texto do toggle a ficar preto */
+            /* Força cor dos textos padrão */
+            .stMarkdown, .element-container, p, span, h1, h2, h3, h4, h5, h6 {
+                color: black !important;
+            }
+
+            /* Texto do toggle */
             label[data-testid="stToggleLabel"] {
                 color: black !important;
             }
         </style>
     """, unsafe_allow_html=True)
+
 
 
 

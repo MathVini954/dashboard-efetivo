@@ -31,24 +31,24 @@ def verificar_senha():
 # Verifica a senha
 verificar_senha()
 
-import streamlit as st
-
 modo_escuro = st.toggle("🌙 Modo escuro")
 
 if modo_escuro:
     st.markdown("""
         <style>
+            /* Fundo principal */
             body, .stApp {
                 background-color: #0e1117;
                 color: white;
             }
 
-            /* Força cor dos textos padrão */
-            .stMarkdown, .element-container, p, span, h1, h2, h3, h4, h5, h6 {
+            /* Texto geral */
+            html, body, .stApp, .element-container, .stMarkdown, .block-container,
+            p, span, div, label, h1, h2, h3, h4, h5, h6 {
                 color: white !important;
             }
 
-            /* Texto do toggle */
+            /* Botão toggle */
             label[data-testid="stToggleLabel"] {
                 color: white !important;
             }
@@ -57,24 +57,24 @@ if modo_escuro:
 else:
     st.markdown("""
         <style>
+            /* Fundo principal */
             body, .stApp {
                 background-color: white;
                 color: black;
             }
 
-            /* Força cor dos textos padrão */
-            .stMarkdown, .element-container, p, span, h1, h2, h3, h4, h5, h6 {
+            /* Texto geral */
+            html, body, .stApp, .element-container, .stMarkdown, .block-container,
+            p, span, div, label, h1, h2, h3, h4, h5, h6 {
                 color: black !important;
             }
 
-            /* Texto do toggle */
+            /* Botão toggle */
             label[data-testid="stToggleLabel"] {
                 color: black !important;
             }
         </style>
     """, unsafe_allow_html=True)
-
-
 
 
 @st.cache_data

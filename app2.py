@@ -31,6 +31,37 @@ def verificar_senha():
 # Verifica a senha
 verificar_senha()
 
+# Botão para alternar entre claro e escuro
+modo_escuro = st.toggle("🌙 Modo escuro")
+
+# Aplica o tema com base no botão
+if modo_escuro:
+    st.markdown("""
+        <style>
+            body {
+                background-color: #1e1e1e;
+                color: white;
+            }
+            .stApp {
+                background-color: #1e1e1e;
+                color: white;
+            }
+        </style>
+    """, unsafe_allow_html=True)
+else:
+    st.markdown("""
+        <style>
+            body {
+                background-color: white;
+                color: black;
+            }
+            .stApp {
+                background-color: white;
+                color: black;
+            }
+        </style>
+    """, unsafe_allow_html=True)
+
 @st.cache_data
 def carregar_dados_efetivo():
     df = pd.read_excel("efetivo_abril.xlsx", sheet_name="EFETIVO", engine="openpyxl")

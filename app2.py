@@ -71,7 +71,6 @@ else:
         </style>
     """, unsafe_allow_html=True)
 
-st.title("Dashboard com Modo Escuro 🌗")
 
 
 @st.cache_data

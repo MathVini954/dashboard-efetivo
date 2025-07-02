@@ -31,50 +31,61 @@ def verificar_senha():
 # Verifica a senha
 verificar_senha()
 
+# --- Botão de modo escuro ---
 modo_escuro = st.toggle("🌙 Modo escuro")
 
+# --- CSS conforme o modo ---
 if modo_escuro:
-    st.markdown("""
-        <style>
-            /* Fundo principal */
-            body, .stApp {
-                background-color: #0e1117;
-                color: white;
-            }
-
-            /* Texto geral */
-            html, body, .stApp, .element-container, .stMarkdown, .block-container,
-            p, span, div, label, h1, h2, h3, h4, h5, h6 {
-                color: white !important;
-            }
-
-            /* Botão toggle */
-            label[data-testid="stToggleLabel"] {
-                color: white !important;
-            }
-        </style>
-    """, unsafe_allow_html=True)
+    fundo = "#0e1117"
+    cor_texto = "white"
+    tema_plotly = "plotly_dark"
 else:
-    st.markdown("""
-        <style>
-            /* Fundo principal */
-            body, .stApp {
-                background-color: white;
-                color: black;
-            }
+    fundo = "white"
+    cor_texto = "black"
+    tema_plotly = "plotly_white"
 
-            /* Texto geral */
-            html, body, .stApp, .element-container, .stMarkdown, .block-container,
-            p, span, div, label, h1, h2, h3, h4, h5, h6 {
-                color: black !important;
-            }
+# --- Aplica estilo CSS global ---
+st.markdown(f"""
+    <style>
+        body, .stApp {{
+            background-color: {fundo};
+            color: {cor_texto};
+        }}
 
-            /* Botão toggle */
-            label[data-testid="stToggleLabel"] {
-                color: black !important;
-            }
-        </style>
-    """, unsafe_allow_html=True)
+        html, body, .stApp, .element-container, .block-container,
+        p, span, div, label, h1, h2, h3, h4, h5, h6 {{
+            color: {cor_texto} !important;
+        }}
+
+        label[data-testid="stToggleLabel"] {{
+            color: {cor_texto} !important;
+        }}
+
+        /* Tabela */
+        .stDataFrame, .stTable {{
+            background-color: {fundo} !important;
+            color: {cor_texto} !important;
+        }}
+    </style>
+""", unsafe_allow_html=True)
+
+# --- Título ---
+st.title("🎯 Dashboard com Dark Mode Controlado")
+
+# --- Dados exemplo ---
+df = pd.DataFrame({
+    "Categoria": ["A", "B", "C"],
+    "Valor": [10, 20, 30]
+})
+
+# --- Gráfico com tema plotly correto ---
+fig = px.pie(df, names="Categoria", values="Valor")
+fig.update_layout(template=tema_plotly)
+
+st.plotly_chart(fig, use_container_width=True)
+
+# --- Tabela com fundo controlado ---
+st.dataframe(df, use_container_width=True)
 
 
 @st.cache_data

@@ -1038,7 +1038,7 @@ with col1:
     )
 
 with col2:
-    st.image("rio_ave_logo.png", width=120)
+    st.image("rio_ave_logo.png", width=50)
 
 st.markdown(
     """

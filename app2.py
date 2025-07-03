@@ -9,15 +9,11 @@ import hmac
 import plotly.graph_objects as go
 import plotly.express as px
 
-
-
-SENHA_CORRETA = "RioAve2025"  # 👈 Modifique aqui!
-
 import streamlit as st
 import hashlib
 
 # Defina o hash MD5 da senha correta (exemplo: '1234' → '81dc9bdb52d04dc20036dbd8313ed055')
-SENHA_CORRETA_MD5 = "81dc9bdb52d04dc20036dbd8313ed055"
+SENHA_CORRETA_MD5 = "22e0a8b25d0066406f729ff0bae51954"
 
 # Função para criptografar a senha com MD5
 def hash_md5(senha):

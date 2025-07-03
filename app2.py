@@ -1021,25 +1021,16 @@ def main():
 if __name__ == "__main__":
     main()
 
-st.markdown("""---""")  # Linha divisória
+st.markdown("""---""")  # linha divisória
 
 st.markdown(
     """
-    <div style='text-align: center; color: gray; font-size: 14px; padding-top: 20px; margin-bottom: 20px;'>
+    <div style='text-align: center; color: gray; font-size: 14px; padding-top: 20px;'>
         Desenvolvido por <b>Matheus Vinicio</b> | <b>Engenharia</b> | <b>RIO AVE</b>  
-    </div>
-    """,
-    unsafe_allow_html=True
-)
-
-# Centralizar a imagem usando colunas
-col1, col2 = st.columns([1, 1])
-
-st.markdown(
-    """
-    <div style='text-align: center; color: gray; font-size: 12px; padding-top: 20px; margin-top: 20px;'>
+        <br><br>
         © 2025 - Todos os direitos reservados
     </div>
     """,
     unsafe_allow_html=True
 )
+

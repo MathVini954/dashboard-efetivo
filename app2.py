@@ -1024,21 +1024,20 @@ if __name__ == "__main__":
 st.markdown("""---""")  # Linha divisória
 
 # Criar colunas para colocar texto e imagem lado a lado
-col1, col2 = st.columns([3, 1])
+col1, col2 = st.columns([4, 1])
 
 with col1:
     st.markdown(
         """
-        <div style='text-align: center; color: gray; font-size: 14px; padding-top: 20px;'>
+        <div style='text-align: left; color: gray; font-size: 14px; padding-top: 30px;'>
             Desenvolvido por <b>Matheus Vinicio</b> | <b>Engenharia</b> | <b>RIO AVE</b>  
-            <br><br>
         </div>
         """,
         unsafe_allow_html=True
     )
 
 with col2:
-    st.image("rio_ave_logo.png", width=50)
+    st.image("rio_ave_logo.png", width=80)  # Reduzido de 120 para 80
 
 st.markdown(
     """

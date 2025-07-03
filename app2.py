@@ -1025,9 +1025,8 @@ st.markdown("""---""")  # Linha divisória
 
 st.markdown(
     """
-    <div style='text-align: center; color: gray; font-size: 14px; padding-top: 20px;'>
+    <div style='text-align: center; color: gray; font-size: 14px; padding-top: 20px; margin-bottom: 20px;'>
         Desenvolvido por <b>Matheus Vinicio</b> | <b>Engenharia</b> | <b>RIO AVE</b>  
-        <br><br>
     </div>
     """,
     unsafe_allow_html=True
@@ -1040,7 +1039,7 @@ with col2:
 
 st.markdown(
     """
-    <div style='text-align: center; color: gray; font-size: 12px; padding-top: 10px;'>
+    <div style='text-align: center; color: gray; font-size: 12px; padding-top: 20px; margin-top: 20px;'>
         © 2025 - Todos os direitos reservados
     </div>
     """,

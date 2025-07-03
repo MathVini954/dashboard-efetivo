@@ -44,7 +44,7 @@ import pandas as pd
 import streamlit as st
 
 # Base do link
-BASE_URL = "https://docs.google.com/spreadsheets/d/19DMN-2ZT-s4qhVtiCBgEVNBzI1J-Hs7I/export?format=csv&gid="
+BASE_URL = "https://docs.google.com/spreadsheets/d/19DMN-2ZT-s4qhVtiCBgEVNBzI1J-Hs7I/edit?usp=sharing&ouid=115626891569316977249&rtpof=true&sd=true"
 
 @st.cache_data
 def carregar_dados_efetivo():

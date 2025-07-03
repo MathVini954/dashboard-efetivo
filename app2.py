@@ -1031,7 +1031,9 @@ st.markdown(
     """
     <div style='text-align: center; font-size: 14px; color: gray; padding-top: 20px;'>
         <i>“Inspirados pelo que te faz bem”</i>
+        
         Desenvolvido por <b>Matheus Vinicio</b> — Engenharia
+        
         © 2025 <a href='https://rioave.com.br/' target='_blank' style='color: gray; text-decoration: none;'><b>RIO AVE</b></a>
     </div>
     """,

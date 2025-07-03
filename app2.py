@@ -1026,7 +1026,7 @@ st.markdown("""---""")  # Linha separadora
 st.markdown(
     """
     <div style='text-align: center; color: gray; font-size: 14px; padding-top: 20px;'>
-        Desenvolvido por <b>Matheus Vinicio</b> | Setor de <b>Engenharia</b> | <b>Nome da Empresa LTDA</b>  
+        Desenvolvido por <b>Matheus Vinicio</b> | <b>Engenharia</b> | <b>RIO AVE</b>  
         <br>
         © 2025 - Todos os direitos reservados
     </div>

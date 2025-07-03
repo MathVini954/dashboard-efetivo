@@ -37,21 +37,11 @@ def verificar_senha():
 # Verifica a senha
 verificar_senha()
 
-
-
-
-import pandas as pd
-import streamlit as st
-
-# Base do link
-BASE_URL = "https://docs.google.com/spreadsheets/d/19DMN-2ZT-s4qhVtiCBgEVNBzI1J-Hs7I/edit?usp=sharing&ouid=115626891569316977249&rtpof=true&sd=true"
-
 @st.cache_data
 def carregar_dados_efetivo():
-    url = BASE_URL + "1554300189"  # gid da aba EFETIVO
-    df = pd.read_csv(url)
+    df = pd.read_excel("efetivo_abril.xlsx", sheet_name="EFETIVO", engine="openpyxl")
     df.columns = df.columns.str.strip()
-    df = df[df['Obra'].notna()]
+    df = df[df['Obra'].notna()]  # NOVO: Remove linhas com 'Obra' vazia/nan
 
     df['Hora Extra 70% - Semana'] = pd.to_numeric(df['Hora Extra 70% - Semana'], errors='coerce').fillna(0)
     df['Hora Extra 70% - Sabado'] = pd.to_numeric(df['Hora Extra 70% - Sabado'], errors='coerce').fillna(0)
@@ -65,10 +55,9 @@ def carregar_dados_efetivo():
 
 @st.cache_data
 def carregar_terceiros():
-    url = BASE_URL + "2027861945"  # Substitua pelo gid da aba TERCEIROS
-    df_terceiros = pd.read_csv(url)
+    df_terceiros = pd.read_excel("efetivo_abril.xlsx", sheet_name="TERCEIROS", engine="openpyxl")
     df_terceiros.columns = df_terceiros.columns.str.strip()
-    df_terceiros = df_terceiros[df_terceiros['Obra'].notna()]
+    df_terceiros = df_terceiros[df_terceiros['Obra'].notna()]  # NOVO: Remove linhas com 'Obra' vazia/nan
     df_terceiros['QUANTIDADE'] = pd.to_numeric(df_terceiros['QUANTIDADE'], errors='coerce').fillna(0).astype(int)
     return df_terceiros
 

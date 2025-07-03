@@ -1020,3 +1020,16 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+st.markdown("""---""")  # Linha separadora
+
+st.markdown(
+    """
+    <div style='text-align: center; color: gray; font-size: 14px; padding-top: 20px;'>
+        Desenvolvido por <b>Matheus Vinicio</b> | Setor de <b>Engenharia</b> | <b>Nome da Empresa LTDA</b>  
+        <br>
+        © 2025 - Todos os direitos reservados
+    </div>
+    """,
+    unsafe_allow_html=True
+)

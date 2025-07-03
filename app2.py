@@ -1022,7 +1022,6 @@ if __name__ == "__main__":
     main()
 
 st.markdown("""---""")  # Linha divisória
-
 st.markdown(
     """
     <div style='text-align: center; color: gray; font-size: 14px; padding-top: 20px;'>
@@ -1033,7 +1032,10 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-st.image("rio_ave_logo.png", width=120)  # Exibe a logo centralizada abaixo do texto
+# Centralizar a imagem usando colunas
+col1, col2, col3 = st.columns([1, 1, 1])
+with col2:
+    st.image("rio_ave_logo.png", width=120)
 
 st.markdown(
     """
@@ -1043,4 +1045,3 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
-

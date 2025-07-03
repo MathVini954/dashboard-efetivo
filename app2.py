@@ -1033,7 +1033,7 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-st.image("rio_ave_logo.png", width=80)  # Exibe a logo centralizada abaixo do texto
+st.image("rio_ave_logo.png", width=120)  # Exibe a logo centralizada abaixo do texto
 
 st.markdown(
     """

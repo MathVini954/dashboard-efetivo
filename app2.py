@@ -1021,13 +1021,23 @@ def main():
 if __name__ == "__main__":
     main()
 
-st.markdown("""---""")  # Linha separadora
+st.markdown("""---""")  # Linha divisória
 
 st.markdown(
     """
     <div style='text-align: center; color: gray; font-size: 14px; padding-top: 20px;'>
-        Desenvolvido por <b>Matheus Vinicio</b> | <b>Engenharia</b> | <b>RIO AVE</b>  
-        <br>
+        Desenvolvido por <b>Matheus Vinicio</b> | Setor de <b>Engenharia</b> | <b>RIO AVE ENGENHARIA</b>  
+        <br><br>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
+
+st.image("rio_ave_logo.png", width=120)  # Exibe a logo centralizada abaixo do texto
+
+st.markdown(
+    """
+    <div style='text-align: center; color: gray; font-size: 12px; padding-top: 10px;'>
         © 2025 - Todos os direitos reservados
     </div>
     """,

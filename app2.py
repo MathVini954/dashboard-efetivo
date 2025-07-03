@@ -1022,16 +1022,28 @@ if __name__ == "__main__":
     main()
 
 st.markdown("""---""")  # Linha divisória
+
+# Criar colunas para colocar texto e imagem lado a lado
+col1, col2 = st.columns([3, 1])
+
+with col1:
+    st.markdown(
+        """
+        <div style='text-align: center; color: gray; font-size: 14px; padding-top: 20px;'>
+            Desenvolvido por <b>Matheus Vinicio</b> | <b>Engenharia</b> | <b>RIO AVE</b>  
+            <br><br>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+with col2:
+    st.image("rio_ave_logo.png", width=120)
+
 st.markdown(
     """
-    <div style='text-align: center; color: gray; font-size: 14px; padding-top: 20px;'>
-        Desenvolvido por <b>Matheus Vinicio</b> | <b>Engenharia</b> | <b>RIO AVE</b>  
-        <br><br>
-        <img src="rio_ave_logo.png" width="120" style="display: block; margin: 0 auto;">
-        <br>
-        <div style='font-size: 12px; padding-top: 10px;'>
-            © 2025 - Todos os direitos reservados
-        </div>
+    <div style='text-align: center; color: gray; font-size: 12px; padding-top: 10px;'>
+        © 2025 - Todos os direitos reservados
     </div>
     """,
     unsafe_allow_html=True

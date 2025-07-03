@@ -1021,16 +1021,22 @@ def main():
 if __name__ == "__main__":
     main()
 
-st.markdown("""---""")  # linha divisória
+st.markdown("""---""")
 
 st.markdown(
     """
-    <div style='text-align: center; color: gray; font-size: 14px; padding-top: 20px;'>
-        Desenvolvido por <b>Matheus Vinicio</b> | <b>Engenharia</b> | <b>RIO AVE</b>  
+    <div style='text-align: center; font-size: 14px; color: gray; padding-top: 20px;'>
+        <b>RIO AVE ENGENHARIA LTDA</b><br>
+        “Inspirados pelo que te faz bem”<br><br>
+        Desenvolvido por <b>Matheus Vinicio</b> | Engenharia
         <br><br>
-        © 2025 - Todos os direitos reservados
+        <a href='https://rioave.com.br/' style='color: gray; text-decoration: none;' target='_blank'>
+        </a>
+        <br><br>
+        © 2025 - Rio Ave
     </div>
     """,
     unsafe_allow_html=True
 )
+
 

@@ -1021,19 +1021,19 @@ def main():
 if __name__ == "__main__":
     main()
 
-st.markdown("""---""")  # Linha divisória
+st.markdown("""---""")
 
 st.markdown(
     """
-    <div style='text-align: center; color: gray; font-size: 14px; padding-top: 20px;'>
-        Desenvolvido por <b>Matheus Vinicio</b> | Setor de <b>Engenharia</b> | <b>RIO AVE ENGENHARIA</b>  
-        <br><br>
+    <div style='display: flex; justify-content: center; align-items: center; gap: 10px; padding-top: 10px;'>
+        <span style='color: gray; font-size: 14px;'>
+            Desenvolvido por <b>Matheus Vinicio</b> | Setor de <b>Engenharia</b> | <b>RIO AVE ENGENHARIA</b>
+        </span>
+        <img src='rio_ave_logo.png' width='80'>
     </div>
     """,
     unsafe_allow_html=True
 )
-
-st.image("rio_ave_logo.png", width=120)  # Exibe a logo centralizada abaixo do texto
 
 st.markdown(
     """

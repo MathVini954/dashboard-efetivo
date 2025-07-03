@@ -1026,17 +1026,12 @@ st.markdown("""---""")
 st.markdown(
     """
     <div style='text-align: center; font-size: 14px; color: gray; padding-top: 20px;'>
-        <b>RIO AVE ENGENHARIA LTDA</b><br>
-        “Inspirados pelo que te faz bem”<br><br>
-        Desenvolvido por <b>Matheus Vinicio</b> | Engenharia
+        <i>“Inspirados pelo que te faz bem”</i>
         <br><br>
-        <a href='https://rioave.com.br/' style='color: gray; text-decoration: none;' target='_blank'>
-        </a>
+        Desenvolvido por <b>Matheus Vinicio</b> — Engenharia
         <br><br>
-        © 2025 - Rio Ave
+        © 2025 <a href='https://rioave.com.br/' target='_blank' style='color: gray; text-decoration: none;'><b>RIO AVE</b></a>
     </div>
     """,
     unsafe_allow_html=True
 )
-
-

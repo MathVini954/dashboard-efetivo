@@ -1033,9 +1033,7 @@ st.markdown(
 )
 
 # Centralizar a imagem usando colunas
-col1, col2, col3 = st.columns([1, 1, 1])
-with col2:
-    st.image("rio_ave_logo.png", width=120)
+col1, col2 = st.columns([1, 1])
 
 st.markdown(
     """

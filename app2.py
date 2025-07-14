@@ -1,45 +1,3 @@
-import hashlib
-
-# Função de hash (usuário insere os hashes manualmente)
-def hash_md5(senha):
-    return hashlib.md5(senha.encode()).hexdigest()
-
-# Dicionário de usuários com permissões e hashes de senha
-USUARIOS = {
-    "DIRETORIA": {
-        "senha_hash": "COLE_O_HASH_DA_SENHA_DIRETORIA_AQUI",
-        "dashboards": ["efetivo", "produtividade", "escritorio"]
-    },
-    "Engenharia": {
-        "senha_hash": "COLE_O_HASH_DA_SENHA_ENGENHARIA_AQUI",
-        "dashboards": ["efetivo", "produtividade"]
-    }
-}
-
-# Autenticação apenas por senha
-def autenticar_usuario():
-    import streamlit as st
-    if "usuario_logado" not in st.session_state:
-        senha = st.text_input("Digite sua senha:", type="password")
-
-        if senha:
-            senha_hash = hash_md5(senha)
-            for usuario, dados in USUARIOS.items():
-                if dados["senha_hash"] == senha_hash:
-                    st.session_state.usuario_logado = usuario
-                    st.rerun()
-
-            st.error("Senha incorreta.")
-            st.stop()
-
-    elif st.session_state.usuario_logado not in USUARIOS:
-        st.error("Usuário inválido.")
-        st.stop()
-
-# Chama autenticação no início do app
-autenticar_usuario()
-
-
 import streamlit as st 
 import pandas as pd
 import plotly.graph_objects as go
@@ -53,6 +11,31 @@ import plotly.express as px
 
 import streamlit as st
 import hashlib
+
+# Defina o hash MD5 da senha correta (exemplo: '1234' → '81dc9bdb52d04dc20036dbd8313ed055')
+SENHA_CORRETA_MD5 = "22e0a8b25d0066406f729ff0bae51954"
+
+# Função para criptografar a senha com MD5
+def hash_md5(senha):
+    return hashlib.md5(senha.encode()).hexdigest()
+
+# Sistema de autenticação
+def verificar_senha():
+    if "autenticado" not in st.session_state:
+        st.session_state.autenticado = False
+
+    if not st.session_state.autenticado:
+        senha = st.text_input("Digite a senha de acesso:", type="password", key="senha_input")
+        if senha:
+            if hash_md5(senha) == SENHA_CORRETA_MD5:
+                st.session_state.autenticado = True
+                st.rerun()  # Recarrega o app após autenticação
+            else:
+                st.error("Senha incorreta! Tente novamente.")
+        st.stop()  # Impede o acesso ao restante do app
+
+# Verifica a senha
+verificar_senha()
 
 @st.cache_data
 def carregar_dados_efetivo():
@@ -1012,18 +995,11 @@ def main():
         st.title("🎛️ Painel de Controle")
 
         # Cria botões estilo aba para melhor UX
-        # Mapeamento de todas as abas com ícones
-        TODAS_ABAS = {
+        opcoes_abas = {
             "📊": "efetivo",
             "📈": "produtividade",
             "🏢": "escritorio"
         }
-
-        # Filtra abas com base no usuário autenticado
-        usuario = st.session_state.get("usuario_logado")
-        permissoes = USUARIOS[usuario]["dashboards"]
-
-        opcoes_abas = {icone: nome for icone, nome in TODAS_ABAS.items() if nome in permissoes}
 
         # Exibe como botões horizontais
         cols = st.columns(len(opcoes_abas))

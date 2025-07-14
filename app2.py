@@ -54,11 +54,6 @@ import plotly.express as px
 import streamlit as st
 import hashlib
 
-  # Impede o acesso ao restante do app
-
-# Verifica a senha
-verificar_senha()
-
 @st.cache_data
 def carregar_dados_efetivo():
     df = pd.read_excel("efetivo_abril.xlsx", sheet_name="EFETIVO", engine="openpyxl")

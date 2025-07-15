@@ -995,45 +995,47 @@ def dashboard_escritorio():
 def main():
     st.set_page_config(page_title="Dashboards Inteligentes", layout="wide")
 
-    # 1. Configuração do estado inicial
+    # 🔐 Verifica login antes de continuar
+    verificar_login()
+
+    # 🧠 Inicializa a aba padrão após login
     if 'aba_atual' not in st.session_state:
         st.session_state.aba_atual = "📊"
 
-    # 2. Cabeçalho
+    # 1. Cabeçalho
     col1, col2 = st.columns([1, 4])
     with col1:
         st.image("logotipo.png", width=400)
     with col2:
         st.markdown("<h1 style='margin-top: 30px;'>SISTEMA INTELIGENTE DE GESTÃO</h1>", unsafe_allow_html=True)
 
-   # 3. Sidebar com navegação instantânea
-with st.sidebar:
-    st.title("🎛️ Painel de Controle")
-    st.markdown(f"👤 **Usuário:** {st.session_state.usuario}")
+    # 2. Sidebar com navegação baseada no tipo de usuário
+    with st.sidebar:
+        st.title("🎛️ Painel de Controle")
+        st.markdown(f"👤 **Usuário:** {st.session_state.usuario}")
 
-    # Define opções visíveis com base no tipo do usuário
-    tipo = st.session_state.tipo_usuario
-    if tipo == "admin":
-        opcoes_abas = {
-            "📊": "efetivo",
-            "📈": "produtividade",
-            "🏢": "escritorio"
-        }
-    elif tipo == "engenharia":
-        opcoes_abas = {
-            "📊": "efetivo",
-            "📈": "produtividade"
-        }
-    else:
-        opcoes_abas = {}
+        tipo = st.session_state.tipo_usuario
+        if tipo == "admin":
+            opcoes_abas = {
+                "📊": "efetivo",
+                "📈": "produtividade",
+                "🏢": "escritorio"
+            }
+        elif tipo == "engenharia":
+            opcoes_abas = {
+                "📊": "efetivo",
+                "📈": "produtividade"
+            }
+        else:
+            opcoes_abas = {}
 
-    cols = st.columns(len(opcoes_abas))
-    for idx, (nome_aba, aba_key) in enumerate(opcoes_abas.items()):
-        with cols[idx]:
-            if st.button(nome_aba, key=f"btn_{aba_key}"):
-                st.session_state.aba_atual = nome_aba
+        cols = st.columns(len(opcoes_abas))
+        for idx, (nome_aba, aba_key) in enumerate(opcoes_abas.items()):
+            with cols[idx]:
+                if st.button(nome_aba, key=f"btn_{aba_key}"):
+                    st.session_state.aba_atual = nome_aba
 
-    # 4. Renderização condicional
+    # 3. Renderização do dashboard conforme aba ativa
     try:
         if st.session_state.aba_atual == "📊":
             dashboard_efetivo()
@@ -1041,11 +1043,10 @@ with st.sidebar:
             dashboard_escritorio()
         elif st.session_state.aba_atual == "📈":
             dashboard_produtividade()
-
-
     except Exception as e:
         st.error(f"Erro ao carregar o dashboard: {str(e)}")
-        st.session_state.aba_atual = "📊"  # Volta para aba segura
+        st.session_state.aba_atual = "📊"
+
 
 if __name__ == "__main__":
     main()

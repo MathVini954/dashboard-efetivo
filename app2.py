@@ -9,33 +9,49 @@ import hmac
 import plotly.graph_objects as go
 import plotly.express as px
 
-import streamlit as st
 import hashlib
+import streamlit as st
 
-# Defina o hash MD5 da senha correta (exemplo: '1234' → '81dc9bdb52d04dc20036dbd8313ed055')
-SENHA_CORRETA_MD5 = "22e0a8b25d0066406f729ff0bae51954"
+# Dicionário de usuários (usuário: senha MD5 + tipo de acesso)
+USUARIOS = {
+    "DIRETORIA": {
+        "senha_md5": "22e0a8b25d0066406f729ff0bae51954",  # exemplo: 123456
+        "tipo": "admin"
+    },
+    "Engenharia": {
+        "senha_md5": "81dc9bdb52d04dc20036dbd8313ed055",  # exemplo: 1234
+        "tipo": "engenharia"
+    }
+}
 
-# Função para criptografar a senha com MD5
 def hash_md5(senha):
     return hashlib.md5(senha.encode()).hexdigest()
 
-# Sistema de autenticação
-def verificar_senha():
+def verificar_login():
     if "autenticado" not in st.session_state:
         st.session_state.autenticado = False
+    if "usuario" not in st.session_state:
+        st.session_state.usuario = None
+    if "tipo_usuario" not in st.session_state:
+        st.session_state.tipo_usuario = None
 
     if not st.session_state.autenticado:
-        senha = st.text_input("Digite a senha de acesso:", type="password", key="senha_input")
-        if senha:
-            if hash_md5(senha) == SENHA_CORRETA_MD5:
-                st.session_state.autenticado = True
-                st.rerun()  # Recarrega o app após autenticação
-            else:
-                st.error("Senha incorreta! Tente novamente.")
-        st.stop()  # Impede o acesso ao restante do app
+        st.title("🔒 Login")
 
-# Verifica a senha
-verificar_senha()
+        usuario = st.text_input("Usuário:")
+        senha = st.text_input("Senha:", type="password")
+
+        if st.button("Entrar"):
+            if usuario in USUARIOS and hash_md5(senha) == USUARIOS[usuario]["senha_md5"]:
+                st.session_state.autenticado = True
+                st.session_state.usuario = usuario
+                st.session_state.tipo_usuario = USUARIOS[usuario]["tipo"]
+                st.rerun()
+            else:
+                st.error("Usuário ou senha incorretos")
+        st.stop()
+
+verificar_login()
 
 @st.cache_data
 def carregar_dados_efetivo():
@@ -990,23 +1006,32 @@ def main():
     with col2:
         st.markdown("<h1 style='margin-top: 30px;'>SISTEMA INTELIGENTE DE GESTÃO</h1>", unsafe_allow_html=True)
 
-    # 3. Sidebar com navegação instantânea
-    with st.sidebar:
-        st.title("🎛️ Painel de Controle")
+   # 3. Sidebar com navegação instantânea
+with st.sidebar:
+    st.title("🎛️ Painel de Controle")
+    st.markdown(f"👤 **Usuário:** {st.session_state.usuario}")
 
-        # Cria botões estilo aba para melhor UX
+    # Define opções visíveis com base no tipo do usuário
+    tipo = st.session_state.tipo_usuario
+    if tipo == "admin":
         opcoes_abas = {
             "📊": "efetivo",
             "📈": "produtividade",
             "🏢": "escritorio"
         }
+    elif tipo == "engenharia":
+        opcoes_abas = {
+            "📊": "efetivo",
+            "📈": "produtividade"
+        }
+    else:
+        opcoes_abas = {}
 
-        # Exibe como botões horizontais
-        cols = st.columns(len(opcoes_abas))
-        for idx, (nome_aba, aba_key) in enumerate(opcoes_abas.items()):
-            with cols[idx]:
-                if st.button(nome_aba, key=f"btn_{aba_key}"):
-                    st.session_state.aba_atual = nome_aba
+    cols = st.columns(len(opcoes_abas))
+    for idx, (nome_aba, aba_key) in enumerate(opcoes_abas.items()):
+        with cols[idx]:
+            if st.button(nome_aba, key=f"btn_{aba_key}"):
+                st.session_state.aba_atual = nome_aba
 
     # 4. Renderização condicional
     try:

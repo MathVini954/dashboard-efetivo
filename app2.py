@@ -15,11 +15,11 @@ import streamlit as st
 # Dicionário de usuários (usuário: senha MD5 + tipo de acesso)
 USUARIOS = {
     "DIRETORIA": {
-        "senha_md5": "f2d8cc866b64009e39f1a11f01978e40",  # exemplo: 123456
+        "senha_md5": "22e0a8b25d0066406f729ff0bae51954",  # exemplo: 123456
         "tipo": "admin"
     },
     "Engenharia": {
-        "senha_md5": "81dc9bdb52d04dc20036dbd8313ed055",  # exemplo: 1234
+        "senha_md5": "d3deb726d5e69228aca43797c614dd26",  # exemplo: 1234
         "tipo": "engenharia"
     }
 }

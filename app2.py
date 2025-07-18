@@ -426,9 +426,21 @@ def dashboard_efetivo():
     ranking = df_ranking_limp.sort_values(by=valor_coluna, ascending=False)
 
     valor_total = df_ranking_limp[valor_coluna].sum()
-    st.markdown(f"### 📋 Top Funcionários por **{tipo_analise}**")
-    st.markdown(f"**Total em {tipo_analise}:** R$ {valor_total:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
 
+# Total de funcionários no filtro atual (direto/indireto)
+df_base = df_ranking[df_ranking[valor_coluna].notna()]
+total_funcionarios_geral = df_base['Nome do Funcionário'].nunique()
+total_com_valor = df_ranking_limp['Nome do Funcionário'].nunique()
+total_sem_valor = total_funcionarios_geral - total_com_valor
+
+# Exibição
+st.markdown(f"### 📋 Top Funcionários por **{tipo_analise}**")
+st.markdown(
+    f"**Total em {tipo_analise}:** R$ {valor_total:,.2f}  \n"
+    f"**Funcionários com {tipo_analise}:** {total_com_valor}  \n"
+    f"**Funcionários sem {tipo_analise}:** {total_sem_valor}"
+    .replace(",", "X").replace(".", ",").replace("X", ".")
+)
     if qtd_linhas != 'Todos':
         ranking = ranking.head(int(qtd_linhas))
 

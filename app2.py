@@ -428,7 +428,7 @@ def dashboard_efetivo():
     valor_total = df_ranking_limp[valor_coluna].sum()
 
 # Conta apenas efetivo direto com remuneração > 0
-df_diretos_validos = df[
+    df_diretos_validos = df[
     (df['Obra'].isin(obras_selecionadas)) &
     (df['Tipo'] == 'DIRETO') &
     (pd.to_numeric(df['Remuneração Líquida Folha'], errors='coerce') > 0)

@@ -59,15 +59,38 @@ def carregar_dados_efetivo():
     df.columns = df.columns.str.strip()
     df = df[df['Obra'].notna()]  # NOVO: Remove linhas com 'Obra' vazia/nan
 
+# Hora Extra 70% - Semana
+if 'Hora Extra 70% - Semana' not in df.columns:
+    df['Hora Extra 70% - Semana'] = 0
+else:
     df['Hora Extra 70% - Semana'] = pd.to_numeric(df['Hora Extra 70% - Semana'], errors='coerce').fillna(0)
+
+# Hora Extra 70% - Sábado
+if 'Hora Extra 70% - Sabado' not in df.columns:
+    df['Hora Extra 70% - Sabado'] = 0
+else:
     df['Hora Extra 70% - Sabado'] = pd.to_numeric(df['Hora Extra 70% - Sabado'], errors='coerce').fillna(0)
-    if 'Repouso Remunerado' not in df.columns:
-        df['Repouso Remunerado'] = 0
-    else:
-        df['Repouso Remunerado'] = pd.to_numeric(df['Repouso Remunerado'], errors='coerce').fillna(0)
-    df['Remuneração Líquida Folha'] = pd.to_numeric(df['Remuneração Líquida Folha'], errors='coerce').fillna(0)
-    df['Adiantamento'] = pd.to_numeric(df['Adiantamento'], errors='coerce').fillna(0)
-    return df
+
+# Hora Extra 100%
+if 'Hora Extra 100%' not in df.columns:
+    df['Hora Extra 100%'] = 0
+else:
+    df['Hora Extra 100%'] = pd.to_numeric(df['Hora Extra 100%'], errors='coerce').fillna(0)
+
+# Repouso Remunerado
+if 'Repouso Remunerado' not in df.columns:
+    df['Repouso Remunerado'] = 0
+else:
+    df['Repouso Remunerado'] = pd.to_numeric(df['Repouso Remunerado'], errors='coerce').fillna(0)
+
+# Remuneração Líquida Folha
+df['Remuneração Líquida Folha'] = pd.to_numeric(df['Remuneração Líquida Folha'], errors='coerce').fillna(0)
+
+# Adiantamento
+df['Adiantamento'] = pd.to_numeric(df['Adiantamento'], errors='coerce').fillna(0)
+
+return df
+
 
 @st.cache_data
 def carregar_terceiros():
@@ -1085,4 +1108,5 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
+
 

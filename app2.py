@@ -134,8 +134,7 @@ def definir_colunas_ganhos_descontos():
     'Plano Odontologico Dependente',
     'Pensão Alimentícia  Salário Mínimo',
     'Assitência Médica Dependente','Dsr sobre falta', 'INSS Folha', 'IRRF Folha', 'Pensão Alimentícia','DESCONTO DE ALIMENTAÇÃO',
-    'MENSALIDADE SINDICAL','Vale Transporte','Correção adiantamento', 'Desconto Pagt A Maior'
-    ]
+    'MENSALIDADE SINDICAL','Vale Transporte','Correção adiantamento', 'Desconto Pagt A Maior']
     
     return ganhos, descontos
 
@@ -712,7 +711,7 @@ def definir_colunas_ganhos_descontos():
         'Pensão Alimentícia  Salário Mínimo', 'Assitência Médica Dependente',
         'Dsr sobre falta', 'Pensão Alimentícia', 
         'DESCONTO DE ALIMENTAÇÃO', 'MENSALIDADE SINDICAL', 'Vale Transporte',
-        'Correção adiantamento'
+        'Correção adiantamento', 'INSS Folha', 'IRRF Folha'
     ]
     return ganhos, descontos
 
@@ -1083,6 +1082,7 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
+
 
 
 

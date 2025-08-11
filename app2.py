@@ -138,7 +138,7 @@ def definir_colunas_ganhos_descontos():
     'Salário Família',
     'Insuficiência de Saldo',
     'Auxilio Transporte Retroativo',
-    'Insuficiência de Saldo'
+    'Insuficiência de Saldo', 'Hora Extra 100%'
     ]
 
     descontos = [
@@ -269,7 +269,7 @@ def dashboard_efetivo():
         lista_obras = sorted(df['Obra'].astype(str).unique())
         obras_selecionadas = st.multiselect("Obras:", lista_obras, default=lista_obras)
         tipo_selecionado = st.radio("Tipo:", ['Todos', 'DIRETO', 'INDIRETO', 'TERCEIRO'], horizontal=True)
-        tipo_analise = st.radio("Tipo de Análise da Tabela:", ['Produção', 'Hora Extra Semana', 'Hora Extra Sábado'])
+        tipo_analise = st.radio("Tipo de Análise da Tabela:",['Produção', 'Hora Extra Semana', 'Hora Extra Sábado', 'Hora Extra 100%'])
         qtd_linhas = st.radio("Qtd. de Funcionários na Tabela:", ['5', '10', '20', 'Todos'], horizontal=True)
         tipo_peso = st.radio("Tipo de Peso (Gráficos Novos):", ['Peso sobre Produção', 'Peso sobre Hora Extra'])
 
@@ -423,10 +423,12 @@ def dashboard_efetivo():
         st.dataframe(tabela_terceiros, use_container_width=True)
         return
     coluna_valor = {
-        'Produção': 'PRODUÇÃO',
-        'Hora Extra Semana': 'Hora Extra 70% - Semana',
-        'Hora Extra Sábado': 'Hora Extra 70% - Sabado'
+    'Produção': 'PRODUÇÃO',
+    'Hora Extra Semana': 'Hora Extra 70% - Semana',
+    'Hora Extra Sábado': 'Hora Extra 70% - Sabado',
+    'Hora Extra 100%': 'Hora Extra 100%'
     }[tipo_analise]
+
 
     if tipo_selecionado == 'Todos':
         df_ranking = df_filtrado[df_filtrado['Tipo'].isin(['DIRETO', 'INDIRETO'])]
@@ -1109,6 +1111,7 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
+
 
 
 

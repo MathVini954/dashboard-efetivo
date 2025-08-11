@@ -738,7 +738,7 @@ def definir_colunas_ganhos_descontos():
         'Coparticipacao Titular', 'Desconto Empréstimo', 'Diferenca Plano De Saude',
         'Desconto Ótica', 'Plano Odontologico', 'Plano Odontologico Dependente',
         'Pensão Alimentícia  Salário Mínimo', 'Assitência Médica Dependente',
-        'Dsr sobre falta', 'INSS Folha', 'IRRF Folha', 'Pensão Alimentícia', 
+        'Dsr sobre falta', 'Pensão Alimentícia', 
         'DESCONTO DE ALIMENTAÇÃO', 'MENSALIDADE SINDICAL', 'Vale Transporte',
         'Correção adiantamento'
     ]
@@ -1111,6 +1111,7 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
+
 
 
 

@@ -262,7 +262,7 @@ def dashboard_efetivo():
     df_terceiros = df_terceiros[df_terceiros['Obra'] != 'ESCRITÓRIO ENGENHARIA']
 
     ganhos, descontos = definir_colunas_ganhos_descontos()
-    df['Total Extra'] = df['Hora Extra 70% - Semana'] + df['Hora Extra 70% - Sabado']
+    df['Total Extra'] = df['Hora Extra 70% - Semana'] + df['Hora Extra 70% - Sabado'] + df['Hora Extra 100%']
 
     with st.sidebar:
         st.header("🔍 Filtros - Efetivo")
@@ -767,7 +767,7 @@ def dashboard_escritorio():
     lista_funcionarios = sorted(df['Nome do Funcionário'].unique())
 
     ganhos, descontos = definir_colunas_ganhos_descontos()
-    df['Total Extra'] = df['Hora Extra 70% - Semana'] + df['Hora Extra 70% - Sabado']
+    df['Total Extra'] = df['Hora Extra 70% - Semana'] + df['Hora Extra 70% - Sabado'] + df['Hora Extra 100%']
 
     with st.sidebar:
         st.header("🔍 Filtros - Escritório")
@@ -1111,6 +1111,7 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
+
 
 
 

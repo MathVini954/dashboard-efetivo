@@ -490,7 +490,7 @@ def dashboard_efetivo():
         if tipo_peso == 'Peso sobre Produção':
             peso = (prod_numerador / prod_denominador) if prod_denominador > 0 else 0
         else:
-            peso = ((total_extra + reposo_remunerado)) if hor_extra_denominador > 0 else 0
+            peso = ((total_extra + reposo_remunerado)/df_dir_ind['Remuneração Líquida Folha']) if hor_extra_denominador > 0 else 0
 
         peso_lista.append({'Obra': obra, 'Peso Financeiro': peso})
 
@@ -1082,33 +1082,3 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

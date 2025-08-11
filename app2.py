@@ -490,7 +490,8 @@ def dashboard_efetivo():
         if tipo_peso == 'Peso sobre Produção':
             peso = (prod_numerador / prod_denominador) if prod_denominador > 0 else 0
         else:
-            peso = ((total_extra + reposo_remunerado)  / hor_extra_denominador ) if hor_extra_denominador > 0 else 0
+            peso = ((df['Hora Extra 70% - Semana'] + df['Hora Extra 70% - Sabado'] + df['Hora Extra 100%']
+ + reposo_remunerado)  / hor_extra_denominador ) if hor_extra_denominador > 0 else 0
 
         peso_lista.append({'Obra': obra, 'Peso Financeiro': peso})
 
@@ -1082,6 +1083,7 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
+
 
 
 

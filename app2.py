@@ -103,8 +103,7 @@ def carregar_terceiros():
 
 def definir_colunas_ganhos_descontos():
     """Define as colunas de ganhos e descontos"""
-    ganhos = [
-  'SALÁRIO',
+    ganhos = ['SALÁRIO',
     'Periculosidade',
     'Dias De Atestado',
     'Gratificação',
@@ -141,10 +140,7 @@ def definir_colunas_ganhos_descontos():
     'Insuficiência de Saldo', 'Hora Extra 100%'
     ]
 
-    descontos = [
- 'Atrasos',
-    'Faltas em Dias',
-    'Assistencia Medica',
+    descontos = ['Atrasos', 'Faltas em Dias', 'Assistencia Medica',
     'Coparticipacao Dependente',
     'Coparticipacao Titular',
     'Desconto Empréstimo',
@@ -153,15 +149,8 @@ def definir_colunas_ganhos_descontos():
     'Plano Odontologico',
     'Plano Odontologico Dependente',
     'Pensão Alimentícia  Salário Mínimo',
-    'Assitência Médica Dependente',
-    'Dsr sobre falta',
-    'INSS Folha',
-    'IRRF Folha',
-    'Pensão Alimentícia', 'DESCONTO DE ALIMENTAÇÃO',
-    'MENSALIDADE SINDICAL',
-    'Vale Transporte','Correção adiantamento', 'Desconto Pagt A Maior'
-
-
+    'Assitência Médica Dependente','Dsr sobre falta', 'INSS Folha', 'IRRF Folha', 'Pensão Alimentícia','DESCONTO DE ALIMENTAÇÃO',
+    'MENSALIDADE SINDICAL','Vale Transporte','Correção adiantamento', 'Desconto Pagt A Maior'
     ]
 
 
@@ -1111,6 +1100,7 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
+
 
 
 

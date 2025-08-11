@@ -483,7 +483,7 @@ def dashboard_efetivo():
         prod_numerador = df_direto['PRODUÇÃO'].sum() + df_direto['REFLEXO S PRODUÇÃO'].sum()
         prod_denominador = df_direto['Remuneração Líquida Folha'].sum() + df_direto['Adiantamento'].sum()
         df_dir_ind = df_obra[df_obra['Tipo'].isin(['DIRETO', 'INDIRETO'])]
-        total_extra = df_dir_ind['Hora Extra 70% - Semana'].sum()
+        total_extra = df_dir_ind['Hora Extra 70% - Sabado'].sum()
         reposo_remunerado = df_dir_ind['Repouso Remunerado'].sum()
         hor_extra_denominador = df_dir_ind['Remuneração Líquida Folha'].sum() + df_dir_ind['Adiantamento'].sum()
 
@@ -1082,6 +1082,7 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
+
 
 
 

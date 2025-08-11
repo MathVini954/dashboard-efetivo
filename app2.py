@@ -767,8 +767,8 @@ def dashboard_escritorio():
     lista_funcionarios = sorted(df['Nome do Funcionário'].unique())
 
     ganhos, descontos = definir_colunas_ganhos_descontos()
-    df['Total Extra'] = df['Hora Extra 70% - Semana'] + df['Hora Extra 70% - Sabado'] + df['Hora Extra 100%']
-
+    df['Total Extra'] = df['Hora Extra 70% - Semana'] + df['Hora Extra 70% - Sabado'] 
+    
     with st.sidebar:
         st.header("🔍 Filtros - Escritório")
         departamentos_selecionados = st.multiselect(
@@ -1111,6 +1111,7 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
+
 
 
 

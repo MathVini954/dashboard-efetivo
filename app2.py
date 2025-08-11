@@ -120,24 +120,8 @@ def definir_colunas_ganhos_descontos():
     'Reflexo S/ He Produção',
     'Reembolso V. Transporte',
     'Prêmio',
-    'Premio-gestao Desempenho',
-    'Passagem Interior',
-    'Passagem Interior Adiantamento',
-    'Hora Extra 70% - Sabado',
-    'Hora Extra 70% - Semana',
-    'Salário Maternidade',
-    'Adicional H.e S/ Producao 70%',
-    'PRODUÇÃO',
-    'AJUDA DE CUSTO',
-    'Ajuda de Custo Combustivel',
-    'REFLEXO S PRODUÇÃO',
-    'Hora Extra 100%',
-    'Repouso Remunerado',
-    'Periculosidade',
-    'Salário Família',
-    'Insuficiência de Saldo',
-    'Auxilio Transporte Retroativo',
-    'Insuficiência de Saldo', 'Hora Extra 100%'
+    'Premio-gestao Desempenho','Passagem Interior','Passagem Interior Adiantamento','Hora Extra 70% - Sabado','Hora Extra 70% - Semana','Salário Maternidade','Adicional H.e S/ Producao 70%','PRODUÇÃO','AJUDA DE CUSTO','Ajuda de Custo Combustivel', 'REFLEXO S PRODUÇÃO','Hora Extra 100%','Repouso Remunerado','Periculosidade','Salário Família',
+    'Insuficiência de Saldo', 'Auxilio Transporte Retroativo', 'Insuficiência de Saldo', 'Hora Extra 100%'
     ]
 
     descontos = ['Atrasos', 'Faltas em Dias', 'Assistencia Medica',
@@ -152,8 +136,7 @@ def definir_colunas_ganhos_descontos():
     'Assitência Médica Dependente','Dsr sobre falta', 'INSS Folha', 'IRRF Folha', 'Pensão Alimentícia','DESCONTO DE ALIMENTAÇÃO',
     'MENSALIDADE SINDICAL','Vale Transporte','Correção adiantamento', 'Desconto Pagt A Maior'
     ]
-
-
+    
     return ganhos, descontos
 
 def criar_grafico_cascata(df_filtrado, ganhos, descontos):
@@ -1100,6 +1083,7 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
+
 
 
 

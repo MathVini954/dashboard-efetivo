@@ -483,14 +483,14 @@ def dashboard_efetivo():
         prod_numerador = df_direto['PRODUÇÃO'].sum() + df_direto['REFLEXO S PRODUÇÃO'].sum()
         prod_denominador = df_direto['Remuneração Líquida Folha'].sum() + df_direto['Adiantamento'].sum()
         df_dir_ind = df_obra[df_obra['Tipo'].isin(['DIRETO', 'INDIRETO'])]
-        total_extra = df_dir_ind['Hora Extra 70% - Sabado'].sum()
+        total_extra = df['Hora Extra 70% - Semana'].sum() + df['Hora Extra 70% - Sabado'].sum() + df['Hora Extra 100%'].sum() + df_dir_ind['Repouso Remunerado'].sum()
         reposo_remunerado = df_dir_ind['Repouso Remunerado'].sum()
         hor_extra_denominador = df_dir_ind['Remuneração Líquida Folha'].sum() + df_dir_ind['Adiantamento'].sum()
 
         if tipo_peso == 'Peso sobre Produção':
             peso = (prod_numerador / prod_denominador) if prod_denominador > 0 else 0
         else:
-            peso = (total_extra) if hor_extra_denominador > 0 else 0
+            peso = (total_extra / hor_extra_denominador ) if hor_extra_denominador > 0 else 0
 
         peso_lista.append({'Obra': obra, 'Peso Financeiro': peso})
 
@@ -1082,6 +1082,7 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
+
 
 
 

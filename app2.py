@@ -14,181 +14,223 @@ st.set_page_config(
 )
 
 # Título principal
-st.title("📊 Dashboard do Projeto de Construção")
+st.title("🏗️ Dashboard de Obras")
 
-# Dados do projeto
-data = {
-    'Métrica': [
-        'AC(m²)', 'AP(m²)', 'Ef', 'Total Unidades', 'Avanço Físico Planejado',
-        'Avanço Físico Real', 'Aderência Física', 'Início', 'Tend', 'Prazo Concl.',
-        'Prazo Cliente', 'Orçamento Base', 'Orçamento Reajustado', 'Custo Final',
-        'Desvio', 'Desembolso', 'Saldo', 'Índice Econômico', 'Rentab. Viabilidade',
-        'Rentab. Projetada', 'Custo Atual AC', 'Custo Atual AP'
-    ],
-    'Valor': [
-        29651.00, 14887.00, '50,21%', 80.00, 0.99, 0.92, 0.94, '1-jun', '1-set',
-        '1-ago', '1-nov', 'R$ 102.593.965,36', 'R$ 104.856.979,36', 'R$ 104.856.979,36',
-        1.12, 'R$ 95.337.442,00', 'R$ 9.519.537,36', 1.01, '22%', '17%',
-        'R$ 3.574,04', 'R$ 7.118,56'
-    ]
-}
+# Upload da planilha
+st.subheader("📁 Upload da Planilha")
+uploaded_file = st.file_uploader("Escolha o arquivo Excel com os dados das obras:", type=['xlsx', 'xls'])
 
-df = pd.DataFrame(data)
+if uploaded_file is not None:
+    try:
+        # Carregar todas as abas do Excel
+        excel_file = pd.ExcelFile(uploaded_file)
+        sheet_names = excel_file.sheet_names
+        
+        # Selectbox para escolher a aba
+        selected_sheet = st.selectbox("Escolha a obra (aba da planilha):", sheet_names)
+        
+        # Carregar dados da aba selecionada
+        df = pd.read_excel(uploaded_file, sheet_name=selected_sheet)
+        
+        # Verificar se tem pelo menos 2 colunas
+        if df.shape[1] < 2:
+            st.error("A planilha precisa ter pelo menos 2 colunas (A: Métricas, B: Valores)")
+            st.stop()
+        
+        # Assumir que coluna 0 são as métricas e coluna 1 são os valores
+        df_clean = df.iloc[:, [0, 1]].dropna()
+        df_clean.columns = ['Metrica', 'Valor']
+        
+        # Criar dicionário com os dados
+        dados = {}
+        for _, row in df_clean.iterrows():
+            dados[str(row['Metrica']).strip()] = row['Valor']
+        
+        st.success(f"✅ Dados carregados da aba: **{selected_sheet}**")
+        
+        # Função para buscar valor no dicionário
+        def get_value(key, default="N/A"):
+            return dados.get(key, default)
+        
+        # Função para formatar valores monetários
+        def format_money(value):
+            if isinstance(value, (int, float)):
+                return f"R$ {value:,.0f}".replace(',', '.')
+            elif isinstance(value, str) and 'R$' in value:
+                return value
+            return str(value)
+        
+        # Função para formatar percentuais
+        def format_percent(value):
+            if isinstance(value, (int, float)) and value <= 1:
+                return f"{value*100:.1f}%"
+            elif isinstance(value, str) and '%' in value:
+                return value
+            return str(value)
+        
+        # Primeira seção - Métricas Principais em linha
+        st.subheader("📊 Métricas Principais")
+        
+        col1, col2, col3, col4, col5, col6, col7 = st.columns(7)
+        
+        with col1:
+            total_unidades = get_value("Total Unidades")
+            st.metric("Total Unidades", str(total_unidades))
+        
+        with col2:
+            ac = get_value("AC(m²)")
+            st.metric("AC(m²)", f"{ac:,.0f}" if isinstance(ac, (int, float)) else str(ac))
+        
+        with col3:
+            ap = get_value("AP(m²)")
+            st.metric("AP(m²)", f"{ap:,.0f}" if isinstance(ap, (int, float)) else str(ap))
+        
+        with col4:
+            rentab_viab = get_value("Rentab. Viabilidade")
+            st.metric("Rentab. Viabilidade", format_percent(rentab_viab))
+        
+        with col5:
+            rentab_proj = get_value("Rentab. Projetada")
+            st.metric("Rentab. Projetada", format_percent(rentab_proj))
+        
+        with col6:
+            custo_ac = get_value("Custo Atual AC")
+            st.metric("Custo AC", format_money(custo_ac))
+        
+        with col7:
+            custo_ap = get_value("Custo Atual AP")
+            st.metric("Custo AP", format_money(custo_ap))
+        
+        # Segunda seção - Análise Financeira
+        st.subheader("💰 Análise Financeira")
+        
+        col8, col9, col10, col11, col12, col13, col14 = st.columns(7)
+        
+        with col8:
+            orc_base = get_value("Orçamento Base")
+            st.metric("Orçamento Base", format_money(orc_base))
+        
+        with col9:
+            orc_reaj = get_value("Orçamento Reajustado")
+            st.metric("Orç. Reajustado", format_money(orc_reaj))
+        
+        with col10:
+            custo_final = get_value("Custo Final")
+            st.metric("Custo Final", format_money(custo_final))
+        
+        with col11:
+            desvio = get_value("Desvio")
+            st.metric("Desvio", str(desvio))
+        
+        with col12:
+            desembolso = get_value("Desembolso")
+            st.metric("Desembolso", format_money(desembolso))
+        
+        with col13:
+            saldo = get_value("Saldo")
+            st.metric("Saldo", format_money(saldo))
+        
+        with col14:
+            indice_econ = get_value("Índice Econômico")
+            st.metric("Índice Econômico", str(indice_econ))
+        
+        # Terceira seção - Prazos e Avanço
+        st.subheader("📅 Prazos e Avanço Físico")
+        
+        col15, col16, col17, col18, col19, col20, col21 = st.columns(7)
+        
+        with col15:
+            av_plan = get_value("Avanço Físico Planejado")
+            st.metric("Avanço Planejado", format_percent(av_plan))
+        
+        with col16:
+            av_real = get_value("Avanço Físico Real")
+            st.metric("Avanço Real", format_percent(av_real))
+        
+        with col17:
+            aderencia = get_value("Aderência Física")
+            st.metric("Aderência Física", format_percent(aderencia))
+        
+        with col18:
+            inicio = get_value("Início")
+            st.metric("Início", str(inicio))
+        
+        with col19:
+            tend = get_value("Tend")
+            st.metric("Tendência", str(tend))
+        
+        with col20:
+            prazo_concl = get_value("Prazo Concl.")
+            st.metric("Prazo Conclusão", str(prazo_concl))
+        
+        with col21:
+            prazo_cliente = get_value("Prazo Cliente")
+            st.metric("Prazo Cliente", str(prazo_cliente))
+        
+        # Velocímetro de Avanço Físico
+        st.subheader("⚡ Velocímetro de Avanço")
+        
+        col_vel, col_space = st.columns([3, 1])
+        
+        with col_vel:
+            # Converter avanço real para número
+            av_real_num = get_value("Avanço Físico Real", 0)
+            av_plan_num = get_value("Avanço Físico Planejado", 1)
+            
+            if isinstance(av_real_num, str):
+                try:
+                    av_real_num = float(av_real_num.replace('%', '').replace(',', '.'))
+                except:
+                    av_real_num = 0
+            
+            if isinstance(av_plan_num, str):
+                try:
+                    av_plan_num = float(av_plan_num.replace('%', '').replace(',', '.'))
+                except:
+                    av_plan_num = 100
+            
+            # Se os valores estão entre 0-1, converter para 0-100
+            if av_real_num <= 1:
+                av_real_num *= 100
+            if av_plan_num <= 1:
+                av_plan_num *= 100
+            
+            fig_velocimetro = go.Figure(go.Indicator(
+                mode = "gauge+number+delta",
+                value = av_real_num,
+                domain = {'x': [0, 1], 'y': [0, 1]},
+                title = {'text': "Avanço Físico Real (%)"},
+                delta = {'reference': av_plan_num, 'suffix': "% da meta"},
+                gauge = {
+                    'axis': {'range': [None, 100]},
+                    'bar': {'color': "#2E86C1"},
+                    'steps': [
+                        {'range': [0, 50], 'color': "#E74C3C"},
+                        {'range': [50, 80], 'color': "#F39C12"},
+                        {'range': [80, 100], 'color': "#27AE60"}
+                    ],
+                    'threshold': {
+                        'line': {'color': "red", 'width': 4},
+                        'thickness': 0.75,
+                        'value': av_plan_num
+                    }
+                }
+            ))
+            fig_velocimetro.update_layout(height=400)
+            st.plotly_chart(fig_velocimetro, use_container_width=True)
+        
+        # Mostrar dados carregados (debug)
+        with st.expander("🔍 Visualizar dados carregados"):
+            st.dataframe(df_clean, use_container_width=True)
+            
+    except Exception as e:
+        st.error(f"Erro ao carregar a planilha: {str(e)}")
+        st.info("Certifique-se de que a planilha tem o formato correto: Coluna A (Métricas), Coluna B (Valores)")
 
-# Layout em colunas
-col1, col2, col3 = st.columns([1, 1, 1])
-
-# Primeira coluna - Métricas Físicas
-with col1:
-    st.subheader("📐 Métricas Físicas")
-    
-    # Cards de métricas físicas
-    st.metric("Área Construída (AC)", "29.651 m²", delta=None)
-    st.metric("Área Privativa (AP)", "14.887 m²", delta=None)
-    st.metric("Eficiência", "50,21%", delta=None)
-    st.metric("Total de Unidades", "80", delta=None)
-    
-    # Gráfico de avanço físico
-    fig_avanço = go.Figure()
-    fig_avanço.add_trace(go.Bar(
-        x=['Planejado', 'Real'],
-        y=[0.99, 0.92],
-        marker_color=['#2E86C1', '#E74C3C'],
-        text=['99%', '92%'],
-        textposition='auto',
-    ))
-    fig_avanço.update_layout(
-        title="Avanço Físico",
-        yaxis_title="Percentual",
-        showlegend=False,
-        height=300
-    )
-    st.plotly_chart(fig_avanço, use_container_width=True)
-
-# Segunda coluna - Cronograma
-with col2:
-    st.subheader("📅 Cronograma")
-    
-    # Timeline do projeto
-    st.metric("Aderência Física", "94%", delta="-6%")
-    
-    cronograma_data = {
-        'Marco': ['Início', 'Tendência', 'Prazo Conclusão', 'Prazo Cliente'],
-        'Data': ['1-jun', '1-set', '1-ago', '1-nov'],
-        'Status': ['Concluído', 'Em Progresso', 'Atrasado', 'Meta']
-    }
-    
-    cronograma_df = pd.DataFrame(cronograma_data)
-    st.dataframe(cronograma_df, use_container_width=True, hide_index=True)
-    
-    # Gráfico de Gantt simplificado
-    fig_gantt = go.Figure()
-    dates = ['2024-06-01', '2024-08-01', '2024-09-01', '2024-11-01']
-    colors = ['#27AE60', '#F39C12', '#E74C3C', '#8E44AD']
-    
-    for i, (marco, color) in enumerate(zip(cronograma_data['Marco'], colors)):
-        fig_gantt.add_trace(go.Scatter(
-            x=[dates[i]], y=[marco],
-            mode='markers',
-            marker=dict(size=15, color=color),
-            name=marco
-        ))
-    
-    fig_gantt.update_layout(
-        title="Timeline do Projeto",
-        xaxis_title="Data",
-        height=300,
-        showlegend=False
-    )
-    st.plotly_chart(fig_gantt, use_container_width=True)
-
-# Terceira coluna - Financeiro
-with col3:
-    st.subheader("💰 Indicadores Financeiros")
-    
-    # Métricas financeiras principais
-    st.metric("Orçamento Base", "R$ 102.593.965", delta=None)
-    st.metric("Custo Final", "R$ 104.856.979", delta="R$ 2.263.014")
-    st.metric("Desembolso", "R$ 95.337.442", delta=None)
-    st.metric("Saldo", "R$ 9.519.537", delta=None)
-    
-    # Gráfico de rentabilidade
-    fig_rent = go.Figure()
-    fig_rent.add_trace(go.Bar(
-        x=['Viabilidade', 'Projetada'],
-        y=[22, 17],
-        marker_color=['#28B463', '#F4D03F'],
-        text=['22%', '17%'],
-        textposition='auto',
-    ))
-    fig_rent.update_layout(
-        title="Rentabilidade (%)",
-        yaxis_title="Percentual",
-        showlegend=False,
-        height=300
-    )
-    st.plotly_chart(fig_rent, use_container_width=True)
-
-# Seção de indicadores principais
-st.subheader("🎯 Indicadores Principais")
-
-col4, col5, col6, col7 = st.columns(4)
-
-with col4:
-    st.metric("Desvio Orçamentário", "1,12", delta="12%")
-
-with col5:
-    st.metric("Índice Econômico", "1,01", delta="1%")
-
-with col6:
-    st.metric("Custo m² AC", "R$ 3.574", delta=None)
-
-with col7:
-    st.metric("Custo m² AP", "R$ 7.119", delta=None)
-
-# Gráfico de distribuição financeira
-st.subheader("📊 Distribuição Financeira")
-
-col8, col9 = st.columns(2)
-
-with col8:
-    # Gráfico pizza - distribuição orçamentária
-    labels = ['Desembolsado', 'Saldo']
-    values = [95337442, 9519537]
-    
-    fig_pizza = go.Figure(data=[go.Pie(
-        labels=labels, 
-        values=values,
-        hole=.3,
-        marker_colors=['#3498DB', '#E67E22']
-    )])
-    fig_pizza.update_layout(title="Distribuição do Orçamento")
-    st.plotly_chart(fig_pizza, use_container_width=True)
-
-with col9:
-    # Comparativo de custos
-    categorias = ['Orçamento Base', 'Orçamento Reajustado', 'Custo Final']
-    valores = [102593965, 104856979, 104856979]
-    
-    fig_comparativo = go.Figure()
-    fig_comparativo.add_trace(go.Bar(
-        x=categorias,
-        y=valores,
-        marker_color=['#3498DB', '#F39C12', '#E74C3C'],
-        text=[f'R$ {v:,.0f}' for v in valores],
-        textposition='auto',
-    ))
-    fig_comparativo.update_layout(
-        title="Comparativo de Custos",
-        yaxis_title="Valor (R$)",
-        showlegend=False
-    )
-    st.plotly_chart(fig_comparativo, use_container_width=True)
-
-# Tabela completa dos dados
-st.subheader("📋 Dados Completos do Projeto")
-st.dataframe(df, use_container_width=True, hide_index=True)
+else:
+    st.warning("⚠️ Por favor, faça upload da planilha Excel para visualizar os dados das obras.")
+    st.info("**Formato esperado:** Coluna A com nomes das métricas, Coluna B com os valores correspondentes")
 
 # Footer
 st.markdown("---")
-st.markdown("Dashboard atualizado em tempo real | Dados do projeto de construção")
+st.markdown("Dashboard atualizado em tempo real | Dados da obra selecionada")

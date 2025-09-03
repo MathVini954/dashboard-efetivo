@@ -117,11 +117,10 @@ if uploaded_file is not None:
         
         st.success(f"✅ Dados carregados da aba: **{selected_sheet}**")
         
-        # Função para buscar valor no dicionário
+        # Funções utilitárias
         def get_value(key, default="N/A"):
             return dados.get(key, default)
         
-        # Função para formatar valores monetários
         def format_money(value):
             if isinstance(value, (int, float)):
                 return f"R$ {value:,.0f}".replace(',', '.')
@@ -129,7 +128,6 @@ if uploaded_file is not None:
                 return value
             return str(value)
         
-        # Função para formatar percentuais
         def format_percent(value):
             if isinstance(value, (int, float)) and value <= 1:
                 return f"{value*100:.1f}%"
@@ -139,13 +137,12 @@ if uploaded_file is not None:
                 return value
             return str(value)
         
-        # Primeira seção - Métricas Principais
+        # -------------------- Métricas Principais --------------------
         st.markdown('<p class="sub-header">📊 Métricas Principais</p>', unsafe_allow_html=True)
-        
         col1, col2, col3, col4 = st.columns(4)
         
         with col1:
-            st.markdown('<div class="metric-card"><p class="metric-title">Total Unidades</p><p class="metric-value">' + str(get_value("Total Unidades")) + '</p></div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="metric-card"><p class="metric-title">Total Unidades</p><p class="metric-value">{get_value("Total Unidades")}</p></div>', unsafe_allow_html=True)
         
         with col2:
             ac = get_value("AC(m²)")
@@ -175,128 +172,112 @@ if uploaded_file is not None:
             custo_ap = get_value("Custo Atual AP")
             st.markdown(f'<div class="metric-card"><p class="metric-title">Custo AP</p><p class="metric-value">{format_money(custo_ap)}</p></div>', unsafe_allow_html=True)
         
-      # -------------------- Gráfico de Orçamento --------------------
-st.markdown('<p class="sub-header">💰 Análise Financeira</p>', unsafe_allow_html=True)
-
-# Dados para o gráfico de orçamento
-orc_base = get_value("Orçamento Base", 0)
-orc_reaj = get_value("Orçamento Reajustado", 0)
-custo_final = get_value("Custo Final", 0)
-
-# Converter strings monetárias para float (mantendo sua lógica)
-def to_float(val):
-    if isinstance(val, str):
-        try:
-            return float(val.replace('R$', '').replace('.', '').replace(',', '.'))
-        except:
-            return 0
-    return val
-
-orc_base = to_float(orc_base)
-orc_reaj = to_float(orc_reaj)
-custo_final = to_float(custo_final)
-
-# Criar gráfico de barras para orçamento
-fig_orcamento = go.Figure()
-fig_orcamento.add_trace(go.Bar(
-    x=['Orçamento Base', 'Orçamento Reajustado', 'Custo Final'],
-    y=[orc_base, orc_reaj, custo_final],
-    marker_color=['#3B82F6', '#60A5FA', '#10B981'],
-    text=[format_money(orc_base), format_money(orc_reaj), format_money(custo_final)],
-    textposition='auto',
-))
-fig_orcamento.update_layout(
-    title='Comparativo de Orçamento',
-    plot_bgcolor='rgba(0,0,0,0)',
-    paper_bgcolor='rgba(0,0,0,0)',
-    font=dict(color='white'),
-    height=400,
-    showlegend=False
-)
-st.plotly_chart(fig_orcamento, use_container_width=True)
-
-# -------------------- Caixa de Texto Financeira --------------------
-col_fin1, col_fin2, col_fin3, col_fin4 = st.columns(4)
-
-with col_fin1:
-    st.markdown(f'<div class="metric-card"><p class="metric-title">Desvio</p><p class="metric-value">{get_value("Desvio")}</p></div>', unsafe_allow_html=True)
-with col_fin2:
-    st.markdown(f'<div class="metric-card"><p class="metric-title">Desembolso</p><p class="metric-value">{get_value("Desembolso")}</p></div>', unsafe_allow_html=True)
-with col_fin3:
-    st.markdown(f'<div class="metric-card"><p class="metric-title">Saldo</p><p class="metric-value">{get_value("Saldo")}</p></div>', unsafe_allow_html=True)
-with col_fin4:
-    st.markdown(f'<div class="metric-card"><p class="metric-title">Índice Econômico</p><p class="metric-value">{get_value("Índice Econômico")}</p></div>', unsafe_allow_html=True)
-
-# -------------------- Avanço Físico com Barra --------------------
-st.markdown('<p class="sub-header">📅 Prazos e Avanço Físico</p>', unsafe_allow_html=True)
-
-av_real_num = get_value("Avanço Físico Real", 0)
-av_plan_num = get_value("Avanço Físico Planejado", 1)
-
-# Converter para número se necessário
-if isinstance(av_real_num, str):
-    try:
-        av_real_num = float(av_real_num.replace('%','').replace(',','.'))
-    except:
-        av_real_num = 0
-if isinstance(av_plan_num, str):
-    try:
-        av_plan_num = float(av_plan_num.replace('%','').replace(',','.'))
-    except:
-        av_plan_num = 100
-
-if av_real_num <= 1: av_real_num *= 100
-if av_plan_num <= 1: av_plan_num *= 100
-
-# Barra de progresso com plotly
-fig_bar = go.Figure(go.Bar(
-    x=[av_real_num],
-    y=['Avanço Físico'],
-    orientation='h',
-    marker=dict(color='#3B82F6'),
-    width=0.4,
-    name='Real'
-))
-
-# Linha indicando o planejado
-fig_bar.add_trace(go.Scatter(
-    x=[av_plan_num],
-    y=['Avanço Físico'],
-    mode='markers',
-    marker=dict(color='#F59E0B', size=20, symbol='line-ns-open'),
-    name='Planejado'
-))
-
-fig_bar.update_layout(
-    xaxis=dict(range=[0,100], title='Percentual (%)'),
-    yaxis=dict(showticklabels=True),
-    plot_bgcolor='rgba(0,0,0,0)',
-    paper_bgcolor='rgba(0,0,0,0)',
-    height=150,
-    showlegend=True,
-    font=dict(color='white')
-)
-st.plotly_chart(fig_bar, use_container_width=True)
-
+        # -------------------- Análise Financeira --------------------
+        st.markdown('<p class="sub-header">💰 Análise Financeira</p>', unsafe_allow_html=True)
         
-        # Quarta seção - Linha do tempo
+        # Dados de orçamento
+        orc_base = get_value("Orçamento Base", 0)
+        orc_reaj = get_value("Orçamento Reajustado", 0)
+        custo_final = get_value("Custo Final", 0)
+        
+        def to_float(val):
+            if isinstance(val, str):
+                try:
+                    return float(val.replace('R$', '').replace('.', '').replace(',', '.'))
+                except:
+                    return 0
+            return val
+
+        orc_base = to_float(orc_base)
+        orc_reaj = to_float(orc_reaj)
+        custo_final = to_float(custo_final)
+        
+        fig_orcamento = go.Figure()
+        fig_orcamento.add_trace(go.Bar(
+            x=['Orçamento Base', 'Orçamento Reajustado', 'Custo Final'],
+            y=[orc_base, orc_reaj, custo_final],
+            marker_color=['#3B82F6', '#60A5FA', '#10B981'],
+            text=[format_money(orc_base), format_money(orc_reaj), format_money(custo_final)],
+            textposition='auto',
+        ))
+        fig_orcamento.update_layout(
+            title='Comparativo de Orçamento',
+            plot_bgcolor='rgba(0,0,0,0)',
+            paper_bgcolor='rgba(0,0,0,0)',
+            font=dict(color='white'),
+            height=400,
+            showlegend=False
+        )
+        st.plotly_chart(fig_orcamento, use_container_width=True)
+        
+        # -------------------- 4 Caixas de Texto --------------------
+        col_fin1, col_fin2, col_fin3, col_fin4 = st.columns(4)
+        with col_fin1:
+            st.markdown(f'<div class="metric-card"><p class="metric-title">Desvio</p><p class="metric-value">{get_value("Desvio")}</p></div>', unsafe_allow_html=True)
+        with col_fin2:
+            st.markdown(f'<div class="metric-card"><p class="metric-title">Desembolso</p><p class="metric-value">{get_value("Desembolso")}</p></div>', unsafe_allow_html=True)
+        with col_fin3:
+            st.markdown(f'<div class="metric-card"><p class="metric-title">Saldo</p><p class="metric-value">{get_value("Saldo")}</p></div>', unsafe_allow_html=True)
+        with col_fin4:
+            st.markdown(f'<div class="metric-card"><p class="metric-title">Índice Econômico</p><p class="metric-value">{get_value("Índice Econômico")}</p></div>', unsafe_allow_html=True)
+        
+        # -------------------- Avanço Físico (Barra) --------------------
+        st.markdown('<p class="sub-header">📅 Prazos e Avanço Físico</p>', unsafe_allow_html=True)
+
+        av_real_num = get_value("Avanço Físico Real", 0)
+        av_plan_num = get_value("Avanço Físico Planejado", 1)
+
+        if isinstance(av_real_num, str):
+            try:
+                av_real_num = float(av_real_num.replace('%','').replace(',','.'))
+            except:
+                av_real_num = 0
+        if isinstance(av_plan_num, str):
+            try:
+                av_plan_num = float(av_plan_num.replace('%','').replace(',','.'))
+            except:
+                av_plan_num = 100
+        if av_real_num <= 1: av_real_num *= 100
+        if av_plan_num <= 1: av_plan_num *= 100
+
+        fig_bar = go.Figure(go.Bar(
+            x=[av_real_num],
+            y=['Avanço Físico'],
+            orientation='h',
+            marker=dict(color='#3B82F6'),
+            width=0.4,
+            name='Real'
+        ))
+        fig_bar.add_trace(go.Scatter(
+            x=[av_plan_num],
+            y=['Avanço Físico'],
+            mode='markers',
+            marker=dict(color='#F59E0B', size=20, symbol='line-ns-open'),
+            name='Planejado'
+        ))
+        fig_bar.update_layout(
+            xaxis=dict(range=[0,100], title='Percentual (%)'),
+            yaxis=dict(showticklabels=True),
+            plot_bgcolor='rgba(0,0,0,0)',
+            paper_bgcolor='rgba(0,0,0,0)',
+            height=150,
+            showlegend=True,
+            font=dict(color='white')
+        )
+        st.plotly_chart(fig_bar, use_container_width=True)
+
+        # -------------------- Linha do tempo --------------------
         st.markdown('<p class="sub-header">⏰ Linha do Tempo</p>', unsafe_allow_html=True)
-        
-        # Obter datas
         inicio = get_value("Início", "N/A")
         tend = get_value("Tend", "N/A")
         prazo_concl = get_value("Prazo Concl.", "N/A")
         prazo_cliente = get_value("Prazo Cliente", "N/A")
         
-        # Criar linha do tempo
         fig_timeline = go.Figure()
-        
-        # Adicionar marcadores para cada data
         dates = [inicio, tend, prazo_concl, prazo_cliente]
         labels = ["Início", "Tendência", "Prazo Conclusão", "Prazo Cliente"]
         colors = ["#3B82F6", "#F59E0B", "#10B981", "#EF4444"]
-        
-        # Converter para datas se possível
+
         date_values = []
         for d in dates:
             if isinstance(d, (datetime, pd.Timestamp)):
@@ -308,14 +289,11 @@ st.plotly_chart(fig_bar, use_container_width=True)
                     date_values.append(None)
             else:
                 date_values.append(None)
-        
-        # Criar linha do tempo apenas se temos pelo menos duas datas válidas
+
         valid_dates = [d for d in date_values if d is not None]
         if len(valid_dates) >= 2:
             min_date = min(valid_dates)
             max_date = max(valid_dates)
-            
-            # Adicionar linha de tempo
             fig_timeline.add_trace(go.Scatter(
                 x=[min_date, max_date],
                 y=[0, 0],
@@ -323,8 +301,6 @@ st.plotly_chart(fig_bar, use_container_width=True)
                 line=dict(color='white', width=3),
                 showlegend=False
             ))
-            
-            # Adicionar marcadores
             for i, (date, label, color) in enumerate(zip(date_values, labels, colors)):
                 if date is not None:
                     fig_timeline.add_trace(go.Scatter(
@@ -337,7 +313,6 @@ st.plotly_chart(fig_bar, use_container_width=True)
                         name=label,
                         textfont=dict(color='white', size=12)
                     ))
-            
             fig_timeline.update_layout(
                 title='Cronograma da Obra',
                 showlegend=True,
@@ -348,12 +323,11 @@ st.plotly_chart(fig_bar, use_container_width=True)
                 xaxis=dict(showgrid=False, zeroline=False),
                 yaxis=dict(showgrid=False, zeroline=False, showticklabels=False)
             )
-            
             st.plotly_chart(fig_timeline, use_container_width=True)
         else:
             st.info("Não há datas suficientes para criar a linha do tempo.")
-        
-        # Mostrar dados carregados (debug)
+
+        # Visualizar dados carregados
         with st.expander("🔍 Visualizar dados carregados"):
             st.dataframe(df_clean, use_container_width=True)
             
@@ -368,4 +342,3 @@ else:
 # Footer
 st.markdown("---")
 st.markdown("<div style='text-align: center; color: #6B7280;'>Dashboard atualizado em tempo real | Dados da obra selecionada</div>", unsafe_allow_html=True)
-

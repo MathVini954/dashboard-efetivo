@@ -35,18 +35,32 @@ st.write("Acompanhamento visual das obras - produção, efetivo, financeiro e in
 # ===== UPLOAD DO ARQUIVO =====
 uploaded_file = st.file_uploader("📥 Faça upload da planilha Excel", type=["xlsx"])
 
+# ===== FUNÇÕES AUXILIARES =====
 def parse_valor(val):
     """Converte valores para float, trata % e valores numéricos."""
     if pd.isna(val):
         return 0
     if isinstance(val, str):
-        val = val.replace('%','').replace('R$','').replace(',','.')
+        val = val.replace('%','').replace('R$','').replace('.','').replace(',','.')
         try:
             return float(val)
         except:
             return 0
     return float(val)
 
+def format_money(val):
+    try:
+        return f"R$ {val:,.2f}"
+    except:
+        return "R$ 0,00"
+
+def format_percent(val):
+    try:
+        return f"{val:.1f}%"
+    except:
+        return "0%"
+
+# ===== DASHBOARD =====
 if uploaded_file:
     xls = pd.ExcelFile(uploaded_file)
     abas = xls.sheet_names
@@ -55,7 +69,7 @@ if uploaded_file:
         st.markdown(f"## 🏢 {aba}")
         df = pd.read_excel(uploaded_file, sheet_name=aba, header=None)
         
-        # Dicionário de indicadores
+        # Cria dicionário de indicadores
         indicadores = {}
         for i in range(len(df)):
             if pd.notna(df.iloc[i,0]):
@@ -68,7 +82,7 @@ if uploaded_file:
         col1.markdown(f"<div class='card'><h4>AC (m²)</h4><p>{indicadores.get('AC (m²)', '-')}</p></div>", unsafe_allow_html=True)
         col2.markdown(f"<div class='card'><h4>Efetivo</h4><p>{indicadores.get('Ef', '-')}</p></div>", unsafe_allow_html=True)
         col3.markdown(f"<div class='card'><h4>Total Unidades</h4><p>{indicadores.get('Total Unidades', '-')}</p></div>", unsafe_allow_html=True)
-        col4.markdown(f"<div class='card'><h4>Desembolso (R$)</h4><p>{indicadores.get('Desembolso', '-'):,.2f}</p></div>", unsafe_allow_html=True)
+        col4.markdown(f"<div class='card'><h4>Desembolso</h4><p>{format_money(indicadores.get('Desembolso',0))}</p></div>", unsafe_allow_html=True)
         
         # ===== AVANÇO FÍSICO =====
         st.write("### 📈 Avanço Físico")
@@ -76,10 +90,9 @@ if uploaded_file:
         real = indicadores.get("Avanço Físico Real",0)
         aderencia = indicadores.get("Aderência Física",0)
         
-        # Converte para %
-        planejado_pct = f"{planejado:.1f}%"
-        real_pct = f"{real:.1f}%"
-        aderencia_pct = f"{aderencia:.1f}%"
+        planejado_pct = format_percent(planejado)
+        real_pct = format_percent(real)
+        aderencia_pct = format_percent(aderencia)
         
         st.markdown(f"<p>Planejado: {planejado_pct} | Real: {real_pct} | Aderência: {aderencia_pct}</p>", unsafe_allow_html=True)
         st.markdown(f"""
@@ -91,16 +104,16 @@ if uploaded_file:
         # ===== INDICADORES FINANCEIROS =====
         st.write("### 💰 Indicadores Financeiros")
         col1, col2, col3 = st.columns(3)
-        col1.markdown(f"<div class='card'><h4>Orçamento Base</h4><p>R$ {indicadores.get('Orçamento Base',0):,.2f}</p></div>", unsafe_allow_html=True)
-        col2.markdown(f"<div class='card'><h4>Orçamento Reajustado</h4><p>R$ {indicadores.get('Orçamento Reajustado',0):,.2f}</p></div>", unsafe_allow_html=True)
-        col3.markdown(f"<div class='card'><h4>Custo Final</h4><p>R$ {indicadores.get('Custo Final',0):,.2f}</p></div>", unsafe_allow_html=True)
+        col1.markdown(f"<div class='card'><h4>Orçamento Base</h4><p>{format_money(indicadores.get('Orçamento Base',0))}</p></div>", unsafe_allow_html=True)
+        col2.markdown(f"<div class='card'><h4>Orçamento Reajustado</h4><p>{format_money(indicadores.get('Orçamento Reajustado',0))}</p></div>", unsafe_allow_html=True)
+        col3.markdown(f"<div class='card'><h4>Custo Final</h4><p>{format_money(indicadores.get('Custo Final',0))}</p></div>", unsafe_allow_html=True)
         
         # ===== INDICADORES ECONÔMICOS =====
         st.write("### 📊 Indicadores Econômicos")
         col1, col2, col3 = st.columns(3)
-        col1.markdown(f"<div class='card'><h4>Índice Econômico</h4><p>{indicadores.get('Índice Econômico',0):.1f}%</p></div>", unsafe_allow_html=True)
-        col2.markdown(f"<div class='card'><h4>Rentab. Viabilidade</h4><p>{indicadores.get('Rentab. Viabilidade',0):.1f}%</p></div>", unsafe_allow_html=True)
-        col3.markdown(f"<div class='card'><h4>Rentab. Projetada</h4><p>{indicadores.get('Rentab. Projetada',0):.1f}%</p></div>", unsafe_allow_html=True)
+        col1.markdown(f"<div class='card'><h4>Índice Econômico</h4><p>{format_percent(indicadores.get('Índice Econômico',0))}</p></div>", unsafe_allow_html=True)
+        col2.markdown(f"<div class='card'><h4>Rentab. Viabilidade</h4><p>{format_percent(indicadores.get('Rentab. Viabilidade',0))}</p></div>", unsafe_allow_html=True)
+        col3.markdown(f"<div class='card'><h4>Rentab. Projetada</h4><p>{format_percent(indicadores.get('Rentab. Projetada',0))}</p></div>", unsafe_allow_html=True)
         
         st.markdown("---")
         

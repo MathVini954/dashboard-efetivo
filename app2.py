@@ -37,34 +37,41 @@ uploaded_file = st.file_uploader("📥 Faça upload da planilha Excel", type=["x
 
 # ===== FUNÇÕES AUXILIARES =====
 def parse_valor(val):
-    """
-    Converte valores numéricos e percentuais para float.
-    Se for texto (datas, nomes), retorna como string.
-    """
+    """Converte números e porcentagens para float; mantém texto/datas como string."""
     if pd.isna(val):
         return ""
     if isinstance(val, str):
-        # Tenta detectar %
-        if "%" in val:
+        v = val.strip()
+        # Porcentagem
+        if "%" in v:
             try:
-                return float(val.replace("%",""))
+                return float(v.replace("%", "").replace(",", "."))
             except:
-                return val  # texto que não é número
-        # Tenta detectar moeda
-        elif "R$" in val:
+                return v
+        # Moeda
+        if "R$" in v:
             try:
-                v = val.replace("R$","").replace(".","").replace(",",".")
-                return float(v)
+                return float(v.replace("R$", "").replace(".", "").replace(",", "."))
             except:
-                return val
-        else:
-            try:
-                return float(val)
-            except:
-                return val  # texto normal
-    # Se já for número
+                return v
+        # Número decimal com vírgula
+        try:
+            return float(v.replace(",", "."))
+        except:
+            return v
     return val
 
+def format_money(val):
+    try:
+        return f"R$ {float(val):,.2f}"
+    except:
+        return str(val)
+
+def format_percent(val):
+    try:
+        return f"{float(val):.1f}%"
+    except:
+        return str(val)
 
 # ===== DASHBOARD =====
 if uploaded_file:
@@ -75,46 +82,40 @@ if uploaded_file:
         st.markdown(f"## 🏢 {aba}")
         df = pd.read_excel(uploaded_file, sheet_name=aba, header=None)
         
-        # Cria dicionário de indicadores
         indicadores = {}
         for i in range(len(df)):
             if pd.notna(df.iloc[i,0]):
                 key = str(df.iloc[i,0]).strip()
                 value = parse_valor(df.iloc[i,1])
                 indicadores[key] = value
-
+        
         # ===== CARDS PRINCIPAIS =====
         col1, col2, col3, col4 = st.columns(4)
         col1.markdown(f"<div class='card'><h4>AC (m²)</h4><p>{indicadores.get('AC(m²)', '-')}</p></div>", unsafe_allow_html=True)
         col2.markdown(f"<div class='card'><h4>AP (m²)</h4><p>{indicadores.get('AP(m²)', '-')}</p></div>", unsafe_allow_html=True)
-        col3.markdown(f"<div class='card'><h4>Efetivo</h4><p>{indicadores.get('Ef', '-')}</p></div>", unsafe_allow_html=True)
-        col4.markdown(f"<div class='card'><h4>Total Unidades</h4><p>{indicadores.get('Total Unidades', '-')}</p></div>", unsafe_allow_html=True)
+        col3.markdown(f"<div class='card'><h4>Efetivo</h4><p>{format_percent(indicadores.get('Ef',0))}</p></div>", unsafe_allow_html=True)
+        col4.markdown(f"<div class='card'><h4>Total Unidades</h4><p>{indicadores.get('Total Unidades','-')}</p></div>", unsafe_allow_html=True)
 
         # ===== AVANÇO FÍSICO =====
         st.write("### 📈 Avanço Físico")
         planejado = indicadores.get("Avanço Físico Planejado",0)
         real = indicadores.get("Avanço Físico Real",0)
         aderencia = indicadores.get("Aderência Física",0)
-
-        planejado_pct = format_percent(planejado)
-        real_pct = format_percent(real)
-        aderencia_pct = format_percent(aderencia)
-
-        st.markdown(f"<p>Planejado: {planejado_pct} | Real: {real_pct} | Aderência: {aderencia_pct}</p>", unsafe_allow_html=True)
+        st.markdown(f"<p>Planejado: {format_percent(planejado)} | Real: {format_percent(real)} | Aderência: {format_percent(aderencia)}</p>", unsafe_allow_html=True)
         st.markdown(f"""
         <div class="progress-bar">
-            <div class="progress-bar-fill" style="width:{real}%; background-color:#4caf50;">{real_pct}</div>
+            <div class="progress-bar-fill" style="width:{real}%; background-color:#4caf50;">{format_percent(real)}</div>
         </div>
         """, unsafe_allow_html=True)
 
         # ===== PRAZOS =====
         st.write("### ⏱️ Prazos")
         col1, col2 = st.columns(2)
-        col1.markdown(f"<div class='card'><h4>Início</h4><p>{indicadores.get('Início', '-')}</p></div>", unsafe_allow_html=True)
-        col2.markdown(f"<div class='card'><h4>Tendência</h4><p>{indicadores.get('Tend', '-')}</p></div>", unsafe_allow_html=True)
+        col1.markdown(f"<div class='card'><h4>Início</h4><p>{indicadores.get('Início','-')}</p></div>", unsafe_allow_html=True)
+        col2.markdown(f"<div class='card'><h4>Tendência</h4><p>{indicadores.get('Tend','-')}</p></div>", unsafe_allow_html=True)
         col1, col2 = st.columns(2)
-        col1.markdown(f"<div class='card'><h4>Prazo Concl.</h4><p>{indicadores.get('Prazo Concl.', '-')}</p></div>", unsafe_allow_html=True)
-        col2.markdown(f"<div class='card'><h4>Prazo Cliente</h4><p>{indicadores.get('Prazo Cliente', '-')}</p></div>", unsafe_allow_html=True)
+        col1.markdown(f"<div class='card'><h4>Prazo Concl.</h4><p>{indicadores.get('Prazo Concl.','-')}</p></div>", unsafe_allow_html=True)
+        col2.markdown(f"<div class='card'><h4>Prazo Cliente</h4><p>{indicadores.get('Prazo Cliente','-')}</p></div>", unsafe_allow_html=True)
 
         # ===== FINANCEIRO =====
         st.write("### 💰 Indicadores Financeiros")
@@ -141,4 +142,3 @@ if uploaded_file:
         
 else:
     st.warning("⛔ Por favor, faça upload da planilha Excel para visualizar o dashboard.")
-

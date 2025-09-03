@@ -12,13 +12,14 @@ if uploaded_file:
     
     for aba in abas:
         st.write(f"### Aba: {aba}")
-        # Lê apenas as duas primeiras colunas como string
-        df = pd.read_excel(uploaded_file, sheet_name=aba, usecols="A:B", dtype=str)
-        # Limpa espaços
+        # Lê apenas as duas primeiras colunas como string, sem cabeçalho
+        df = pd.read_excel(uploaded_file, sheet_name=aba, usecols="A:B", header=None, dtype=str)
+        
+        # Agora as colunas existem como 0 e 1
         df[0] = df[0].str.strip()
         df[1] = df[1].str.strip()
+        
         # Exibe exatamente o que foi lido
         st.dataframe(df)
 else:
     st.warning("⛔ Por favor, faça upload da planilha Excel.")
-

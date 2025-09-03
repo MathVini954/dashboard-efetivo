@@ -214,8 +214,8 @@ if uploaded_file is not None:
         
         fig_orcamento.update_layout(
             title='Comparativo de Orçamento',
-            plot_bgcolor='#1E293B',
-            paper_bgcolor='#1E293B',
+            plot_bgcolor='rgba(0,0,0,0)',
+            paper_bgcolor='rgba(0,0,0,0)',
             font=dict(color='white'),
             height=400,
             showlegend=False
@@ -260,49 +260,52 @@ if uploaded_file is not None:
             if aderencia <= 1:
                 aderencia *= 100
             
-            # Velocímetro com três indicadores
-            fig_velocimetro = go.Figure()
-            
-            # Adicionar o velocímetro base
-            fig_velocimetro.add_trace(go.Indicator(
-                mode = "gauge+number",
-                value = aderencia,
-                domain = {'x': [0, 1], 'y': [0, 1]},
-                title = {'text': "Aderência Física", 'font': {'size': 20, 'color': 'white'}},
-                number = {'font': {'size': 40, 'color': 'white'}, 'suffix': '%'},
-                gauge = {
-                    'axis': {'range': [None, 100], 'tickwidth': 1, 'tickcolor': "white"},
-                    'bar': {'color': "#10B981", 'thickness': 0.15},
+            # Velocímetro simplificado e limpo
+            fig_velocimetro = go.Figure(go.Indicator(
+                mode="gauge+number+delta",
+                value=av_real_num,
+                domain={'x': [0, 1], 'y': [0, 1]},
+                title={
+                    'text': "Avanço Físico Real vs Planejado",
+                    'font': {'size': 16, 'color': 'white'}
+                },
+                number={
+                    'font': {'size': 40, 'color': 'white'},
+                    'suffix': '%',
+                    'valueformat': '.1f'
+                },
+                delta={
+                    'reference': av_plan_num,
+                    'increasing': {'color': "#10B981"},
+                    'decreasing': {'color': "#EF4444"},
+                    'font': {'size': 16}
+                },
+                gauge={
+                    'axis': {
+                        'range': [0, 100],
+                        'tickwidth': 1,
+                        'tickcolor': "white",
+                        'tickfont': {'size': 12, 'color': 'white'}
+                    },
+                    'bar': {'color': "#3B82F6", 'thickness': 0.25},
                     'bgcolor': "rgba(0,0,0,0)",
                     'borderwidth': 2,
                     'bordercolor': "gray",
                     'steps': [
-                        {'range': [0, 70], 'color': '#FEF2F2'},
-                        {'range': [70, 90], 'color': '#FFFBEB'},
-                        {'range': [90, 100], 'color': '#F0FDF4'}
+                        {'range': [0, 70], 'color': 'rgba(239, 68, 68, 0.3)'},
+                        {'range': [70, 90], 'color': 'rgba(245, 158, 11, 0.3)'},
+                        {'range': [90, 100], 'color': 'rgba(16, 185, 129, 0.3)'}
                     ],
+                    'threshold': {
+                        'line': {'color': "#F59E0B", 'width': 4},
+                        'thickness': 0.75,
+                        'value': av_plan_num
+                    }
                 }
             ))
             
-            # Adicionar marcadores para avanço planejado e real
-            fig_velocimetro.add_trace(go.Scatterpolar(
-                r=[av_plan_num/100, av_real_num/100],
-                theta=[0, 0],
-                mode="markers+text",
-                marker=dict(size=20, color=["#3B82F6", "#EF4444"]),
-                text=["Planejado", "Real"],
-                textposition="middle center",
-                textfont=dict(color="white", size=12),
-                subplot="polar"
-            ))
-            
             fig_velocimetro.update_layout(
-                polar=dict(
-                    radialaxis=dict(visible=True, range=[0, 1]),
-                    angularaxis=dict(visible=False)
-                ),
-                showlegend=False,
-                height=500,
+                height=400,
                 font={'color': "white", 'family': "Arial"},
                 margin=dict(l=30, r=30, t=80, b=30),
                 paper_bgcolor='rgba(0,0,0,0)',
@@ -383,8 +386,8 @@ if uploaded_file is not None:
                 title='Cronograma da Obra',
                 showlegend=True,
                 height=300,
-                plot_bgcolor='#1E293B',
-                paper_bgcolor='#1E293B',
+                plot_bgcolor='rgba(0,0,0,0)',
+                paper_bgcolor='rgba(0,0,0,0)',
                 font=dict(color='white'),
                 xaxis=dict(showgrid=False, zeroline=False),
                 yaxis=dict(showgrid=False, zeroline=False, showticklabels=False)

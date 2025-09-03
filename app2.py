@@ -35,15 +35,8 @@ st.write("Visualização profissional das obras com todos os indicadores princip
 # ===== UPLOAD DO ARQUIVO =====
 uploaded_file = st.file_uploader("📥 Faça upload da planilha Excel", type=["xlsx"])
 
-# ===== FUNÇÕES AUXILIARES =====
+# Converte valores numéricos/texto/datas corretamente
 def parse_valor(val):
-    """
-    Converte valores numéricos e percentuais corretamente, mantendo texto e datas.
-    Formatos suportados:
-    - Percentual com vírgula: '98,7%'
-    - Moeda: 'R$ 92,00'
-    - Números decimais com vírgula: '1,118'
-    """
     if pd.isna(val):
         return ""
     if isinstance(val, str):
@@ -51,7 +44,7 @@ def parse_valor(val):
         # Porcentagem
         if v.endswith("%"):
             try:
-                return float(v.replace("%", "").replace(",", "."))
+                return float(v.replace("%", ".").replace(",", "."))
             except:
                 return v
         # Moeda
@@ -66,6 +59,20 @@ def parse_valor(val):
         except:
             return v
     return val
+
+# Formata valores monetários
+def format_money(val):
+    try:
+        return f"R$ {float(val):,.2f}"
+    except:
+        return str(val)
+
+# Formata valores percentuais
+def format_percent(val):
+    try:
+        return f"{float(val):.1f}%"
+    except:
+        return str(val)
 
 
 # ===== DASHBOARD =====
@@ -137,4 +144,5 @@ if uploaded_file:
         
 else:
     st.warning("⛔ Por favor, faça upload da planilha Excel para visualizar o dashboard.")
+
 

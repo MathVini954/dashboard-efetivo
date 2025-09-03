@@ -176,30 +176,30 @@ if uploaded_file is not None:
             st.markdown(f'<div class="metric-card"><p class="metric-title">Índice Econômico</p><p class="metric-value">{get_value("Índice Econômico")}</p></div>',unsafe_allow_html=True)
         
 # -------------------- Velocímetro Avanço Físico --------------------
-    st.markdown('<p class="sub-header">📅 Prazos e Avanço Físico</p>', unsafe_allow_html=True)
-    av_real = get_value("Avanço Físico Real",0)
-    av_plan = get_value("Avanço Físico Planejado",1)
+        st.markdown('<p class="sub-header">📅 Prazos e Avanço Físico</p>', unsafe_allow_html=True)
+        av_real = get_value("Avanço Físico Real",0)
+        av_plan = get_value("Avanço Físico Planejado",1)
 
 # Converter valores
-def parse_percent(val):
-    if isinstance(val,str):
-        try:
-            val = float(val.replace('%','').replace(',','.'))
-        except:
-            val = 0
-    if val <= 1: val *= 100
-    return val
+    def parse_percent(val):
+        if isinstance(val,str):
+            try:
+                val = float(val.replace('%','').replace(',','.'))
+            except:
+                val = 0
+        if val <= 1: val *= 100
+        return val
 
-av_real_num = parse_percent(av_real)
-av_plan_num = parse_percent(av_plan)
+        av_real_num = parse_percent(av_real)
+        av_plan_num = parse_percent(av_plan)
 
-fig_velo = go.Figure(go.Indicator(
-    mode="gauge+number",
-    value=av_real_num,
-    domain={'x':[0,1],'y':[0,1]},
-    title={'text':"Avanço Físico Real",'font':{'size':16,'color':'white'}},
-    number={'font':{'size':40,'color':'white'},'suffix':'%'},
-    gauge={
+       fig_velo = go.Figure(go.Indicator(
+       mode="gauge+number",
+       value=av_real_num,
+       domain={'x':[0,1],'y':[0,1]},
+       title={'text':"Avanço Físico Real",'font':{'size':16,'color':'white'}},
+       number={'font':{'size':40,'color':'white'},'suffix':'%'},
+       gauge={
         'axis':{'range':[0,100],'tickwidth':1,'tickcolor':'white','tickfont':{'size':12,'color':'white'}},
         'bar':{'color':'#3B82F6','thickness':0.25},
         'bgcolor':'rgba(0,0,0,0)',
@@ -213,19 +213,19 @@ fig_velo = go.Figure(go.Indicator(
 ))
 
 # Adicionar anotações para planeado e real
-fig_velo.update_layout(
-    annotations=[
+        fig_velo.update_layout(
+        annotations=[
         dict(x=0.5, y=0.25, text=f"Planejado: {av_plan_num:.1f}%", showarrow=False, font=dict(color="red", size=14)),
         dict(x=0.5, y=0.1, text=f"Real: {av_real_num:.1f}%", showarrow=False, font=dict(color="white", size=14))
     ],
-    height=400,
-    font={'color':'white','family':'Arial'},
-    margin=dict(l=30,r=30,t=80,b=30),
-    paper_bgcolor='rgba(0,0,0,0)',
-    plot_bgcolor='rgba(0,0,0,0)'
+        height=400,
+        font={'color':'white','family':'Arial'},
+        margin=dict(l=30,r=30,t=80,b=30),
+        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0)'
 )
 
-st.plotly_chart(fig_velo,use_container_width=True)
+       st.plotly_chart(fig_velo,use_container_width=True)
 
         
         # -------------------- Linha do tempo --------------------
@@ -289,4 +289,5 @@ else:
 # Footer
 st.markdown("---")
 st.markdown("<div style='text-align: center; color: #6B7280;'>Dashboard atualizado em tempo real | Dados da obra selecionada</div>", unsafe_allow_html=True)
+
 

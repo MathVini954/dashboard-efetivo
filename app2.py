@@ -37,19 +37,25 @@ uploaded_file = st.file_uploader("📥 Faça upload da planilha Excel", type=["x
 
 # ===== FUNÇÕES AUXILIARES =====
 def parse_valor(val):
-    """Converte números e porcentagens para float; mantém texto/datas como string."""
+    """
+    Converte valores numéricos e percentuais corretamente, mantendo texto e datas.
+    Formatos suportados:
+    - Percentual com vírgula: '98,7%'
+    - Moeda: 'R$ 92,00'
+    - Números decimais com vírgula: '1,118'
+    """
     if pd.isna(val):
         return ""
     if isinstance(val, str):
         v = val.strip()
         # Porcentagem
-        if "%" in v:
+        if v.endswith("%"):
             try:
                 return float(v.replace("%", "").replace(",", "."))
             except:
                 return v
         # Moeda
-        if "R$" in v:
+        if v.startswith("R$"):
             try:
                 return float(v.replace("R$", "").replace(".", "").replace(",", "."))
             except:
@@ -61,17 +67,6 @@ def parse_valor(val):
             return v
     return val
 
-def format_money(val):
-    try:
-        return f"R$ {float(val):,.2f}"
-    except:
-        return str(val)
-
-def format_percent(val):
-    try:
-        return f"{float(val):.1f}%"
-    except:
-        return str(val)
 
 # ===== DASHBOARD =====
 if uploaded_file:
@@ -142,3 +137,4 @@ if uploaded_file:
         
 else:
     st.warning("⛔ Por favor, faça upload da planilha Excel para visualizar o dashboard.")
+

@@ -35,45 +35,40 @@ st.write("Visualização profissional das obras com todos os indicadores princip
 # ===== UPLOAD DO ARQUIVO =====
 uploaded_file = st.file_uploader("📥 Faça upload da planilha Excel", type=["xlsx"])
 
-# Converte valores numéricos/texto/datas corretamente
+# ===== FUNÇÕES AUXILIARES =====
 def parse_valor(val):
+    """Converte valores corretamente: percentual, moeda, número ou mantém texto/datas"""
     if pd.isna(val):
         return ""
     if isinstance(val, str):
         v = val.strip()
-        # Porcentagem
         if v.endswith("%"):
             try:
-                return float(v.replace("%", ".").replace(",", "."))
+                return float(v.replace("%","").replace(",","."))
             except:
                 return v
-        # Moeda
         if v.startswith("R$"):
             try:
-                return float(v.replace("R$", "").replace(".", "").replace(",", "."))
+                return float(v.replace("R$","").replace(".","").replace(",","."))
             except:
                 return v
-        # Número decimal com vírgula
         try:
-            return float(v.replace(",", "."))
+            return float(v.replace(",","."))
         except:
             return v
     return val
 
-# Formata valores monetários
 def format_money(val):
     try:
         return f"R$ {float(val):,.2f}"
     except:
         return str(val)
 
-# Formata valores percentuais
 def format_percent(val):
     try:
         return f"{float(val):.1f}%"
     except:
         return str(val)
-
 
 # ===== DASHBOARD =====
 if uploaded_file:
@@ -93,8 +88,8 @@ if uploaded_file:
         
         # ===== CARDS PRINCIPAIS =====
         col1, col2, col3, col4 = st.columns(4)
-        col1.markdown(f"<div class='card'><h4>AC (m²)</h4><p>{indicadores.get('AC(m²)', '-')}</p></div>", unsafe_allow_html=True)
-        col2.markdown(f"<div class='card'><h4>AP (m²)</h4><p>{indicadores.get('AP(m²)', '-')}</p></div>", unsafe_allow_html=True)
+        col1.markdown(f"<div class='card'><h4>AC (m²)</h4><p>{indicadores.get('AC(m²)','-')}</p></div>", unsafe_allow_html=True)
+        col2.markdown(f"<div class='card'><h4>AP (m²)</h4><p>{indicadores.get('AP(m²)','-')}</p></div>", unsafe_allow_html=True)
         col3.markdown(f"<div class='card'><h4>Efetivo</h4><p>{format_percent(indicadores.get('Ef',0))}</p></div>", unsafe_allow_html=True)
         col4.markdown(f"<div class='card'><h4>Total Unidades</h4><p>{indicadores.get('Total Unidades','-')}</p></div>", unsafe_allow_html=True)
 
@@ -141,8 +136,5 @@ if uploaded_file:
         col3.markdown(f"<div class='card'><h4>Rentab. Projetada</h4><p>{format_percent(indicadores.get('Rentab. Projetada',0))}</p></div>", unsafe_allow_html=True)
         
         st.markdown("---")
-        
 else:
     st.warning("⛔ Por favor, faça upload da planilha Excel para visualizar o dashboard.")
-
-

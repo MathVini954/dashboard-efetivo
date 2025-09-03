@@ -175,153 +175,109 @@ if uploaded_file is not None:
             custo_ap = get_value("Custo Atual AP")
             st.markdown(f'<div class="metric-card"><p class="metric-title">Custo AP</p><p class="metric-value">{format_money(custo_ap)}</p></div>', unsafe_allow_html=True)
         
-        # Segunda seção - Análise Financeira com gráfico
-        st.markdown('<p class="sub-header">💰 Análise Financeira</p>', unsafe_allow_html=True)
-        
-        # Dados para o gráfico de orçamento
-        orc_base = get_value("Orçamento Base", 0)
-        orc_reaj = get_value("Orçamento Reajustado", 0)
-        custo_final = get_value("Custo Final", 0)
-        
-        if isinstance(orc_base, str):
-            try:
-                orc_base = float(orc_base.replace('R$', '').replace('.', '').replace(',', '.'))
-            except:
-                orc_base = 0
-                
-        if isinstance(orc_reaj, str):
-            try:
-                orc_reaj = float(orc_reaj.replace('R$', '').replace('.', '').replace(',', '.'))
-            except:
-                orc_reaj = 0
-                
-        if isinstance(custo_final, str):
-            try:
-                custo_final = float(custo_final.replace('R$', '').replace('.', '').replace(',', '.'))
-            except:
-                custo_final = 0
-        
-        # Criar gráfico de barras para orçamento
-        fig_orcamento = go.Figure()
-        
-        fig_orcamento.add_trace(go.Bar(
-            x=['Orçamento Base', 'Orçamento Reajustado', 'Custo Final'],
-            y=[orc_base, orc_reaj, custo_final],
-            marker_color=['#3B82F6', '#60A5FA', '#10B981'],
-            text=[format_money(orc_base), format_money(orc_reaj), format_money(custo_final)],
-            textposition='auto',
-        ))
-        
-        fig_orcamento.update_layout(
-            title='Comparativo de Orçamento',
-            plot_bgcolor='rgba(0,0,0,0)',
-            paper_bgcolor='rgba(0,0,0,0)',
-            font=dict(color='white'),
-            height=400,
-            showlegend=False
-        )
-        
-        st.plotly_chart(fig_orcamento, use_container_width=True)
-        
-        # Terceira seção - Prazos e Avanço com velocímetro aprimorado
-        st.markdown('<p class="sub-header">📅 Prazos e Avanço Físico</p>', unsafe_allow_html=True)
-        
-        col9, col10, col11 = st.columns([2, 1, 1])
-        
-        with col9:
-            # Converter avanço real para número
-            av_real_num = get_value("Avanço Físico Real", 0)
-            av_plan_num = get_value("Avanço Físico Planejado", 1)
-            aderencia = get_value("Aderência Física", 0)
-            
-            if isinstance(av_real_num, str):
-                try:
-                    av_real_num = float(av_real_num.replace('%', '').replace(',', '.'))
-                except:
-                    av_real_num = 0
-            
-            if isinstance(av_plan_num, str):
-                try:
-                    av_plan_num = float(av_plan_num.replace('%', '').replace(',', '.'))
-                except:
-                    av_plan_num = 100
-            
-            if isinstance(aderencia, str):
-                try:
-                    aderencia = float(aderencia.replace('%', '').replace(',', '.'))
-                except:
-                    aderencia = 0
-            
-            # Se os valores estão entre 0-1, converter para 0-100
-            if av_real_num <= 1:
-                av_real_num *= 100
-            if av_plan_num <= 1:
-                av_plan_num *= 100
-            if aderencia <= 1:
-                aderencia *= 100
-            
-            # Velocímetro simplificado e limpo
-            fig_velocimetro = go.Figure(go.Indicator(
-                mode="gauge+number+delta",
-                value=av_real_num,
-                domain={'x': [0, 1], 'y': [0, 1]},
-                title={
-                    'text': "Avanço Físico Real vs Planejado",
-                    'font': {'size': 16, 'color': 'white'}
-                },
-                number={
-                    'font': {'size': 40, 'color': 'white'},
-                    'suffix': '%',
-                    'valueformat': '.1f'
-                },
-                delta={
-                    'reference': av_plan_num,
-                    'increasing': {'color': "#10B981"},
-                    'decreasing': {'color': "#EF4444"},
-                    'font': {'size': 16}
-                },
-                gauge={
-                    'axis': {
-                        'range': [0, 100],
-                        'tickwidth': 1,
-                        'tickcolor': "white",
-                        'tickfont': {'size': 12, 'color': 'white'}
-                    },
-                    'bar': {'color': "#3B82F6", 'thickness': 0.25},
-                    'bgcolor': "rgba(0,0,0,0)",
-                    'borderwidth': 2,
-                    'bordercolor': "gray",
-                    'steps': [
-                        {'range': [0, 70], 'color': 'rgba(239, 68, 68, 0.3)'},
-                        {'range': [70, 90], 'color': 'rgba(245, 158, 11, 0.3)'},
-                        {'range': [90, 100], 'color': 'rgba(16, 185, 129, 0.3)'}
-                    ],
-                    'threshold': {
-                        'line': {'color': "#F59E0B", 'width': 4},
-                        'thickness': 0.75,
-                        'value': av_plan_num
-                    }
-                }
-            ))
-            
-            fig_velocimetro.update_layout(
-                height=400,
-                font={'color': "white", 'family': "Arial"},
-                margin=dict(l=30, r=30, t=80, b=30),
-                paper_bgcolor='rgba(0,0,0,0)',
-                plot_bgcolor='rgba(0,0,0,0)'
-            )
-            
-            st.plotly_chart(fig_velocimetro, use_container_width=True)
-        
-        with col10:
-            st.markdown(f'<div class="metric-card"><p class="metric-title">Avanço Planejado</p><p class="metric-value">{format_percent(av_plan_num)}</p></div>', unsafe_allow_html=True)
-            st.markdown(f'<div class="metric-card"><p class="metric-title">Avanço Real</p><p class="metric-value">{format_percent(av_real_num)}</p></div>', unsafe_allow_html=True)
-        
-        with col11:
-            st.markdown(f'<div class="metric-card"><p class="metric-title">Aderência Física</p><p class="metric-value">{format_percent(aderencia)}</p></div>', unsafe_allow_html=True)
-            desvio = get_value("Desvio")
-            st.markdown(f'<div class="metric-card"><p class="metric-title">Desvio</p><p class="metric-value">{str(desvio)}</p></div>', unsafe_allow_html=True)
+      # -------------------- Gráfico de Orçamento --------------------
+st.markdown('<p class="sub-header">💰 Análise Financeira</p>', unsafe_allow_html=True)
+
+# Dados para o gráfico de orçamento
+orc_base = get_value("Orçamento Base", 0)
+orc_reaj = get_value("Orçamento Reajustado", 0)
+custo_final = get_value("Custo Final", 0)
+
+# Converter strings monetárias para float (mantendo sua lógica)
+def to_float(val):
+    if isinstance(val, str):
+        try:
+            return float(val.replace('R$', '').replace('.', '').replace(',', '.'))
+        except:
+            return 0
+    return val
+
+orc_base = to_float(orc_base)
+orc_reaj = to_float(orc_reaj)
+custo_final = to_float(custo_final)
+
+# Criar gráfico de barras para orçamento
+fig_orcamento = go.Figure()
+fig_orcamento.add_trace(go.Bar(
+    x=['Orçamento Base', 'Orçamento Reajustado', 'Custo Final'],
+    y=[orc_base, orc_reaj, custo_final],
+    marker_color=['#3B82F6', '#60A5FA', '#10B981'],
+    text=[format_money(orc_base), format_money(orc_reaj), format_money(custo_final)],
+    textposition='auto',
+))
+fig_orcamento.update_layout(
+    title='Comparativo de Orçamento',
+    plot_bgcolor='rgba(0,0,0,0)',
+    paper_bgcolor='rgba(0,0,0,0)',
+    font=dict(color='white'),
+    height=400,
+    showlegend=False
+)
+st.plotly_chart(fig_orcamento, use_container_width=True)
+
+# -------------------- Caixa de Texto Financeira --------------------
+col_fin1, col_fin2, col_fin3, col_fin4 = st.columns(4)
+
+with col_fin1:
+    st.markdown(f'<div class="metric-card"><p class="metric-title">Desvio</p><p class="metric-value">{get_value("Desvio")}</p></div>', unsafe_allow_html=True)
+with col_fin2:
+    st.markdown(f'<div class="metric-card"><p class="metric-title">Desembolso</p><p class="metric-value">{get_value("Desembolso")}</p></div>', unsafe_allow_html=True)
+with col_fin3:
+    st.markdown(f'<div class="metric-card"><p class="metric-title">Saldo</p><p class="metric-value">{get_value("Saldo")}</p></div>', unsafe_allow_html=True)
+with col_fin4:
+    st.markdown(f'<div class="metric-card"><p class="metric-title">Índice Econômico</p><p class="metric-value">{get_value("Índice Econômico")}</p></div>', unsafe_allow_html=True)
+
+# -------------------- Avanço Físico com Barra --------------------
+st.markdown('<p class="sub-header">📅 Prazos e Avanço Físico</p>', unsafe_allow_html=True)
+
+av_real_num = get_value("Avanço Físico Real", 0)
+av_plan_num = get_value("Avanço Físico Planejado", 1)
+
+# Converter para número se necessário
+if isinstance(av_real_num, str):
+    try:
+        av_real_num = float(av_real_num.replace('%','').replace(',','.'))
+    except:
+        av_real_num = 0
+if isinstance(av_plan_num, str):
+    try:
+        av_plan_num = float(av_plan_num.replace('%','').replace(',','.'))
+    except:
+        av_plan_num = 100
+
+if av_real_num <= 1: av_real_num *= 100
+if av_plan_num <= 1: av_plan_num *= 100
+
+# Barra de progresso com plotly
+fig_bar = go.Figure(go.Bar(
+    x=[av_real_num],
+    y=['Avanço Físico'],
+    orientation='h',
+    marker=dict(color='#3B82F6'),
+    width=0.4,
+    name='Real'
+))
+
+# Linha indicando o planejado
+fig_bar.add_trace(go.Scatter(
+    x=[av_plan_num],
+    y=['Avanço Físico'],
+    mode='markers',
+    marker=dict(color='#F59E0B', size=20, symbol='line-ns-open'),
+    name='Planejado'
+))
+
+fig_bar.update_layout(
+    xaxis=dict(range=[0,100], title='Percentual (%)'),
+    yaxis=dict(showticklabels=True),
+    plot_bgcolor='rgba(0,0,0,0)',
+    paper_bgcolor='rgba(0,0,0,0)',
+    height=150,
+    showlegend=True,
+    font=dict(color='white')
+)
+st.plotly_chart(fig_bar, use_container_width=True)
+
         
         # Quarta seção - Linha do tempo
         st.markdown('<p class="sub-header">⏰ Linha do Tempo</p>', unsafe_allow_html=True)
@@ -412,3 +368,4 @@ else:
 # Footer
 st.markdown("---")
 st.markdown("<div style='text-align: center; color: #6B7280;'>Dashboard atualizado em tempo real | Dados da obra selecionada</div>", unsafe_allow_html=True)
+

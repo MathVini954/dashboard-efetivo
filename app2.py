@@ -17,50 +17,67 @@ st.set_page_config(
 st.markdown("""
 <style>
     .main-header {
-        font-size: 2.5rem;
+        font-size: 2.8rem;
         color: #1E3A8A;
-        font-weight: 700;
-        margin-bottom: 1.5rem;
+        font-weight: 800;
+        margin-bottom: 2rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 3px solid #3B82F6;
     }
     .sub-header {
-        font-size: 1.5rem;
+        font-size: 1.8rem;
         color: #374151;
-        font-weight: 600;
-        margin-bottom: 1rem;
-        border-bottom: 2px solid #E5E7EB;
+        font-weight: 700;
+        margin: 2rem 0 1.5rem 0;
         padding-bottom: 0.5rem;
+        border-bottom: 2px solid #E5E7EB;
     }
     .metric-card {
-        background-color: #F9FAFB;
-        border-radius: 0.5rem;
-        padding: 1rem;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        background-color: #1E293B;
+        border-radius: 0.75rem;
+        padding: 1.5rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
         height: 100%;
-        border-left: 4px solid #3B82F6;
+        border-left: 5px solid #3B82F6;
+        margin-bottom: 1.5rem;
     }
     .metric-title {
-        font-size: 0.9rem;
-        color: #6B7280;
-        font-weight: 500;
-        margin-bottom: 0.5rem;
+        font-size: 1rem;
+        color: #93C5FD;
+        font-weight: 600;
+        margin-bottom: 0.75rem;
     }
     .metric-value {
-        font-size: 1.5rem;
-        color: #111827;
-        font-weight: 700;
+        font-size: 1.8rem;
+        color: #FFFFFF;
+        font-weight: 800;
     }
     .positive-value {
-        color: #059669;
+        color: #10B981;
     }
     .negative-value {
-        color: #DC2626;
+        color: #EF4444;
     }
-    .stMetric {
-        background-color: #F9FAFB;
-        border-radius: 0.5rem;
-        padding: 1rem;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-        border-left: 4px solid #3B82F6;
+    .section-container {
+        background-color: #0F172A;
+        border-radius: 1rem;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.4);
+    }
+    .timeline-container {
+        background-color: #1E293B;
+        border-radius: 1rem;
+        padding: 1.5rem;
+        margin-top: 2rem;
+    }
+    .stSelectbox > div > div {
+        background-color: #1E293B;
+        color: white;
+    }
+    .stSelectbox label {
+        color: #93C5FD !important;
+        font-weight: 600;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -122,118 +139,100 @@ if uploaded_file is not None:
                 return value
             return str(value)
         
-        # Primeira seção - Métricas Principais em linha
+        # Primeira seção - Métricas Principais
         st.markdown('<p class="sub-header">📊 Métricas Principais</p>', unsafe_allow_html=True)
         
-        col1, col2, col3, col4, col5, col6, col7 = st.columns(7)
+        col1, col2, col3, col4 = st.columns(4)
         
         with col1:
-            total_unidades = get_value("Total Unidades")
-            st.metric("Total Unidades", str(total_unidades))
+            st.markdown('<div class="metric-card"><p class="metric-title">Total Unidades</p><p class="metric-value">' + str(get_value("Total Unidades")) + '</p></div>', unsafe_allow_html=True)
         
         with col2:
             ac = get_value("AC(m²)")
-            st.metric("AC(m²)", f"{ac:,.0f}" if isinstance(ac, (int, float)) else str(ac))
+            ac_value = f"{ac:,.0f}" if isinstance(ac, (int, float)) else str(ac)
+            st.markdown(f'<div class="metric-card"><p class="metric-title">AC(m²)</p><p class="metric-value">{ac_value}</p></div>', unsafe_allow_html=True)
         
         with col3:
             ap = get_value("AP(m²)")
-            st.metric("AP(m²)", f"{ap:,.0f}" if isinstance(ap, (int, float)) else str(ap))
+            ap_value = f"{ap:,.0f}" if isinstance(ap, (int, float)) else str(ap)
+            st.markdown(f'<div class="metric-card"><p class="metric-title">AP(m²)</p><p class="metric-value">{ap_value}</p></div>', unsafe_allow_html=True)
         
         with col4:
             rentab_viab = get_value("Rentab. Viabilidade")
-            st.metric("Rentab. Viabilidade", format_percent(rentab_viab))
+            st.markdown(f'<div class="metric-card"><p class="metric-title">Rentab. Viabilidade</p><p class="metric-value">{format_percent(rentab_viab)}</p></div>', unsafe_allow_html=True)
+        
+        col5, col6, col7, col8 = st.columns(4)
         
         with col5:
             rentab_proj = get_value("Rentab. Projetada")
-            st.metric("Rentab. Projetada", format_percent(rentab_proj))
+            st.markdown(f'<div class="metric-card"><p class="metric-title">Rentab. Projetada</p><p class="metric-value">{format_percent(rentab_proj)}</p></div>', unsafe_allow_html=True)
         
         with col6:
             custo_ac = get_value("Custo Atual AC")
-            st.metric("Custo AC", format_money(custo_ac))
+            st.markdown(f'<div class="metric-card"><p class="metric-title">Custo AC</p><p class="metric-value">{format_money(custo_ac)}</p></div>', unsafe_allow_html=True)
         
         with col7:
             custo_ap = get_value("Custo Atual AP")
-            st.metric("Custo AP", format_money(custo_ap))
+            st.markdown(f'<div class="metric-card"><p class="metric-title">Custo AP</p><p class="metric-value">{format_money(custo_ap)}</p></div>', unsafe_allow_html=True)
         
-        # Segunda seção - Análise Financeira
+        # Segunda seção - Análise Financeira com gráfico
         st.markdown('<p class="sub-header">💰 Análise Financeira</p>', unsafe_allow_html=True)
         
-        col8, col9, col10, col11, col12, col13, col14 = st.columns(7)
+        # Dados para o gráfico de orçamento
+        orc_base = get_value("Orçamento Base", 0)
+        orc_reaj = get_value("Orçamento Reajustado", 0)
+        custo_final = get_value("Custo Final", 0)
         
-        with col8:
-            orc_base = get_value("Orçamento Base")
-            st.metric("Orçamento Base", format_money(orc_base))
+        if isinstance(orc_base, str):
+            try:
+                orc_base = float(orc_base.replace('R$', '').replace('.', '').replace(',', '.'))
+            except:
+                orc_base = 0
+                
+        if isinstance(orc_reaj, str):
+            try:
+                orc_reaj = float(orc_reaj.replace('R$', '').replace('.', '').replace(',', '.'))
+            except:
+                orc_reaj = 0
+                
+        if isinstance(custo_final, str):
+            try:
+                custo_final = float(custo_final.replace('R$', '').replace('.', '').replace(',', '.'))
+            except:
+                custo_final = 0
         
-        with col9:
-            orc_reaj = get_value("Orçamento Reajustado")
-            st.metric("Orç. Reajustado", format_money(orc_reaj))
+        # Criar gráfico de barras para orçamento
+        fig_orcamento = go.Figure()
         
-        with col10:
-            custo_final = get_value("Custo Final")
-            st.metric("Custo Final", format_money(custo_final))
+        fig_orcamento.add_trace(go.Bar(
+            x=['Orçamento Base', 'Orçamento Reajustado', 'Custo Final'],
+            y=[orc_base, orc_reaj, custo_final],
+            marker_color=['#3B82F6', '#60A5FA', '#10B981'],
+            text=[format_money(orc_base), format_money(orc_reaj), format_money(custo_final)],
+            textposition='auto',
+        ))
         
-        with col11:
-            desvio = get_value("Desvio")
-            # Verificar se o desvio é positivo ou negativo para colorir
-            desvio_str = str(desvio)
-            if isinstance(desvio, (int, float)):
-                desvio_str = f"{desvio:+,.0f}" if isinstance(desvio, (int, float)) else str(desvio)
-            st.metric("Desvio", desvio_str)
+        fig_orcamento.update_layout(
+            title='Comparativo de Orçamento',
+            plot_bgcolor='#1E293B',
+            paper_bgcolor='#1E293B',
+            font=dict(color='white'),
+            height=400,
+            showlegend=False
+        )
         
-        with col12:
-            desembolso = get_value("Desembolso")
-            st.metric("Desembolso", format_money(desembolso))
+        st.plotly_chart(fig_orcamento, use_container_width=True)
         
-        with col13:
-            saldo = get_value("Saldo")
-            st.metric("Saldo", format_money(saldo))
-        
-        with col14:
-            indice_econ = get_value("Índice Econômico")
-            st.metric("Índice Econômico", str(indice_econ))
-        
-        # Terceira seção - Prazos e Avanço
+        # Terceira seção - Prazos e Avanço com velocímetro aprimorado
         st.markdown('<p class="sub-header">📅 Prazos e Avanço Físico</p>', unsafe_allow_html=True)
         
-        col15, col16, col17, col18, col19, col20, col21 = st.columns(7)
+        col9, col10, col11 = st.columns([2, 1, 1])
         
-        with col15:
-            av_plan = get_value("Avanço Físico Planejado")
-            st.metric("Avanço Planejado", format_percent(av_plan))
-        
-        with col16:
-            av_real = get_value("Avanço Físico Real")
-            st.metric("Avanço Real", format_percent(av_real))
-        
-        with col17:
-            aderencia = get_value("Aderência Física")
-            st.metric("Aderência Física", format_percent(aderencia))
-        
-        with col18:
-            inicio = get_value("Início")
-            st.metric("Início", str(inicio))
-        
-        with col19:
-            tend = get_value("Tend")
-            st.metric("Tendência", str(tend))
-        
-        with col20:
-            prazo_concl = get_value("Prazo Concl.")
-            st.metric("Prazo Conclusão", str(prazo_concl))
-        
-        with col21:
-            prazo_cliente = get_value("Prazo Cliente")
-            st.metric("Prazo Cliente", str(prazo_cliente))
-        
-        # Velocímetro de Avanço Físico
-        st.markdown('<p class="sub-header">⚡ Velocímetro de Avanço</p>', unsafe_allow_html=True)
-        
-        col_vel, col_space = st.columns([3, 1])
-        
-        with col_vel:
+        with col9:
             # Converter avanço real para número
             av_real_num = get_value("Avanço Físico Real", 0)
             av_plan_num = get_value("Avanço Físico Planejado", 1)
+            aderencia = get_value("Aderência Física", 0)
             
             if isinstance(av_real_num, str):
                 try:
@@ -247,50 +246,34 @@ if uploaded_file is not None:
                 except:
                     av_plan_num = 100
             
+            if isinstance(aderencia, str):
+                try:
+                    aderencia = float(aderencia.replace('%', '').replace(',', '.'))
+                except:
+                    aderencia = 0
+            
             # Se os valores estão entre 0-1, converter para 0-100
             if av_real_num <= 1:
                 av_real_num *= 100
             if av_plan_num <= 1:
                 av_plan_num *= 100
+            if aderencia <= 1:
+                aderencia *= 100
             
-            # Calcular a diferença para o delta
-            delta_value = av_real_num - av_plan_num
+            # Velocímetro com três indicadores
+            fig_velocimetro = go.Figure()
             
-            # Determinar cores com base no desempenho
-            if av_real_num >= 90:
-                gauge_color = "#16A34A"  # Verde para ótimo desempenho
-            elif av_real_num >= 70:
-                gauge_color = "#CA8A04"  # Amarelo para desempenho médio
-            else:
-                gauge_color = "#DC2626"  # Vermelho para desempenho ruim
-                
-            fig_velocimetro = go.Figure(go.Indicator(
-                mode = "gauge+number+delta",
-                value = av_real_num,
+            # Adicionar o velocímetro base
+            fig_velocimetro.add_trace(go.Indicator(
+                mode = "gauge+number",
+                value = aderencia,
                 domain = {'x': [0, 1], 'y': [0, 1]},
-                title = {
-                    'text': "Avanço Físico Real",
-                    'font': {'size': 20, 'color': '#374151'}
-                },
-                number = {
-                    'font': {'size': 40, 'color': '#111827'},
-                    'suffix': '%'
-                },
-                delta = {
-                    'reference': av_plan_num,
-                    'increasing': {'color': "#16A34A"},
-                    'decreasing': {'color': "#DC2626"},
-                    'font': {'size': 16}
-                },
+                title = {'text': "Aderência Física", 'font': {'size': 20, 'color': 'white'}},
+                number = {'font': {'size': 40, 'color': 'white'}, 'suffix': '%'},
                 gauge = {
-                    'axis': {
-                        'range': [None, 100],
-                        'tickwidth': 1,
-                        'tickcolor': "#4B5563",
-                        'tickfont': {'size': 12, 'color': '#6B7280'}
-                    },
-                    'bar': {'color': gauge_color, 'thickness': 0.3},
-                    'bgcolor': "white",
+                    'axis': {'range': [None, 100], 'tickwidth': 1, 'tickcolor': "white"},
+                    'bar': {'color': "#10B981", 'thickness': 0.15},
+                    'bgcolor': "rgba(0,0,0,0)",
                     'borderwidth': 2,
                     'bordercolor': "gray",
                     'steps': [
@@ -298,22 +281,118 @@ if uploaded_file is not None:
                         {'range': [70, 90], 'color': '#FFFBEB'},
                         {'range': [90, 100], 'color': '#F0FDF4'}
                     ],
-                    'threshold': {
-                        'line': {'color': "red", 'width': 4},
-                        'thickness': 0.75,
-                        'value': av_plan_num
-                    }
                 }
             ))
             
+            # Adicionar marcadores para avanço planejado e real
+            fig_velocimetro.add_trace(go.Scatterpolar(
+                r=[av_plan_num/100, av_real_num/100],
+                theta=[0, 0],
+                mode="markers+text",
+                marker=dict(size=20, color=["#3B82F6", "#EF4444"]),
+                text=["Planejado", "Real"],
+                textposition="middle center",
+                textfont=dict(color="white", size=12),
+                subplot="polar"
+            ))
+            
             fig_velocimetro.update_layout(
-                height=400,
-                font={'color': "#4B5563", 'family': "Arial"},
+                polar=dict(
+                    radialaxis=dict(visible=True, range=[0, 1]),
+                    angularaxis=dict(visible=False)
+                ),
+                showlegend=False,
+                height=500,
+                font={'color': "white", 'family': "Arial"},
                 margin=dict(l=30, r=30, t=80, b=30),
                 paper_bgcolor='rgba(0,0,0,0)',
                 plot_bgcolor='rgba(0,0,0,0)'
             )
+            
             st.plotly_chart(fig_velocimetro, use_container_width=True)
+        
+        with col10:
+            st.markdown(f'<div class="metric-card"><p class="metric-title">Avanço Planejado</p><p class="metric-value">{format_percent(av_plan_num)}</p></div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="metric-card"><p class="metric-title">Avanço Real</p><p class="metric-value">{format_percent(av_real_num)}</p></div>', unsafe_allow_html=True)
+        
+        with col11:
+            st.markdown(f'<div class="metric-card"><p class="metric-title">Aderência Física</p><p class="metric-value">{format_percent(aderencia)}</p></div>', unsafe_allow_html=True)
+            desvio = get_value("Desvio")
+            st.markdown(f'<div class="metric-card"><p class="metric-title">Desvio</p><p class="metric-value">{str(desvio)}</p></div>', unsafe_allow_html=True)
+        
+        # Quarta seção - Linha do tempo
+        st.markdown('<p class="sub-header">⏰ Linha do Tempo</p>', unsafe_allow_html=True)
+        
+        # Obter datas
+        inicio = get_value("Início", "N/A")
+        tend = get_value("Tend", "N/A")
+        prazo_concl = get_value("Prazo Concl.", "N/A")
+        prazo_cliente = get_value("Prazo Cliente", "N/A")
+        
+        # Criar linha do tempo
+        fig_timeline = go.Figure()
+        
+        # Adicionar marcadores para cada data
+        dates = [inicio, tend, prazo_concl, prazo_cliente]
+        labels = ["Início", "Tendência", "Prazo Conclusão", "Prazo Cliente"]
+        colors = ["#3B82F6", "#F59E0B", "#10B981", "#EF4444"]
+        
+        # Converter para datas se possível
+        date_values = []
+        for d in dates:
+            if isinstance(d, (datetime, pd.Timestamp)):
+                date_values.append(d)
+            elif isinstance(d, str) and d != "N/A":
+                try:
+                    date_values.append(pd.to_datetime(d))
+                except:
+                    date_values.append(None)
+            else:
+                date_values.append(None)
+        
+        # Criar linha do tempo apenas se temos pelo menos duas datas válidas
+        valid_dates = [d for d in date_values if d is not None]
+        if len(valid_dates) >= 2:
+            min_date = min(valid_dates)
+            max_date = max(valid_dates)
+            
+            # Adicionar linha de tempo
+            fig_timeline.add_trace(go.Scatter(
+                x=[min_date, max_date],
+                y=[0, 0],
+                mode='lines',
+                line=dict(color='white', width=3),
+                showlegend=False
+            ))
+            
+            # Adicionar marcadores
+            for i, (date, label, color) in enumerate(zip(date_values, labels, colors)):
+                if date is not None:
+                    fig_timeline.add_trace(go.Scatter(
+                        x=[date],
+                        y=[0],
+                        mode='markers+text',
+                        marker=dict(size=15, color=color),
+                        text=[label],
+                        textposition="top center",
+                        name=label,
+                        textfont=dict(color='white', size=12)
+                    ))
+            
+            fig_timeline.update_layout(
+                title='Cronograma da Obra',
+                showlegend=True,
+                height=300,
+                plot_bgcolor='#1E293B',
+                paper_bgcolor='#1E293B',
+                font=dict(color='white'),
+                xaxis=dict(showgrid=False, zeroline=False),
+                yaxis=dict(showgrid=False, zeroline=False, showticklabels=False)
+            )
+            
+            st.plotly_chart(fig_timeline, use_container_width=True)
+        else:
+            st.info("Não há datas suficientes para criar a linha do tempo.")
         
         # Mostrar dados carregados (debug)
         with st.expander("🔍 Visualizar dados carregados"):
@@ -329,4 +408,4 @@ else:
 
 # Footer
 st.markdown("---")
-st.markdown("Dashboard atualizado em tempo real | Dados da obra selecionada")
+st.markdown("<div style='text-align: center; color: #6B7280;'>Dashboard atualizado em tempo real | Dados da obra selecionada</div>", unsafe_allow_html=True)

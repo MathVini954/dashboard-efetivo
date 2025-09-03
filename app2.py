@@ -221,50 +221,58 @@ if uploaded_file is not None:
         with col_fin4:
             st.markdown(f'<div class="metric-card"><p class="metric-title">Índice Econômico</p><p class="metric-value">{get_value("Índice Econômico")}</p></div>', unsafe_allow_html=True)
         
-        # -------------------- Avanço Físico (Barra) --------------------
-        st.markdown('<p class="sub-header">📅 Prazos e Avanço Físico</p>', unsafe_allow_html=True)
+# -------------------- Avanço Físico com Velocímetro --------------------
+st.markdown('<p class="sub-header">📅 Prazos e Avanço Físico</p>', unsafe_allow_html=True)
 
-        av_real_num = get_value("Avanço Físico Real", 0)
-        av_plan_num = get_value("Avanço Físico Planejado", 1)
+av_real_num = get_value("Avanço Físico Real", 0)
+av_plan_num = get_value("Avanço Físico Planejado", 1)
 
-        if isinstance(av_real_num, str):
-            try:
-                av_real_num = float(av_real_num.replace('%','').replace(',','.'))
-            except:
-                av_real_num = 0
-        if isinstance(av_plan_num, str):
-            try:
-                av_plan_num = float(av_plan_num.replace('%','').replace(',','.'))
-            except:
-                av_plan_num = 100
-        if av_real_num <= 1: av_real_num *= 100
-        if av_plan_num <= 1: av_plan_num *= 100
+# Converter para número
+if isinstance(av_real_num, str):
+    try:
+        av_real_num = float(av_real_num.replace('%','').replace(',','.'))
+    except:
+        av_real_num = 0
+if isinstance(av_plan_num, str):
+    try:
+        av_plan_num = float(av_plan_num.replace('%','').replace(',','.'))
+    except:
+        av_plan_num = 100
+if av_real_num <= 1: av_real_num *= 100
+if av_plan_num <= 1: av_plan_num *= 100
 
-        fig_bar = go.Figure(go.Bar(
-            x=[av_real_num],
-            y=['Avanço Físico'],
-            orientation='h',
-            marker=dict(color='#3B82F6'),
-            width=0.4,
-            name='Real'
-        ))
-        fig_bar.add_trace(go.Scatter(
-            x=[av_plan_num],
-            y=['Avanço Físico'],
-            mode='markers',
-            marker=dict(color='#F59E0B', size=20, symbol='line-ns-open'),
-            name='Planejado'
-        ))
-        fig_bar.update_layout(
-            xaxis=dict(range=[0,100], title='Percentual (%)'),
-            yaxis=dict(showticklabels=True),
-            plot_bgcolor='rgba(0,0,0,0)',
-            paper_bgcolor='rgba(0,0,0,0)',
-            height=150,
-            showlegend=True,
-            font=dict(color='white')
-        )
-        st.plotly_chart(fig_bar, use_container_width=True)
+# Velocímetro com barra única até o real
+fig_velocimetro = go.Figure(go.Indicator(
+    mode="gauge+number",
+    value=av_real_num,
+    domain={'x':[0,1], 'y':[0,1]},
+    title={'text': "Avanço Físico Real", 'font': {'size':16, 'color':'white'}},
+    number={'font': {'size': 40, 'color':'white'}, 'suffix':'%'},
+    gauge={
+        'axis': {'range':[0,100], 'tickwidth':1, 'tickcolor':'white', 'tickfont':{'size':12,'color':'white'}},
+        'bar': {'color': "#3B82F6", 'thickness': 0.25},  # azul até o real
+        'bgcolor': "rgba(0,0,0,0)",
+        'borderwidth': 2,
+        'bordercolor': "gray",
+        'steps': [],
+        'threshold': {
+            'line': {'color':'#EF4444', 'width':4},  # linha vermelha indicando o planejado
+            'thickness': 0.75,
+            'value': av_plan_num
+        }
+    }
+))
+
+fig_velocimetro.update_layout(
+    height=400,
+    font={'color':"white", 'family':"Arial"},
+    margin=dict(l=30, r=30, t=80, b=30),
+    paper_bgcolor='rgba(0,0,0,0)',
+    plot_bgcolor='rgba(0,0,0,0)'
+)
+
+st.plotly_chart(fig_velocimetro, use_container_width=True)
+
 
         # -------------------- Linha do tempo --------------------
         st.markdown('<p class="sub-header">⏰ Linha do Tempo</p>', unsafe_allow_html=True)

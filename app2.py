@@ -7,10 +7,10 @@ import numpy as np
 
 # Configuração da página
 st.set_page_config(
-    page_title="Dashboard do Projeto",
+    page_title="Dashboard de Obras",
     page_icon="🏗️",
     layout="wide",
-    initial_sidebar_state="collapsed"
+    initial_sidebar_state="expanded"
 )
 
 # Título principal

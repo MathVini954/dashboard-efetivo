@@ -13,12 +13,64 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
+# Estilos CSS personalizados
+st.markdown("""
+<style>
+    .main-header {
+        font-size: 2.5rem;
+        color: #1E3A8A;
+        font-weight: 700;
+        margin-bottom: 1.5rem;
+    }
+    .sub-header {
+        font-size: 1.5rem;
+        color: #374151;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        border-bottom: 2px solid #E5E7EB;
+        padding-bottom: 0.5rem;
+    }
+    .metric-card {
+        background-color: #F9FAFB;
+        border-radius: 0.5rem;
+        padding: 1rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        height: 100%;
+        border-left: 4px solid #3B82F6;
+    }
+    .metric-title {
+        font-size: 0.9rem;
+        color: #6B7280;
+        font-weight: 500;
+        margin-bottom: 0.5rem;
+    }
+    .metric-value {
+        font-size: 1.5rem;
+        color: #111827;
+        font-weight: 700;
+    }
+    .positive-value {
+        color: #059669;
+    }
+    .negative-value {
+        color: #DC2626;
+    }
+    .stMetric {
+        background-color: #F9FAFB;
+        border-radius: 0.5rem;
+        padding: 1rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        border-left: 4px solid #3B82F6;
+    }
+</style>
+""", unsafe_allow_html=True)
+
 # Título principal
-st.title("🏗️ Dashboard de Obras")
+st.markdown('<p class="main-header">🏗️ Dashboard de Obras</p>', unsafe_allow_html=True)
 
 # Upload da planilha
-st.subheader("📁 Upload da Planilha")
-uploaded_file = st.file_uploader("Escolha o arquivo Excel com os dados das obras:", type=['xlsx', 'xls'])
+st.markdown('<p class="sub-header">📁 Upload da Planilha</p>', unsafe_allow_html=True)
+uploaded_file = st.file_uploader("Escolha o arquivo Excel com os dados das obras:", type=['xlsx', 'xls'], label_visibility="collapsed")
 
 if uploaded_file is not None:
     try:
@@ -64,12 +116,14 @@ if uploaded_file is not None:
         def format_percent(value):
             if isinstance(value, (int, float)) and value <= 1:
                 return f"{value*100:.1f}%"
+            elif isinstance(value, (int, float)) and value > 1:
+                return f"{value:.1f}%"
             elif isinstance(value, str) and '%' in value:
                 return value
             return str(value)
         
         # Primeira seção - Métricas Principais em linha
-        st.subheader("📊 Métricas Principais")
+        st.markdown('<p class="sub-header">📊 Métricas Principais</p>', unsafe_allow_html=True)
         
         col1, col2, col3, col4, col5, col6, col7 = st.columns(7)
         
@@ -102,7 +156,7 @@ if uploaded_file is not None:
             st.metric("Custo AP", format_money(custo_ap))
         
         # Segunda seção - Análise Financeira
-        st.subheader("💰 Análise Financeira")
+        st.markdown('<p class="sub-header">💰 Análise Financeira</p>', unsafe_allow_html=True)
         
         col8, col9, col10, col11, col12, col13, col14 = st.columns(7)
         
@@ -120,7 +174,11 @@ if uploaded_file is not None:
         
         with col11:
             desvio = get_value("Desvio")
-            st.metric("Desvio", str(desvio))
+            # Verificar se o desvio é positivo ou negativo para colorir
+            desvio_str = str(desvio)
+            if isinstance(desvio, (int, float)):
+                desvio_str = f"{desvio:+,.0f}" if isinstance(desvio, (int, float)) else str(desvio)
+            st.metric("Desvio", desvio_str)
         
         with col12:
             desembolso = get_value("Desembolso")
@@ -135,7 +193,7 @@ if uploaded_file is not None:
             st.metric("Índice Econômico", str(indice_econ))
         
         # Terceira seção - Prazos e Avanço
-        st.subheader("📅 Prazos e Avanço Físico")
+        st.markdown('<p class="sub-header">📅 Prazos e Avanço Físico</p>', unsafe_allow_html=True)
         
         col15, col16, col17, col18, col19, col20, col21 = st.columns(7)
         
@@ -168,7 +226,7 @@ if uploaded_file is not None:
             st.metric("Prazo Cliente", str(prazo_cliente))
         
         # Velocímetro de Avanço Físico
-        st.subheader("⚡ Velocímetro de Avanço")
+        st.markdown('<p class="sub-header">⚡ Velocímetro de Avanço</p>', unsafe_allow_html=True)
         
         col_vel, col_space = st.columns([3, 1])
         
@@ -195,19 +253,50 @@ if uploaded_file is not None:
             if av_plan_num <= 1:
                 av_plan_num *= 100
             
+            # Calcular a diferença para o delta
+            delta_value = av_real_num - av_plan_num
+            
+            # Determinar cores com base no desempenho
+            if av_real_num >= 90:
+                gauge_color = "#16A34A"  # Verde para ótimo desempenho
+            elif av_real_num >= 70:
+                gauge_color = "#CA8A04"  # Amarelo para desempenho médio
+            else:
+                gauge_color = "#DC2626"  # Vermelho para desempenho ruim
+                
             fig_velocimetro = go.Figure(go.Indicator(
                 mode = "gauge+number+delta",
                 value = av_real_num,
                 domain = {'x': [0, 1], 'y': [0, 1]},
-                title = {'text': "Avanço Físico Real (%)"},
-                delta = {'reference': av_plan_num, 'suffix': "% da meta"},
+                title = {
+                    'text': "Avanço Físico Real",
+                    'font': {'size': 20, 'color': '#374151'}
+                },
+                number = {
+                    'font': {'size': 40, 'color': '#111827'},
+                    'suffix': '%'
+                },
+                delta = {
+                    'reference': av_plan_num,
+                    'increasing': {'color': "#16A34A"},
+                    'decreasing': {'color': "#DC2626"},
+                    'font': {'size': 16}
+                },
                 gauge = {
-                    'axis': {'range': [None, 100]},
-                    'bar': {'color': "#2E86C1"},
+                    'axis': {
+                        'range': [None, 100],
+                        'tickwidth': 1,
+                        'tickcolor': "#4B5563",
+                        'tickfont': {'size': 12, 'color': '#6B7280'}
+                    },
+                    'bar': {'color': gauge_color, 'thickness': 0.3},
+                    'bgcolor': "white",
+                    'borderwidth': 2,
+                    'bordercolor': "gray",
                     'steps': [
-                        {'range': [0, 50], 'color': "#E74C3C"},
-                        {'range': [50, 80], 'color': "#F39C12"},
-                        {'range': [80, 100], 'color': "#27AE60"}
+                        {'range': [0, 70], 'color': '#FEF2F2'},
+                        {'range': [70, 90], 'color': '#FFFBEB'},
+                        {'range': [90, 100], 'color': '#F0FDF4'}
                     ],
                     'threshold': {
                         'line': {'color': "red", 'width': 4},
@@ -216,7 +305,14 @@ if uploaded_file is not None:
                     }
                 }
             ))
-            fig_velocimetro.update_layout(height=400)
+            
+            fig_velocimetro.update_layout(
+                height=400,
+                font={'color': "#4B5563", 'family': "Arial"},
+                margin=dict(l=30, r=30, t=80, b=30),
+                paper_bgcolor='rgba(0,0,0,0)',
+                plot_bgcolor='rgba(0,0,0,0)'
+            )
             st.plotly_chart(fig_velocimetro, use_container_width=True)
         
         # Mostrar dados carregados (debug)

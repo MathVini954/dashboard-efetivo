@@ -22,7 +22,7 @@ body { background-color: #1e1e2f; color: #fff; }
     margin-bottom: 20px;
 }
 .card h4 { margin-bottom: 10px; color:#fff; }
-.card p { font-size:18px; color:#fff; font-weight:bold; }
+.card p { font-size:16px; color:#fff; font-weight:bold; }
 .progress-bar { background-color: #555; border-radius: 10px; overflow: hidden; height: 25px; margin-bottom:20px; }
 .progress-bar-fill { height: 100%; background-color: #4caf50; text-align: center; color: white; font-weight: bold; line-height:25px;}
 </style>
@@ -30,7 +30,7 @@ body { background-color: #1e1e2f; color: #fff; }
 
 # ===== HEADER =====
 st.markdown("<p class='big-title'>🏗️ Dashboard de Obras</p>", unsafe_allow_html=True)
-st.write("Acompanhamento visual das obras - produção, efetivo, financeiro e indicadores estratégicos.")
+st.write("Visualização profissional das obras com todos os indicadores principais.")
 
 # ===== UPLOAD DO ARQUIVO =====
 uploaded_file = st.file_uploader("📥 Faça upload da planilha Excel", type=["xlsx"])
@@ -76,38 +76,54 @@ if uploaded_file:
                 key = str(df.iloc[i,0]).strip()
                 value = parse_valor(df.iloc[i,1])
                 indicadores[key] = value
-        
+
         # ===== CARDS PRINCIPAIS =====
         col1, col2, col3, col4 = st.columns(4)
-        col1.markdown(f"<div class='card'><h4>AC (m²)</h4><p>{indicadores.get('AC (m²)', '-')}</p></div>", unsafe_allow_html=True)
-        col2.markdown(f"<div class='card'><h4>Efetivo</h4><p>{indicadores.get('Ef', '-')}</p></div>", unsafe_allow_html=True)
-        col3.markdown(f"<div class='card'><h4>Total Unidades</h4><p>{indicadores.get('Total Unidades', '-')}</p></div>", unsafe_allow_html=True)
-        col4.markdown(f"<div class='card'><h4>Desembolso</h4><p>{format_money(indicadores.get('Desembolso',0))}</p></div>", unsafe_allow_html=True)
-        
+        col1.markdown(f"<div class='card'><h4>AC (m²)</h4><p>{indicadores.get('AC(m²)', '-')}</p></div>", unsafe_allow_html=True)
+        col2.markdown(f"<div class='card'><h4>AP (m²)</h4><p>{indicadores.get('AP(m²)', '-')}</p></div>", unsafe_allow_html=True)
+        col3.markdown(f"<div class='card'><h4>Efetivo</h4><p>{indicadores.get('Ef', '-')}</p></div>", unsafe_allow_html=True)
+        col4.markdown(f"<div class='card'><h4>Total Unidades</h4><p>{indicadores.get('Total Unidades', '-')}</p></div>", unsafe_allow_html=True)
+
         # ===== AVANÇO FÍSICO =====
         st.write("### 📈 Avanço Físico")
         planejado = indicadores.get("Avanço Físico Planejado",0)
         real = indicadores.get("Avanço Físico Real",0)
         aderencia = indicadores.get("Aderência Física",0)
-        
+
         planejado_pct = format_percent(planejado)
         real_pct = format_percent(real)
         aderencia_pct = format_percent(aderencia)
-        
+
         st.markdown(f"<p>Planejado: {planejado_pct} | Real: {real_pct} | Aderência: {aderencia_pct}</p>", unsafe_allow_html=True)
         st.markdown(f"""
         <div class="progress-bar">
             <div class="progress-bar-fill" style="width:{real}%; background-color:#4caf50;">{real_pct}</div>
         </div>
         """, unsafe_allow_html=True)
-        
-        # ===== INDICADORES FINANCEIROS =====
+
+        # ===== PRAZOS =====
+        st.write("### ⏱️ Prazos")
+        col1, col2 = st.columns(2)
+        col1.markdown(f"<div class='card'><h4>Início</h4><p>{indicadores.get('Início', '-')}</p></div>", unsafe_allow_html=True)
+        col2.markdown(f"<div class='card'><h4>Tendência</h4><p>{indicadores.get('Tend', '-')}</p></div>", unsafe_allow_html=True)
+        col1, col2 = st.columns(2)
+        col1.markdown(f"<div class='card'><h4>Prazo Concl.</h4><p>{indicadores.get('Prazo Concl.', '-')}</p></div>", unsafe_allow_html=True)
+        col2.markdown(f"<div class='card'><h4>Prazo Cliente</h4><p>{indicadores.get('Prazo Cliente', '-')}</p></div>", unsafe_allow_html=True)
+
+        # ===== FINANCEIRO =====
         st.write("### 💰 Indicadores Financeiros")
-        col1, col2, col3 = st.columns(3)
+        col1, col2, col3, col4 = st.columns(4)
         col1.markdown(f"<div class='card'><h4>Orçamento Base</h4><p>{format_money(indicadores.get('Orçamento Base',0))}</p></div>", unsafe_allow_html=True)
         col2.markdown(f"<div class='card'><h4>Orçamento Reajustado</h4><p>{format_money(indicadores.get('Orçamento Reajustado',0))}</p></div>", unsafe_allow_html=True)
         col3.markdown(f"<div class='card'><h4>Custo Final</h4><p>{format_money(indicadores.get('Custo Final',0))}</p></div>", unsafe_allow_html=True)
+        col4.markdown(f"<div class='card'><h4>Desvio</h4><p>{format_percent(indicadores.get('Desvio',0))}</p></div>", unsafe_allow_html=True)
         
+        col1, col2, col3, col4 = st.columns(4)
+        col1.markdown(f"<div class='card'><h4>Desembolso</h4><p>{format_money(indicadores.get('Desembolso',0))}</p></div>", unsafe_allow_html=True)
+        col2.markdown(f"<div class='card'><h4>Saldo</h4><p>{format_money(indicadores.get('Saldo',0))}</p></div>", unsafe_allow_html=True)
+        col3.markdown(f"<div class='card'><h4>Custo Atual AC</h4><p>{format_money(indicadores.get('Custo Atual AC',0))}</p></div>", unsafe_allow_html=True)
+        col4.markdown(f"<div class='card'><h4>Custo Atual AP</h4><p>{format_money(indicadores.get('Custo Atual AP',0))}</p></div>", unsafe_allow_html=True)
+
         # ===== INDICADORES ECONÔMICOS =====
         st.write("### 📊 Indicadores Econômicos")
         col1, col2, col3 = st.columns(3)

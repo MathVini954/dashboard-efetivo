@@ -12,6 +12,15 @@ import plotly.express as px
 import hashlib
 import streamlit as st
 
+# -------------------- Configuração da página --------------------
+st.set_page_config(
+    page_title="EFETIVO - RIO AVE",
+    page_icon="🏗️",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
+
 # Dicionário de usuários (usuário: senha MD5 + tipo de acesso)
 USUARIOS = {
     "DIRETORIA": {
@@ -1082,5 +1091,6 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
+
 
 

@@ -484,42 +484,26 @@ def dashboard_efetivo():
 
     st.divider()
 
-    todas_obras = sorted(df['Obra'].astype(str).unique())
-peso_lista = []
+    então, ta sendo calculado errado
 
-cols_extra = [
-    'Hora Extra 70% - Sabado',
-    'Hora Extra 70% - Semana',
-    'Hora Extra 100%',
-    'Repouso Remunerado'
-]
+ todas_obras = sorted(df['Obra'].astype(str).unique())
+    peso_lista = []
+    for obra in todas_obras:
+        df_obra = df[df['Obra'] == obra]
+        df_direto = df_obra[df_obra['Tipo'] == 'DIRETO']
+        prod_numerador = df_direto['PRODUÇÃO'].sum() + df_direto['REFLEXO S PRODUÇÃO'].sum()
+        prod_denominador = df_direto['Remuneração Líquida Folha'].sum() + df_direto['Adiantamento'].sum()
+        df_dir_ind = df_obra[df_obra['Tipo'].isin(['DIRETO', 'INDIRETO'])]
+        total_extra = df_dir_ind['Total Extra'].sum()
+        reposo_remunerado = df_dir_ind['Repouso Remunerado'].sum()
+        hor_extra_denominador = df_dir_ind['Remuneração Líquida Folha'].sum() + df_dir_ind['Adiantamento'].sum()
 
-for obra in todas_obras:
-    df_obra = df[df['Obra'] == obra]
-    df_direto = df_obra[df_obra['Tipo'] == 'DIRETO']
-    prod_numerador = df_direto['PRODUÇÃO'].sum() + df_direto['REFLEXO S PRODUÇÃO'].sum()
-    prod_denominador = df_direto['Remuneração Líquida Folha'].sum() + df_direto['Adiantamento'].sum()
-    
-    df_dir_ind = df_obra[df_obra['Tipo'].isin(['DIRETO', 'INDIRETO'])].copy()
+        if tipo_peso == 'Peso sobre Produção':
+            peso = (prod_numerador / prod_denominador) if prod_denominador > 0 else 0
+        else:
+            peso = ((total_extra + reposo_remunerado)/ hor_extra_denominador ) if hor_extra_denominador > 0 else 0
 
-    if tipo_peso == 'Peso sobre Produção':
-        # mantém como estava
-        peso = (prod_numerador / prod_denominador) if prod_denominador > 0 else 0
-    else:
-        # garante existência das colunas e converte para numérico
-        for c in cols_extra + ['Remuneração Líquida Folha']:
-            if c not in df_dir_ind.columns:
-                df_dir_ind[c] = 0
-            else:
-                df_dir_ind[c] = pd.to_numeric(df_dir_ind[c], errors='coerce').fillna(0)
-
-        soma_extras = df_dir_ind[cols_extra].sum().sum()
-        soma_rem_liq = df_dir_ind['Remuneração Líquida Folha'].sum()
-
-        peso = (soma_extras / soma_rem_liq) if soma_rem_liq > 0 else 0
-
-    peso_lista.append({'Obra': obra, 'Peso Financeiro': peso})
-
+        peso_lista.append({'Obra': obra, 'Peso Financeiro': peso})
 
     df_peso = pd.DataFrame(peso_lista)
     df_peso = df_peso.sort_values(by='Peso Financeiro', ascending=False)

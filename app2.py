@@ -485,7 +485,7 @@ def dashboard_efetivo():
     st.divider()
 
 
-             todas_obras = sorted(df['Obra'].astype(str).unique())
+todas_obras = sorted(df['Obra'].astype(str).unique())
     peso_lista = []
     for obra in todas_obras:
         df_obra = df[df['Obra'] == obra]
@@ -1092,6 +1092,7 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
+
 
 
 

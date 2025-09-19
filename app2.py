@@ -484,7 +484,6 @@ def dashboard_efetivo():
 
     st.divider()
 
-    então, ta sendo calculado errado
 
  todas_obras = sorted(df['Obra'].astype(str).unique())
     peso_lista = []
@@ -1093,6 +1092,7 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
+
 
 
 

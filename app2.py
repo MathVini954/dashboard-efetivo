@@ -486,52 +486,52 @@ def dashboard_efetivo():
 
 
 todas_obras = sorted(df['Obra'].astype(str).unique())
-    peso_lista = []
-    for obra in todas_obras:
-        df_obra = df[df['Obra'] == obra]
-        df_direto = df_obra[df_obra['Tipo'] == 'DIRETO']
-        prod_numerador = df_direto['PRODUÇÃO'].sum() + df_direto['REFLEXO S PRODUÇÃO'].sum()
-        prod_denominador = df_direto['Remuneração Líquida Folha'].sum() + df_direto['Adiantamento'].sum()
-        df_dir_ind = df_obra[df_obra['Tipo'].isin(['DIRETO', 'INDIRETO'])]
-        total_extra = df_dir_ind['Total Extra'].sum()
-        reposo_remunerado = df_dir_ind['Repouso Remunerado'].sum()
-        hor_extra_denominador = df_dir_ind['Remuneração Líquida Folha'].sum() + df_dir_ind['Adiantamento'].sum()
+peso_lista = []  # <- sem indentação extra
+for obra in todas_obras:
+    df_obra = df[df['Obra'] == obra]
+    df_direto = df_obra[df_obra['Tipo'] == 'DIRETO']
+    prod_numerador = df_direto['PRODUÇÃO'].sum() + df_direto['REFLEXO S PRODUÇÃO'].sum()
+    prod_denominador = df_direto['Remuneração Líquida Folha'].sum() + df_direto['Adiantamento'].sum()
+    df_dir_ind = df_obra[df_obra['Tipo'].isin(['DIRETO', 'INDIRETO'])]
+    total_extra = df_dir_ind['Total Extra'].sum()
+    reposo_remunerado = df_dir_ind['Repouso Remunerado'].sum()
+    hor_extra_denominador = df_dir_ind['Remuneração Líquida Folha'].sum() + df_dir_ind['Adiantamento'].sum()
 
-        if tipo_peso == 'Peso sobre Produção':
-            peso = (prod_numerador / prod_denominador) if prod_denominador > 0 else 0
-        else:
-            peso = ((total_extra + reposo_remunerado)/ hor_extra_denominador ) if hor_extra_denominador > 0 else 0
+    if tipo_peso == 'Peso sobre Produção':
+        peso = (prod_numerador / prod_denominador) if prod_denominador > 0 else 0
+    else:
+        peso = ((total_extra + reposo_remunerado)/ hor_extra_denominador ) if hor_extra_denominador > 0 else 0
 
-        peso_lista.append({'Obra': obra, 'Peso Financeiro': peso})
+    peso_lista.append({'Obra': obra, 'Peso Financeiro': peso})
 
-    df_peso = pd.DataFrame(peso_lista)
-    df_peso = df_peso.sort_values(by='Peso Financeiro', ascending=False)
-    df_peso['Selecionada'] = df_peso['Obra'].apply(lambda x: x in obras_selecionadas)
-    colors = df_peso['Selecionada'].map({True: 'darkblue', False: 'lightblue'})
+df_peso = pd.DataFrame(peso_lista)
+df_peso = df_peso.sort_values(by='Peso Financeiro', ascending=False)
+df_peso['Selecionada'] = df_peso['Obra'].apply(lambda x: x in obras_selecionadas)
+colors = df_peso['Selecionada'].map({True: 'darkblue', False: 'lightblue'})
 
-    fig_peso = px.bar(
-        df_peso,
-        x='Obra',
-        y='Peso Financeiro',
-        title=f'Peso Financeiro por Obra ({tipo_peso})',
-        labels={'Peso Financeiro': 'Índice', 'Obra': 'Obra'},
-        text=df_peso['Peso Financeiro'].apply(lambda x: f"{x:.2%}"),
-    )
+fig_peso = px.bar(
+    df_peso,
+    x='Obra',
+    y='Peso Financeiro',
+    title=f'Peso Financeiro por Obra ({tipo_peso})',
+    labels={'Peso Financeiro': 'Índice', 'Obra': 'Obra'},
+    text=df_peso['Peso Financeiro'].apply(lambda x: f"{x:.2%}"),
+)
 
-    fig_peso.update_traces(
-        marker_color=colors,
-        textposition='outside',
-        marker_line_color='black',
-        marker_line_width=0.5
-    )
+fig_peso.update_traces(
+    marker_color=colors,
+    textposition='outside',
+    marker_line_color='black',
+    marker_line_width=0.5
+)
 
-    fig_peso.update_layout(
-        yaxis_tickformat='.0%',
-        showlegend=False,
-        xaxis={'categoryorder': 'array', 'categoryarray': df_peso['Obra']}
-    )
+fig_peso.update_layout(
+    yaxis_tickformat='.0%',
+    showlegend=False,
+    xaxis={'categoryorder': 'array', 'categoryarray': df_peso['Obra']}
+)
 
-    st.plotly_chart(fig_peso, use_container_width=True)
+st.plotly_chart(fig_peso, use_container_width=True)
 
 
 # Dicionário para mapear meses em inglês para abreviações em português
@@ -1092,6 +1092,7 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
+
 
 
 
